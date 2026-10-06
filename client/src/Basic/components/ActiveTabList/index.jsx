@@ -27,6 +27,8 @@ import {
   SalesReportHome,
   Dashboard,
   ContentMaster,
+  CountsMaster,
+  YarnBlendMaster,
 } from "..";
 
 import { CLOSE_ICON, DOUBLE_NEXT_ICON } from "../../../icons";
@@ -196,6 +198,8 @@ const ActiveTabList = () => {
     ///////////////////////////////////////////
 
     "CONTENT MASTER": <ContentMaster />,
+    "COUNTS MASTER": <CountsMaster />,
+    "YARN BLEND MASTER": <YarnBlendMaster />,
   };
   const innerWidth = window.innerWidth;
   const itemsToShow = innerWidth / 130;

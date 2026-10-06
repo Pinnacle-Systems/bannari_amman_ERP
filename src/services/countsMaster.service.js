@@ -3,7 +3,7 @@ import { NoRecordFound } from "../configs/Responses.js";
 
 async function get(req) {
   const { companyId, active } = req.query;
-  const data = await prisma.contentMaster.findMany({
+  const data = await prisma.countsMaster.findMany({
     where: {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
@@ -15,19 +15,19 @@ async function get(req) {
 
 async function getOne(id) {
   const childRecord = 0;
-  const data = await prisma.contentMaster.findUnique({
+  const data = await prisma.countsMaster.findUnique({
     where: {
       id: parseInt(id),
     },
   });
-  if (!data) return NoRecordFound("contentMaster");
+  if (!data) return NoRecordFound("countsMaster");
   return { statusCode: 0, data: { ...data, ...{ childRecord } } };
 }
 
 async function getSearch(req) {
   const { searchKey } = req.params;
   const { companyId, active } = req.query;
-  const data = await prisma.contentMaster.findMany({
+  const data = await prisma.countsMaster.findMany({
     where: {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
@@ -45,7 +45,7 @@ async function getSearch(req) {
 
 async function create(body) {
   const { name, code, companyId, active } = await body;
-  const data = await prisma.contentMaster.create({
+  const data = await prisma.countsMaster.create({
     data: {
       name,
       code,
@@ -58,13 +58,13 @@ async function create(body) {
 
 async function update(id, body) {
   const { name, code, active } = await body;
-  const dataFound = await prisma.contentMaster.findUnique({
+  const dataFound = await prisma.countsMaster.findUnique({
     where: {
       id: parseInt(id),
     },
   });
-  if (!dataFound) return NoRecordFound("contentMaster");
-  const data = await prisma.contentMaster.update({
+  if (!dataFound) return NoRecordFound("countsMaster");
+  const data = await prisma.countsMaster.update({
     where: {
       id: parseInt(id),
     },
@@ -78,7 +78,7 @@ async function update(id, body) {
 }
 
 async function remove(id) {
-  const data = await prisma.contentMaster.delete({
+  const data = await prisma.countsMaster.delete({
     where: {
       id: parseInt(id),
     },

@@ -569,6 +569,7 @@ CREATE TABLE "Stock" (
     "sizeId" INTEGER,
     "colorId" INTEGER,
     "gsmId" INTEGER,
+    "jobCardId" INTEGER,
     "styleId" INTEGER,
     "orderId" INTEGER,
     "packingId" INTEGER,
@@ -1533,6 +1534,207 @@ CREATE TABLE "ProcessGroupList" (
 );
 
 -- CreateTable
+CREATE TABLE "Board" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT,
+    "active" BOOLEAN DEFAULT true,
+    "companyId" INTEGER,
+
+    CONSTRAINT "Board_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Plate" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT,
+    "active" BOOLEAN DEFAULT true,
+    "companyId" INTEGER,
+
+    CONSTRAINT "Plate_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Die" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT,
+    "active" BOOLEAN DEFAULT true,
+    "companyId" INTEGER,
+
+    CONSTRAINT "Die_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "JobCard" (
+    "id" SERIAL NOT NULL,
+    "docId" TEXT NOT NULL,
+    "docDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" INTEGER,
+    "updatedById" INTEGER,
+    "branchId" INTEGER,
+    "orderEntryId" INTEGER,
+    "orderType" TEXT,
+    "orderQty" INTEGER,
+    "customerId" INTEGER,
+    "gsmId" INTEGER,
+    "boardId" INTEGER,
+    "otherBoardId" INTEGER,
+    "fullBoard" INTEGER,
+    "noOfPockets" INTEGER,
+    "cuttingSize" TEXT,
+    "runningQty" INTEGER,
+    "isFourColor" BOOLEAN DEFAULT false,
+    "isCutColor" BOOLEAN DEFAULT false,
+    "isFront" BOOLEAN DEFAULT false,
+    "isFrontAndBack" BOOLEAN DEFAULT false,
+    "isCMYK" BOOLEAN DEFAULT false,
+    "isCutColMachine" BOOLEAN DEFAULT false,
+    "isFrontMachine" BOOLEAN DEFAULT false,
+    "isFrontBackMachine" BOOLEAN DEFAULT false,
+    "plateId" INTEGER,
+    "dieId" INTEGER,
+    "totalPlateSet" INTEGER,
+    "dieMethod" TEXT,
+    "dieDescription" TEXT,
+    "remarks" TEXT,
+    "designerId" INTEGER,
+    "followUpId" INTEGER,
+    "tagCardUps" TEXT,
+    "totalPlatesets" TEXT,
+    "jobRunTime" TEXT,
+    "productionType" TEXT,
+    "fullBoardId" INTEGER,
+    "cuttingSizeId" INTEGER,
+    "labelSizeId" INTEGER,
+    "itemGroupId" INTEGER,
+    "itemType" TEXT,
+    "styleItemId" INTEGER,
+    "trackingType" TEXT,
+    "labelQty" INTEGER,
+    "rollQty" DOUBLE PRECISION,
+    "cutAndSeal" TEXT,
+    "labelQuality" TEXT,
+    "labelItemId" INTEGER,
+    "block" TEXT,
+    "orderItemId" INTEGER,
+    "totalMeter" INTEGER,
+    "blockDate" TIMESTAMP(3),
+    "isRepeatedJobCard" BOOLEAN DEFAULT false,
+    "refJobCardId" INTEGER,
+    "storeId" INTEGER,
+    "splitType" TEXT,
+    "colorId" INTEGER,
+    "plateSupplierId" INTEGER,
+    "isHold" BOOLEAN DEFAULT false,
+    "isCancelled" BOOLEAN DEFAULT false,
+    "lenght" INTEGER,
+    "width" INTEGER,
+    "meter" INTEGER,
+    "isPackingComplted" TEXT,
+    "isOldPlate" BOOLEAN DEFAULT false,
+    "isNewPlate" BOOLEAN DEFAULT false,
+
+    CONSTRAINT "JobCard_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BoardQuality" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "boardId" INTEGER,
+    "processId" INTEGER,
+    "gsmId" INTEGER,
+    "fullBoardId" INTEGER,
+    "noOfSheets" INTEGER,
+
+    CONSTRAINT "BoardQuality_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FinishingProcess" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processId" INTEGER,
+
+    CONSTRAINT "FinishingProcess_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LabelPrintingDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processId" INTEGER,
+
+    CONSTRAINT "LabelPrintingDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PrintingDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processId" INTEGER,
+    "isFrontAndBack" BOOLEAN DEFAULT false,
+    "isFront" BOOLEAN DEFAULT false,
+
+    CONSTRAINT "PrintingDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PlateDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "plateId" INTEGER,
+    "machineId" INTEGER,
+    "plateName" TEXT,
+    "description" TEXT,
+    "qty" INTEGER,
+
+    CONSTRAINT "PlateDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProcessDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processId" INTEGER,
+
+    CONSTRAINT "ProcessDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LaminationDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "laminationId" INTEGER,
+    "isFrontAndBack" BOOLEAN DEFAULT false,
+    "isFront" BOOLEAN DEFAULT false,
+
+    CONSTRAINT "LaminationDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "VarnishDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "varnishId" INTEGER,
+    "isFrontAndBack" BOOLEAN DEFAULT false,
+    "isFront" BOOLEAN DEFAULT false,
+
+    CONSTRAINT "VarnishDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MachineDetails" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "machineId" INTEGER,
+    "macId" INTEGER,
+
+    CONSTRAINT "MachineDetails_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "OrderItems" (
     "id" SERIAL NOT NULL,
     "orderEntryId" INTEGER,
@@ -1576,6 +1778,96 @@ CREATE TABLE "OrderSizeBreakup" (
     "barcodeTo" TEXT,
 
     CONSTRAINT "OrderSizeBreakup_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "JobCardSizeBreakup" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER NOT NULL,
+    "sizeId" INTEGER,
+    "qty" INTEGER,
+    "barcodeFrom" TEXT,
+    "barcodeTo" TEXT,
+
+    CONSTRAINT "JobCardSizeBreakup_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProcessRoute" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processId" INTEGER,
+    "type" TEXT NOT NULL,
+    "sequence" INTEGER NOT NULL,
+    "isFront" BOOLEAN NOT NULL DEFAULT false,
+    "isFrontAndBack" BOOLEAN NOT NULL DEFAULT false,
+    "status" TEXT,
+    "completedQty" INTEGER,
+    "actualQty" INTEGER,
+    "pendingQty" INTEGER,
+    "wastageQty" INTEGER,
+    "reworkSetId" TEXT,
+    "sendQty" INTEGER,
+
+    CONSTRAINT "ProcessRoute_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "productionempPunch" (
+    "id" SERIAL NOT NULL,
+    "jobCardId" INTEGER,
+    "processRouteId" INTEGER,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "startTime" TIME(0),
+    "endTime" TIME(0),
+    "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "Userid" INTEGER NOT NULL,
+    "departmentid" INTEGER NOT NULL,
+    "Machineid" INTEGER NOT NULL,
+
+    CONSTRAINT "productionempPunch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "splitSizes" (
+    "id" SERIAL NOT NULL,
+    "pushLogId" INTEGER NOT NULL,
+    "jobCardSizeId" INTEGER,
+    "qty" INTEGER,
+
+    CONSTRAINT "splitSizes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "takenmachines" (
+    "id" SERIAL NOT NULL,
+    "Userid" INTEGER NOT NULL,
+    "jobCardId" INTEGER,
+    "processRouteId" INTEGER,
+    "stDatetime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "edDatetime" TIMESTAMP(3),
+    "departmentid" INTEGER NOT NULL,
+    "Machineid" INTEGER NOT NULL,
+    "isAvailable" BOOLEAN,
+
+    CONSTRAINT "takenmachines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "pushLogs" (
+    "id" SERIAL NOT NULL,
+    "Userid" INTEGER NOT NULL,
+    "pauseReason" TEXT,
+    "pushtime" TIMESTAMP(3),
+    "resumetime" TIMESTAMP(3),
+    "productionlog" INTEGER NOT NULL,
+    "completedQty" INTEGER DEFAULT 0,
+    "wastageQty" INTEGER DEFAULT 0,
+    "remarks" TEXT,
+    "pauseQty" INTEGER DEFAULT 0,
+
+    CONSTRAINT "pushLogs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1698,6 +1990,204 @@ CREATE TABLE "Bank" (
     "bankHolderName" TEXT,
 
     CONSTRAINT "Bank_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionAllocation" (
+    "id" SERIAL NOT NULL,
+    "docId" TEXT NOT NULL,
+    "docDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" INTEGER,
+    "updatedById" INTEGER,
+    "jobCardId" INTEGER NOT NULL,
+    "remarks" TEXT,
+    "styleItemId" INTEGER,
+    "branchId" INTEGER,
+    "priority" TEXT,
+
+    CONSTRAINT "ProductionAllocation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionAllocationDtl" (
+    "id" SERIAL NOT NULL,
+    "productionAllocationId" INTEGER NOT NULL,
+    "isInHouse" BOOLEAN NOT NULL DEFAULT false,
+    "isOutSide" BOOLEAN NOT NULL DEFAULT false,
+    "processId" INTEGER,
+    "type" TEXT,
+    "sequence" INTEGER,
+    "supplierId" INTEGER,
+    "processRouteId" INTEGER,
+    "isFront" BOOLEAN NOT NULL DEFAULT false,
+    "isFrontAndBack" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "ProductionAllocationDtl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Machine" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT,
+    "active" BOOLEAN DEFAULT true,
+    "companyId" INTEGER,
+    "sizeId" INTEGER,
+    "departmentId" INTEGER,
+    "isDefault" BOOLEAN DEFAULT false,
+
+    CONSTRAINT "Machine_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Notification" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" TEXT,
+    "userId" INTEGER,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "referenceId" INTEGER,
+    "referencePage" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isResolved" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionOutward" (
+    "id" SERIAL NOT NULL,
+    "docId" TEXT NOT NULL,
+    "docDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" INTEGER,
+    "updatedById" INTEGER,
+    "jobCardId" INTEGER NOT NULL,
+    "productionAllocationId" INTEGER,
+    "supplierId" INTEGER,
+    "remarks" TEXT,
+    "branchId" INTEGER,
+    "dcNo" TEXT,
+    "vehicleNo" TEXT,
+
+    CONSTRAINT "ProductionOutward_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionOutwardDtl" (
+    "id" SERIAL NOT NULL,
+    "productionOutwardId" INTEGER NOT NULL,
+    "processId" INTEGER,
+    "sentQty" DOUBLE PRECISION,
+    "sequence" INTEGER,
+    "prevProcessId" INTEGER,
+    "productionAllocationDtlId" INTEGER,
+
+    CONSTRAINT "ProductionOutwardDtl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionInward" (
+    "id" SERIAL NOT NULL,
+    "docId" TEXT NOT NULL,
+    "docDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" INTEGER,
+    "updatedById" INTEGER,
+    "productionOutwardId" INTEGER,
+    "supplierId" INTEGER,
+    "remarks" TEXT,
+    "branchId" INTEGER,
+    "jobCardId" INTEGER,
+    "inwardType" TEXT,
+    "dcNo" TEXT,
+    "dcDate" TIMESTAMP(3),
+    "vehicleNo" TEXT,
+    "receiptType" TEXT,
+    "invNo" TEXT,
+    "netBillValue" DOUBLE PRECISION,
+    "discountType" TEXT,
+    "discountValue" DOUBLE PRECISION,
+    "taxTemplateId" INTEGER,
+
+    CONSTRAINT "ProductionInward_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductionInwardDtl" (
+    "id" SERIAL NOT NULL,
+    "productionInwardId" INTEGER NOT NULL,
+    "outwardDetailId" INTEGER,
+    "receivedQty" DOUBLE PRECISION,
+    "wastageQty" DOUBLE PRECISION,
+    "acceptedQty" DOUBLE PRECISION,
+    "processId" INTEGER,
+    "price" DOUBLE PRECISION,
+    "discountType" TEXT,
+    "discountValue" DOUBLE PRECISION,
+    "taxPercent" DOUBLE PRECISION,
+    "jobCardId" INTEGER,
+    "productionOutwardId" INTEGER,
+
+    CONSTRAINT "ProductionInwardDtl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "InwardProcessDtl" (
+    "id" SERIAL NOT NULL,
+    "productionInwardDtlId" INTEGER NOT NULL,
+    "processId" INTEGER,
+
+    CONSTRAINT "InwardProcessDtl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProcessBill" (
+    "id" SERIAL NOT NULL,
+    "docId" TEXT NOT NULL,
+    "docDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdById" INTEGER,
+    "updatedById" INTEGER,
+    "supplierId" INTEGER,
+    "remarks" TEXT,
+    "branchId" INTEGER,
+    "netBillValue" DOUBLE PRECISION,
+    "discountType" TEXT,
+    "discountValue" DOUBLE PRECISION,
+    "taxTemplateId" INTEGER,
+
+    CONSTRAINT "ProcessBill_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProcessBillDtl" (
+    "id" SERIAL NOT NULL,
+    "processBilldId" INTEGER NOT NULL,
+    "acceptedQty" DOUBLE PRECISION,
+    "billedQty" DOUBLE PRECISION,
+    "price" DOUBLE PRECISION,
+    "discountType" TEXT,
+    "discountValue" DOUBLE PRECISION,
+    "taxPercent" DOUBLE PRECISION,
+    "jobCardId" INTEGER,
+    "productionInwardId" INTEGER,
+
+    CONSTRAINT "ProcessBillDtl_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingProcess" (
+    "id" SERIAL NOT NULL,
+    "processBillDtlId" INTEGER NOT NULL,
+    "processId" INTEGER,
+
+    CONSTRAINT "BillingProcess_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1923,6 +2413,7 @@ CREATE TABLE "Packing" (
     "updatedById" INTEGER,
     "branchId" INTEGER,
     "orderId" INTEGER,
+    "jobCardId" INTEGER,
     "orderType" TEXT,
     "finYearId" INTEGER,
     "orderQty" INTEGER,
@@ -1994,6 +2485,56 @@ CREATE TABLE "PackingBreakup" (
     "noOfunits" TEXT,
 
     CONSTRAINT "PackingBreakup_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ReworkLog" (
+    "id" SERIAL NOT NULL,
+    "uniqueId" TEXT NOT NULL,
+    "jobCardId" INTEGER,
+    "processRouteId" INTEGER,
+    "actualQty" INTEGER,
+    "completedQty" INTEGER,
+    "wastageQty" INTEGER,
+    "pendingQty" INTEGER,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "Userid" INTEGER,
+
+    CONSTRAINT "ReworkLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ReworkBatchTracker" (
+    "id" SERIAL NOT NULL,
+    "uniqueId" TEXT NOT NULL,
+    "jobCardId" INTEGER NOT NULL,
+    "processRouteId" INTEGER NOT NULL,
+    "userId" INTEGER,
+    "isExpired" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ReworkBatchTracker_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncomingQty" (
+    "id" SERIAL NOT NULL,
+    "uniqueId" TEXT NOT NULL,
+    "jobCardId" INTEGER NOT NULL,
+    "processRouteId" INTEGER NOT NULL,
+    "isCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "qty" INTEGER NOT NULL,
+    "pendingQty" INTEGER,
+    "completedQty" INTEGER,
+    "wastageQty" INTEGER,
+    "sendRoute" INTEGER NOT NULL,
+    "outwardId" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncomingQty_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -2096,6 +2637,18 @@ CREATE TABLE "SaleBillEntrySizeBreakup" (
 );
 
 -- CreateTable
+CREATE TABLE "MobileNotification" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER,
+    "roleId" INTEGER,
+    "createdAt" TIMESTAMP(3),
+    "isViewed" BOOLEAN,
+    "machineId" INTEGER,
+
+    CONSTRAINT "MobileNotification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_ApprovalRuleFieldToApprovalRuleOperator" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL,
@@ -2173,6 +2726,12 @@ CREATE INDEX "ApprovalLog_referenceId_referencePage_idx" ON "ApprovalLog"("refer
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProformaInvoice_docId_key" ON "ProformaInvoice"("docId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ReworkBatchTracker_uniqueId_key" ON "ReworkBatchTracker"("uniqueId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncomingQty_uniqueId_key" ON "IncomingQty"("uniqueId");
 
 -- CreateIndex
 CREATE INDEX "_ApprovalRuleFieldToApprovalRuleOperator_B_index" ON "_ApprovalRuleFieldToApprovalRuleOperator"("B");
@@ -2419,6 +2978,9 @@ ALTER TABLE "Stock" ADD CONSTRAINT "Stock_colorId_fkey" FOREIGN KEY ("colorId") 
 
 -- AddForeignKey
 ALTER TABLE "Stock" ADD CONSTRAINT "Stock_gsmId_fkey" FOREIGN KEY ("gsmId") REFERENCES "Gsm"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Stock" ADD CONSTRAINT "Stock_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Stock" ADD CONSTRAINT "Stock_styleId_fkey" FOREIGN KEY ("styleId") REFERENCES "Style"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -3117,6 +3679,153 @@ ALTER TABLE "ProcessGroupList" ADD CONSTRAINT "ProcessGroupList_processGroupId_f
 ALTER TABLE "ProcessGroupList" ADD CONSTRAINT "ProcessGroupList_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Board" ADD CONSTRAINT "Board_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Plate" ADD CONSTRAINT "Plate_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Die" ADD CONSTRAINT "Die_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_orderEntryId_fkey" FOREIGN KEY ("orderEntryId") REFERENCES "OrderEntry"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_gsmId_fkey" FOREIGN KEY ("gsmId") REFERENCES "Gsm"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_boardId_fkey" FOREIGN KEY ("boardId") REFERENCES "Board"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_otherBoardId_fkey" FOREIGN KEY ("otherBoardId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_plateId_fkey" FOREIGN KEY ("plateId") REFERENCES "Plate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_dieId_fkey" FOREIGN KEY ("dieId") REFERENCES "Die"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_designerId_fkey" FOREIGN KEY ("designerId") REFERENCES "Employee"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_followUpId_fkey" FOREIGN KEY ("followUpId") REFERENCES "Employee"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_fullBoardId_fkey" FOREIGN KEY ("fullBoardId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_cuttingSizeId_fkey" FOREIGN KEY ("cuttingSizeId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_labelSizeId_fkey" FOREIGN KEY ("labelSizeId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_itemGroupId_fkey" FOREIGN KEY ("itemGroupId") REFERENCES "ItemGroup"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_styleItemId_fkey" FOREIGN KEY ("styleItemId") REFERENCES "StyleItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_labelItemId_fkey" FOREIGN KEY ("labelItemId") REFERENCES "StyleItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "OrderItems"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_refJobCardId_fkey" FOREIGN KEY ("refJobCardId") REFERENCES "JobCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "Location"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_colorId_fkey" FOREIGN KEY ("colorId") REFERENCES "Color"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCard" ADD CONSTRAINT "JobCard_plateSupplierId_fkey" FOREIGN KEY ("plateSupplierId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardQuality" ADD CONSTRAINT "BoardQuality_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardQuality" ADD CONSTRAINT "BoardQuality_boardId_fkey" FOREIGN KEY ("boardId") REFERENCES "Board"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardQuality" ADD CONSTRAINT "BoardQuality_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardQuality" ADD CONSTRAINT "BoardQuality_gsmId_fkey" FOREIGN KEY ("gsmId") REFERENCES "Gsm"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardQuality" ADD CONSTRAINT "BoardQuality_fullBoardId_fkey" FOREIGN KEY ("fullBoardId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FinishingProcess" ADD CONSTRAINT "FinishingProcess_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FinishingProcess" ADD CONSTRAINT "FinishingProcess_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LabelPrintingDetails" ADD CONSTRAINT "LabelPrintingDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LabelPrintingDetails" ADD CONSTRAINT "LabelPrintingDetails_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PrintingDetails" ADD CONSTRAINT "PrintingDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PrintingDetails" ADD CONSTRAINT "PrintingDetails_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlateDetails" ADD CONSTRAINT "PlateDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlateDetails" ADD CONSTRAINT "PlateDetails_plateId_fkey" FOREIGN KEY ("plateId") REFERENCES "Plate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlateDetails" ADD CONSTRAINT "PlateDetails_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "Machine"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessDetails" ADD CONSTRAINT "ProcessDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessDetails" ADD CONSTRAINT "ProcessDetails_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LaminationDetails" ADD CONSTRAINT "LaminationDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LaminationDetails" ADD CONSTRAINT "LaminationDetails_laminationId_fkey" FOREIGN KEY ("laminationId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "VarnishDetails" ADD CONSTRAINT "VarnishDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "VarnishDetails" ADD CONSTRAINT "VarnishDetails_varnishId_fkey" FOREIGN KEY ("varnishId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MachineDetails" ADD CONSTRAINT "MachineDetails_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MachineDetails" ADD CONSTRAINT "MachineDetails_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MachineDetails" ADD CONSTRAINT "MachineDetails_macId_fkey" FOREIGN KEY ("macId") REFERENCES "Machine"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "OrderItems" ADD CONSTRAINT "OrderItems_orderEntryId_fkey" FOREIGN KEY ("orderEntryId") REFERENCES "OrderEntry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -3154,6 +3863,60 @@ ALTER TABLE "OrderSizeBreakup" ADD CONSTRAINT "OrderSizeBreakup_orderStyleBreaku
 
 -- AddForeignKey
 ALTER TABLE "OrderSizeBreakup" ADD CONSTRAINT "OrderSizeBreakup_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCardSizeBreakup" ADD CONSTRAINT "JobCardSizeBreakup_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "JobCardSizeBreakup" ADD CONSTRAINT "JobCardSizeBreakup_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessRoute" ADD CONSTRAINT "ProcessRoute_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessRoute" ADD CONSTRAINT "ProcessRoute_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "productionempPunch" ADD CONSTRAINT "productionempPunch_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "productionempPunch" ADD CONSTRAINT "productionempPunch_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "productionempPunch" ADD CONSTRAINT "productionempPunch_Userid_fkey" FOREIGN KEY ("Userid") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "productionempPunch" ADD CONSTRAINT "productionempPunch_departmentid_fkey" FOREIGN KEY ("departmentid") REFERENCES "Department"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "productionempPunch" ADD CONSTRAINT "productionempPunch_Machineid_fkey" FOREIGN KEY ("Machineid") REFERENCES "Machine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "splitSizes" ADD CONSTRAINT "splitSizes_pushLogId_fkey" FOREIGN KEY ("pushLogId") REFERENCES "pushLogs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "splitSizes" ADD CONSTRAINT "splitSizes_jobCardSizeId_fkey" FOREIGN KEY ("jobCardSizeId") REFERENCES "JobCardSizeBreakup"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "takenmachines" ADD CONSTRAINT "takenmachines_Userid_fkey" FOREIGN KEY ("Userid") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "takenmachines" ADD CONSTRAINT "takenmachines_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "takenmachines" ADD CONSTRAINT "takenmachines_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "takenmachines" ADD CONSTRAINT "takenmachines_departmentid_fkey" FOREIGN KEY ("departmentid") REFERENCES "Department"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "takenmachines" ADD CONSTRAINT "takenmachines_Machineid_fkey" FOREIGN KEY ("Machineid") REFERENCES "Machine"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "pushLogs" ADD CONSTRAINT "pushLogs_Userid_fkey" FOREIGN KEY ("Userid") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "pushLogs" ADD CONSTRAINT "pushLogs_productionlog_fkey" FOREIGN KEY ("productionlog") REFERENCES "productionempPunch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProformaInvoice" ADD CONSTRAINT "ProformaInvoice_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -3241,6 +4004,144 @@ ALTER TABLE "Bank" ADD CONSTRAINT "Bank_companyId_fkey" FOREIGN KEY ("companyId"
 
 -- AddForeignKey
 ALTER TABLE "Bank" ADD CONSTRAINT "Bank_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "City"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocation" ADD CONSTRAINT "ProductionAllocation_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocation" ADD CONSTRAINT "ProductionAllocation_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocation" ADD CONSTRAINT "ProductionAllocation_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocation" ADD CONSTRAINT "ProductionAllocation_styleItemId_fkey" FOREIGN KEY ("styleItemId") REFERENCES "StyleItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocation" ADD CONSTRAINT "ProductionAllocation_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocationDtl" ADD CONSTRAINT "ProductionAllocationDtl_productionAllocationId_fkey" FOREIGN KEY ("productionAllocationId") REFERENCES "ProductionAllocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocationDtl" ADD CONSTRAINT "ProductionAllocationDtl_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocationDtl" ADD CONSTRAINT "ProductionAllocationDtl_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionAllocationDtl" ADD CONSTRAINT "ProductionAllocationDtl_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Machine" ADD CONSTRAINT "Machine_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Machine" ADD CONSTRAINT "Machine_sizeId_fkey" FOREIGN KEY ("sizeId") REFERENCES "Size"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Machine" ADD CONSTRAINT "Machine_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_productionAllocationId_fkey" FOREIGN KEY ("productionAllocationId") REFERENCES "ProductionAllocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutward" ADD CONSTRAINT "ProductionOutward_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutwardDtl" ADD CONSTRAINT "ProductionOutwardDtl_productionOutwardId_fkey" FOREIGN KEY ("productionOutwardId") REFERENCES "ProductionOutward"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutwardDtl" ADD CONSTRAINT "ProductionOutwardDtl_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutwardDtl" ADD CONSTRAINT "ProductionOutwardDtl_prevProcessId_fkey" FOREIGN KEY ("prevProcessId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionOutwardDtl" ADD CONSTRAINT "ProductionOutwardDtl_productionAllocationDtlId_fkey" FOREIGN KEY ("productionAllocationDtlId") REFERENCES "ProductionAllocationDtl"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_productionOutwardId_fkey" FOREIGN KEY ("productionOutwardId") REFERENCES "ProductionOutward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInward" ADD CONSTRAINT "ProductionInward_taxTemplateId_fkey" FOREIGN KEY ("taxTemplateId") REFERENCES "TaxTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInwardDtl" ADD CONSTRAINT "ProductionInwardDtl_productionInwardId_fkey" FOREIGN KEY ("productionInwardId") REFERENCES "ProductionInward"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInwardDtl" ADD CONSTRAINT "ProductionInwardDtl_outwardDetailId_fkey" FOREIGN KEY ("outwardDetailId") REFERENCES "ProductionOutwardDtl"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInwardDtl" ADD CONSTRAINT "ProductionInwardDtl_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInwardDtl" ADD CONSTRAINT "ProductionInwardDtl_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductionInwardDtl" ADD CONSTRAINT "ProductionInwardDtl_productionOutwardId_fkey" FOREIGN KEY ("productionOutwardId") REFERENCES "ProductionOutward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InwardProcessDtl" ADD CONSTRAINT "InwardProcessDtl_productionInwardDtlId_fkey" FOREIGN KEY ("productionInwardDtlId") REFERENCES "ProductionInwardDtl"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InwardProcessDtl" ADD CONSTRAINT "InwardProcessDtl_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBill" ADD CONSTRAINT "ProcessBill_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBill" ADD CONSTRAINT "ProcessBill_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBill" ADD CONSTRAINT "ProcessBill_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Party"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBill" ADD CONSTRAINT "ProcessBill_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBill" ADD CONSTRAINT "ProcessBill_taxTemplateId_fkey" FOREIGN KEY ("taxTemplateId") REFERENCES "TaxTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBillDtl" ADD CONSTRAINT "ProcessBillDtl_processBilldId_fkey" FOREIGN KEY ("processBilldId") REFERENCES "ProcessBill"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBillDtl" ADD CONSTRAINT "ProcessBillDtl_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProcessBillDtl" ADD CONSTRAINT "ProcessBillDtl_productionInwardId_fkey" FOREIGN KEY ("productionInwardId") REFERENCES "ProductionInward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingProcess" ADD CONSTRAINT "BillingProcess_processBillDtlId_fkey" FOREIGN KEY ("processBillDtlId") REFERENCES "ProcessBillDtl"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingProcess" ADD CONSTRAINT "BillingProcess_processId_fkey" FOREIGN KEY ("processId") REFERENCES "Process"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SalesDelivery" ADD CONSTRAINT "SalesDelivery_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -3432,6 +4333,9 @@ ALTER TABLE "Packing" ADD CONSTRAINT "Packing_branchId_fkey" FOREIGN KEY ("branc
 ALTER TABLE "Packing" ADD CONSTRAINT "Packing_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "OrderEntry"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Packing" ADD CONSTRAINT "Packing_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Packing" ADD CONSTRAINT "Packing_finYearId_fkey" FOREIGN KEY ("finYearId") REFERENCES "FinYear"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -3475,6 +4379,36 @@ ALTER TABLE "PackingBreakup" ADD CONSTRAINT "PackingBreakup_PackingSizeBreakupId
 
 -- AddForeignKey
 ALTER TABLE "PackingBreakup" ADD CONSTRAINT "PackingBreakup_packingUomId_fkey" FOREIGN KEY ("packingUomId") REFERENCES "Uom"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkLog" ADD CONSTRAINT "ReworkLog_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkLog" ADD CONSTRAINT "ReworkLog_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkLog" ADD CONSTRAINT "ReworkLog_Userid_fkey" FOREIGN KEY ("Userid") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkBatchTracker" ADD CONSTRAINT "ReworkBatchTracker_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkBatchTracker" ADD CONSTRAINT "ReworkBatchTracker_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReworkBatchTracker" ADD CONSTRAINT "ReworkBatchTracker_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncomingQty" ADD CONSTRAINT "IncomingQty_jobCardId_fkey" FOREIGN KEY ("jobCardId") REFERENCES "JobCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncomingQty" ADD CONSTRAINT "IncomingQty_processRouteId_fkey" FOREIGN KEY ("processRouteId") REFERENCES "ProcessRoute"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncomingQty" ADD CONSTRAINT "IncomingQty_sendRoute_fkey" FOREIGN KEY ("sendRoute") REFERENCES "ProcessRoute"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncomingQty" ADD CONSTRAINT "IncomingQty_outwardId_fkey" FOREIGN KEY ("outwardId") REFERENCES "ProductionOutward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PackingControlPanel" ADD CONSTRAINT "PackingControlPanel_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -3556,6 +4490,15 @@ ALTER TABLE "SaleBillEntrySizeBreakup" ADD CONSTRAINT "SaleBillEntrySizeBreakup_
 
 -- AddForeignKey
 ALTER TABLE "SaleBillEntrySizeBreakup" ADD CONSTRAINT "SaleBillEntrySizeBreakup_SalesSizeBreakupId_fkey" FOREIGN KEY ("SalesSizeBreakupId") REFERENCES "SalesSizeBreakup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MobileNotification" ADD CONSTRAINT "MobileNotification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MobileNotification" ADD CONSTRAINT "MobileNotification_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MobileNotification" ADD CONSTRAINT "MobileNotification_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "Machine"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ApprovalRuleFieldToApprovalRuleOperator" ADD CONSTRAINT "_ApprovalRuleFieldToApprovalRuleOperator_A_fkey" FOREIGN KEY ("A") REFERENCES "ApprovalRuleField"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -50,6 +50,9 @@ import {
   ItemSubGroupMasterApi,
   ProductionReportApi,
   salesReportApi,
+  contentMasterApi,
+  CountsMasterApi,
+  YarnBlendMasterApi,
 } from "./services";
 import paymentApi from "./services/PaymentService";
 import StyleMasterApi from "./services/StyleMasterService";
@@ -157,6 +160,9 @@ const commonReducers = {
   SalesBillEntry: SalesBillEntryApi.reducer,
   [ProductionReportApi.reducerPath]: ProductionReportApi.reducer,
   [salesReportApi.reducerPath]: salesReportApi.reducer,
+  [contentMasterApi.reducerPath]: contentMasterApi.reducer,
+  [CountsMasterApi.reducerPath]: CountsMasterApi.reducer,
+  [YarnBlendMasterApi.reducerPath]: YarnBlendMasterApi.reducer,
 };
 const commonMiddleware = [
   countryMasterApi.middleware,
@@ -234,6 +240,9 @@ const commonMiddleware = [
   SalesBillEntryApi.middleware,
   ProductionReportApi.middleware,
   salesReportApi.middleware,
+  contentMasterApi.middleware,
+  CountsMasterApi.middleware,
+  YarnBlendMasterApi.middleware,
 ];
 
 const store = configureStore({
