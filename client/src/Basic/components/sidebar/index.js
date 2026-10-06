@@ -144,7 +144,7 @@ const Sidebar = ({
       name: findElement(pageId, pageGroup?.data),
       type: "Masters",
     };
-  });
+  }).sort((a, b) => a.id - b.id);
   const transactions = allowedPages.filter(
     (page) => page.type === "Transactions",
   );
