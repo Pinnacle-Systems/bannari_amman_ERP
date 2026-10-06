@@ -1,0 +1,811 @@
+import { prisma } from "../lib/prisma.js";
+
+import { NoRecordFound } from "../configs/Responses.js";
+import {
+  getYearShortCodeForFinYear,
+  getYearShortCode,
+  getDateFromDateTime,
+  buildDateRange,
+  childRecordCount,
+} from "../utils/helper.js";
+import { getFinYearStartTimeEndTime } from "../utils/finYearHelper.js";
+import { getTableRecordWithId } from "../utils/helperQueries.js";
+import fs from "fs";
+import path from "path";
+import {
+  getModuleApprovalSetup,
+  getApprovalStatus,
+  evaluateConfigs,
+  buildIncludeForModule,
+  createApprovalLog,
+} from "../utils/approvalHelper.js";
+import moment from "moment";
+import { itemGroup, jobCard } from "../routes/index.js";
+const REFERENCE_PAGE = "ORDER ENTRY";
+
+async function getNextDocId(
+  branchId,
+  shortCode,
+  startTime,
+  endTime,
+  saveType,
+  docId,
+  isUpdate,
+) {
+  // Case 1: Draft save
+  if (saveType) {
+    return "Draft Save";
+  } else if (isUpdate === "drift") {
+    lastObject = await prisma.SalesOrder.findFirst({
+      where: {
+        branchId: parseInt(branchId),
+        draftSave: false,
+        AND: [
+          { createdAt: { gte: startTime } },
+          { createdAt: { lte: endTime } },
+        ],
+      },
+      orderBy: { id: "desc" },
+    });
+    const branchObj = await getTableRecordWithId(branchId, "branch");
+    let newDocId = `${branchObj.branchCode}${getYearShortCode(new Date(),)}/SO/1`;
+
+    if (lastObject) {
+      newDocId = `${branchObj.branchCode}${getYearShortCode(new Date())}/SO/${parseInt(lastObject.docId.split("/").at(-1)) + 1
+        }`;
+    }
+
+    return newDocId;
+  } else {
+    let lastObject = await prisma.SalesOrder.findFirst({
+      where: {
+        branchId: parseInt(branchId),
+        AND: [
+          {
+            createdAt: {
+              gte: startTime,
+            },
+          },
+          {
+            createdAt: {
+              lte: endTime,
+            },
+          },
+        ],
+      },
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    const branchObj = await getTableRecordWithId(branchId, "branch");
+    let newDocId = `${branchObj.branchCode}/${shortCode}/SO/1`;
+    if (lastObject) {
+      if (lastObject.docId === "Draft Save") {
+        const records = await prisma.SalesOrder.findMany({
+          select: {
+            docId: true,
+          },
+          where: {
+            branchId: parseInt(branchId),
+            AND: [
+              {
+                createdAt: {
+                  gte: startTime,
+                },
+              },
+              {
+                createdAt: {
+                  lte: endTime,
+                },
+              },
+            ],
+          },
+        });
+        const maxDocId = records.reduce((max, current) => {
+          const currentNo = Number(current.docId.split("/").pop());
+          const maxNo = max ? Number(max.split("/").pop()) : 0;
+
+          return currentNo > maxNo ? current.docId : max;
+        }, null);
+        newDocId = `${branchObj.branchCode}/${shortCode}/SO/${parseInt(maxDocId.split("/").at(-1)) + 1
+          }`;
+      } else {
+        newDocId = `${branchObj.branchCode}/${shortCode}/SO/${parseInt(lastObject.docId.split("/").at(-1)) + 1
+          }`;
+      }
+    }
+    return newDocId;
+  }
+}
+
+async function get(req) {
+  const {
+    branchId,
+    pagination,
+    pageNumber,
+    dataPerPage,
+    serachDocNo,
+    searchDocDate,
+    searchOrderType,
+    finYearId,
+    searchCustomer,
+    pendingSalesOrders
+  } = req.query;
+
+  let finYearDate = await getFinYearStartTimeEndTime(finYearId);
+  const shortCode = finYearDate
+    ? getYearShortCodeForFinYear(finYearDate?.startTime, finYearDate?.endTime)
+    : "";
+  let newDocId = await getNextDocId(
+    branchId,
+    shortCode,
+    finYearDate?.startDateStartTime,
+    finYearDate?.endDateEndTime,
+  );
+  let data;
+  let totalCount;
+  data = await prisma.SalesOrder.findMany({
+    where: {
+      branchId: branchId ? parseInt(branchId) : undefined,
+      AND: finYearDate
+        ? [
+          {
+            createdAt: {
+              gte: finYearDate.startTime,
+            },
+          },
+          {
+            createdAt: {
+              lte: finYearDate.endTime,
+            },
+          },
+        ]
+        : undefined,
+      docId: Boolean(serachDocNo)
+        ? {
+          contains: serachDocNo.trim().toUpperCase(),
+        }
+        : undefined,
+      OrderEntry: {
+        docId: Boolean(searchOrderType)
+          ? { contains: searchOrderType.trim().toUpperCase() }
+          : undefined,
+
+      },
+      customer: {
+        name: searchCustomer ? { contains: searchCustomer.trim().toUpperCase() } : undefined,
+      },
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      OrderEntry: { select: { docId: true } },
+      _count: {
+        select: {
+          SalesDelivery: true,
+        },
+      },
+    },
+    orderBy: {
+      id: "desc",
+    },
+  });
+  if (searchDocDate) {
+    data = data?.filter((item) =>
+      String(getDateFromDateTime(item.createdAt)).includes(searchDocDate),
+    );
+  }
+  totalCount = data.length;
+
+  if (pagination) {
+    data = data.slice(
+      (pageNumber - 1) * parseInt(dataPerPage),
+      pageNumber * parseInt(dataPerPage),
+    );
+  }
+
+
+  if (pendingSalesOrders) {
+
+  }
+
+
+
+  return {
+    statusCode: 0,
+    data: data?.map((i) => {
+      return {
+        ...i,
+        childRecord: childRecordCount(i._count) || null
+      };
+    }),
+    nextDocId: newDocId,
+    totalCount,
+  };
+}
+
+async function getRefList(req) {
+  const { branchId, companyId, isRefDistinct } = req.query;
+
+  let data = await prisma.orderEntry.findMany({
+    where: {
+      branchId: branchId ? parseInt(branchId) : undefined,
+    },
+    select: {
+      id: true,
+      refNo: true,
+      docId: true,
+      customerId: true,
+      orderItems: {
+        select: {
+          id: true,
+          styleItemId: true,
+          jobCards: {
+            select: {
+              id: true,
+            },
+          },
+          _count: {
+            select: {
+              jobCards: true,
+            },
+          },
+        },
+      },
+    },
+    distinct: isRefDistinct === "true" ? ["refNo"] : ["docId"],
+    orderBy: {
+      refNo: "asc",
+    },
+  });
+
+  // ── only for non-distinct ref mode ─────────────────────────
+  if (isRefDistinct !== "true") {
+    const { module, hasApproval } = await getModuleApprovalSetup(
+      REFERENCE_PAGE,
+      branchId,
+    );
+
+    const orderIds = data.map((o) => o.id);
+
+    const approvalLogs = await prisma.approvalLog.findMany({
+      where: {
+        referencePage: REFERENCE_PAGE,
+        referenceId: { in: orderIds },
+      },
+      select: {
+        id: true,
+        referenceId: true,
+        status: true,
+        remarks: true,
+        currentLevel: true,
+        LevelLogs: {
+          select: {
+            action: true,
+            levelNo: true,
+            userId: true,
+            createdAt: true,
+            User: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    });
+
+    const approvalLogMap = approvalLogs.reduce((acc, log) => {
+      acc[log.referenceId] = log;
+      return acc;
+    }, {});
+
+    const activeConfigs =
+      hasApproval && module
+        ? await prisma.approvalConfig.findMany({
+          where: {
+            moduleId: module.id,
+            branchId: parseInt(branchId),
+            active: true,
+          },
+          include: {
+            ConfigConditions: {
+              include: {
+                Field: true,
+                Operator: true,
+                CompareField: true,
+              },
+            },
+            approvalLevels: {
+              include: {
+                LevelUsers: true,
+              },
+              orderBy: {
+                levelNo: "asc",
+              },
+            },
+          },
+        })
+        : [];
+
+    data = data.map((order) => {
+      const totalItems = order.orderItems.length;
+
+      const createdItems = order.orderItems.filter(
+        (item) => item._count.jobCards > 0,
+      ).length;
+
+      let creationStatus = "NOT_CREATED";
+
+      if (totalItems > 0 && createdItems === totalItems) {
+        creationStatus = "FULLY_CREATED";
+      } else if (createdItems > 0) {
+        creationStatus = "PARTIALLY_CREATED";
+      }
+      const log = approvalLogMap[order.id] ?? null;
+
+      let shouldTrigger = false;
+
+      if (!log && hasApproval && activeConfigs.length > 0) {
+        shouldTrigger = evaluateConfigs(activeConfigs, order);
+      }
+
+      return {
+        ...order,
+        creationStatus,
+        approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
+        orderItems: order.orderItems.map((item) => ({
+          ...item,
+          childRecordCount: item._count.jobCards,
+        })),
+      };
+    });
+  }
+
+  return { statusCode: 0, data };
+}
+
+async function geOrderItemsList(req) {
+  const { orderEntryId } = req.query;
+
+  let data = await prisma.SalesOrder.findMany({
+    where: {
+      orderEntryId: parseInt(orderEntryId),
+    },
+    select: {
+      id: true,
+      styleItemId: true,
+      itemGroupId: true,
+      ItemGroup: {
+        select: {
+          name: true,
+        },
+      },
+      StyleItem: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          jobCards: true,
+        },
+      },
+    },
+  });
+
+  const result = data.map((item) => ({
+    id: item.styleItemId,
+    childRecord: item._count.jobCards,
+    name: item.StyleItem?.name || "",
+    itemGroupId: item.itemGroupId,
+    itemGroupName: item.ItemGroup?.name,
+  }));
+
+  return { statusCode: 0, data: result };
+}
+
+async function getOne(id) {
+  const data = await prisma.SalesOrder.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      SalesOrderItems: {
+        include: {
+          SaleOrderStyleBreakup: {
+            include: {
+              SaleOrderSizeBreakup: {
+                include: {
+                  SalesSizeBreakup: true
+                },
+              },
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          SalesDelivery: true,
+        },
+      },
+    },
+  });
+
+  if (!data) return NoRecordFound("Sale Order");
+
+
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: childRecordCount(data._count) || null,
+      SalesOrderItems: data.SalesOrderItems.map((item) => ({
+        ...item,
+        styleBreakup: item.SaleOrderStyleBreakup.map((size) => ({
+          ...size,
+          sizeBreakup: size.SaleOrderSizeBreakup?.map((breakup) => ({
+            ...breakup,
+            alreadyDeliveryQty: breakup?.SalesSizeBreakup?.reduce((acc, size) => acc + parseInt(size.deliveryQty), 0),
+
+          })),
+        })),
+      })),
+
+    },
+  };
+}
+
+async function create(body) {
+  const {
+    userId,
+    branchId,
+    docDate,
+    customerId,
+    orderType,
+    deliveryDate,
+    remarks,
+    requirements,
+    finYearId,
+    orderQty,
+    attachments,
+    draftSave,
+    termsAndCondition,
+    termsId,
+    orderItems,
+    productionType,
+    proFormaId,
+    refNo,
+    isRepeatedPI,
+    validDays,
+    taxTemplateId,
+    discountType,
+    discountValue,
+    conversionType,
+    payTermId,
+    bankId,
+    currencyId,
+    weightInKg,
+    carriageCharge,
+    loadingId,
+    deliveryId,
+    carriageTax,
+    orderId,
+    dispatchThrough
+  } = await body;
+  let finYearDate = await getFinYearStartTimeEndTime(finYearId);
+
+  const shortCode = finYearDate ? getYearShortCodeForFinYear(finYearDate?.startDateStartTime, finYearDate?.endDateEndTime,) : "";
+
+  let newDocId = await getNextDocId(branchId, shortCode, finYearDate?.startDateStartTime, finYearDate?.endDateEndTime, draftSave,);
+
+  let data;
+
+  const parsedOrderItems = typeof orderItems === "string" ? JSON.parse(orderItems) : orderItems;
+  const safeOrderItems = parsedOrderItems?.length > 0
+    ? parsedOrderItems.map((item) => ({
+      styleItemId: item?.styleItemId ? parseInt(item.styleItemId) : null,
+      itemGroupId: item?.itemGroupId ? parseInt(item.itemGroupId) : null,
+      itemSubGroupId: item?.itemSubGroupId
+        ? parseInt(item?.itemSubGroupId)
+        : null,
+      labelWidth: item?.labelWidth ?? "",
+      orderQty: item?.orderQty ? parseInt(item?.orderQty) : null,
+      trackingType: item?.trackingType,
+      price: item?.price ? parseFloat(item.price) : null,
+      amount: item?.amount ? parseFloat(item.amount) : null,
+      dozen: item?.dozen ? parseFloat(item.dozen) : null,
+      taxPercent:
+        item?.taxPercent && !isNaN(Number(item.taxPercent))
+          ? parseFloat(item.taxPercent)
+          : null,
+      discountType: item?.discountType || null,
+      discountValue:
+        item?.discountValue && !isNaN(Number(item.discountValue))
+          ? parseFloat(item.discountValue)
+          : null,
+      orderQty:
+        item?.orderQty && !isNaN(Number(item.orderQty))
+          ? parseInt(item.orderQty)
+          : null,
+      uomId: item?.uomId ? parseInt(item.uomId) : null,
+      hsnId: item?.hsnId ? parseInt(item.hsnId) : null,
+      price: item?.price ? parseFloat(item?.price) : null,
+      orderQty: item?.orderQty ? parseInt(item?.orderQty) : null,
+
+      SaleOrderStyleBreakup:
+        item?.styleBreakup?.length > 0
+          ? {
+            create: item.styleBreakup.map((st) => ({
+              styleId: st.styleId ? parseInt(st.styleId) : null,
+              SaleOrderSizeBreakup: st?.sizeBreakup?.length > 0
+                ? {
+                  create: st.sizeBreakup.map((s) => ({
+                    sizeId: s.sizeId ? parseInt(s.sizeId) : null,
+                    qty: s.qty ? parseInt(s.qty) : null,
+                  }))
+                } : undefined
+            })),
+          }
+          : undefined,
+    }))
+    : [];
+
+
+
+
+  const validTo = moment(docDate).add(validDays, "days").endOf("day").toDate();
+  await prisma.$transaction(async (tx) => {
+    data = await tx.SalesOrder.create({
+      data: {
+        docId: newDocId,
+        docDate: docDate ? new Date(docDate) : null,
+        orderId: orderId ? parseInt(orderId) : null,
+        createdById: parseInt(userId),
+        branchId: branchId ? parseInt(branchId) : null,
+        customerId: customerId ? parseInt(customerId) : null,
+
+        deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
+        remarks,
+        termsId: termsId ? parseInt(termsId) : null,
+        termsAndCondition,
+        validDays: validDays ? parseInt(validDays) : null,
+        validTo: validTo,
+        taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
+        discountType: discountType || null,
+        discountValue: discountValue ? parseFloat(discountValue) : null,
+        payTermId: payTermId ? parseInt(payTermId) : null,
+
+        currencyId: currencyId ? parseInt(currencyId) : null,
+        loadingId: loadingId ? parseInt(loadingId) : null,
+        deliveryId: deliveryId ? parseInt(deliveryId) : null,
+        weightInKg: weightInKg ? parseFloat(weightInKg) : null,
+        carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
+        carriageTax: carriageTax ? parseFloat(carriageTax) : null,
+        conversionType: conversionType ? conversionType : 'DOZEN',
+        bankId: bankId ? parseInt(bankId) : null,
+        dispatchThrough: dispatchThrough ? dispatchThrough : null,
+
+        SalesOrderItems:
+          safeOrderItems.length > 0
+            ? {
+              create: safeOrderItems,
+            }
+            : undefined,
+
+      },
+    });
+
+
+  });
+  let saleOrderUpdation
+  if (orderId) {
+    saleOrderUpdation = await prisma.OrderEntry.update({
+      where: { id: parseInt(orderId) },
+      data: {
+        isSaleOrderTaken: true,
+      },
+    });
+  }
+
+
+  return { statusCode: 0, data, saleOrderUpdation };
+}
+
+async function update(id, body, files) {
+  const {
+    attachments,
+    weightInKg,
+    carriageCharge,
+    carriageTax,
+    orderItems,
+    bankId,
+    dispatchThrough,
+  } = await body;
+
+
+
+  const parseAttachments = JSON.parse(attachments || "[]");
+  const incomingIds = parseAttachments
+    ?.filter((i) => i.id)
+    .map((i) => parseInt(i.id));
+
+  const parsedItems = typeof orderItems === "string" ? JSON.parse(orderItems || "[]") : (orderItems || []);
+  const incomingItemIds = parsedItems
+    ?.filter((i) => i.id)
+    .map((i) => parseInt(i.id));
+
+
+
+  let data;
+
+  const dataFound = await prisma.SalesOrder.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      SalesOrderItems: true,
+    },
+  });
+  if (!dataFound) return NoRecordFound("Sales Order");
+
+  const removedItemIds = dataFound.SalesOrderItems
+    .filter((item) => !incomingItemIds.includes(item.id))
+    .map((item) => item.id);
+
+
+
+
+
+  await prisma.$transaction(async (tx) => {
+
+    data = await tx.SalesOrder.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: {
+        weightInKg: weightInKg ? parseFloat(weightInKg) : null,
+        carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
+        carriageTax: carriageTax ? parseFloat(carriageTax) : null,
+        bankId: bankId ? parseInt(bankId) : null,
+        dispatchThrough: dispatchThrough ? dispatchThrough : null,
+
+        SalesOrderItems: {
+          deleteMany: incomingItemIds.length
+            ? { id: { notIn: incomingItemIds } }
+            : {},
+          update: parsedItems
+            .filter((item) => item.id)
+            .map((item) => ({
+              where: { id: parseInt(item.id) },
+              data: {
+                styleItemId: item.styleItemId ? parseInt(item.styleItemId) : null,
+                itemGroupId: item.itemGroupId ? parseInt(item.itemGroupId) : null,
+                itemSubGroupId: item?.itemSubGroupId ? parseInt(item?.itemSubGroupId) : null,
+                orderQty: item?.orderQty ? parseInt(item?.orderQty) : null,
+
+                labelWidth: item?.labelWidth ?? "",
+                trackingType: item.trackingType,
+                price: item?.price ? parseFloat(item.price) : null,
+                amount: item?.amount ? parseFloat(item.amount) : null,
+                dozen: item?.dozen ? parseFloat(item.dozen) : null,
+                uomId: item.uomId ? parseInt(item.uomId) : null,
+                gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+                SaleOrderStyleBreakup: {
+                  deleteMany: {},
+                  create: item?.styleBreakup?.length > 0
+                    ? item.styleBreakup.map((st) => ({
+                      styleId: st.styleId ? parseInt(st.styleId) : null,
+                      SaleOrderSizeBreakup: st?.sizeBreakup?.length > 0
+                        ? {
+                          create: st.sizeBreakup.map((s) => ({
+                            sizeId: s.sizeId ? parseInt(s.sizeId) : null,
+                            qty: s.qty ? parseInt(s.qty) : null,
+
+                          }))
+                        } : undefined
+                    }))
+                    : []
+                },
+              },
+            })),
+
+          create: parsedItems
+            .filter((item) => !item.id)
+            .map((item) => ({
+              styleItemId: item.styleItemId ? parseInt(item.styleItemId) : null,
+              itemGroupId: item.itemGroupId ? parseInt(item.itemGroupId) : null,
+              itemSubGroupId: item?.itemSubGroupId ? parseInt(item?.itemSubGroupId) : null,
+              labelWidth: item?.labelWidth ?? "",
+              trackingType: item.trackingType,
+              price: item?.price ? parseFloat(item.price) : null,
+              amount: item?.amount ? parseFloat(item.amount) : null,
+              dozen: item?.dozen ? parseFloat(item.dozen) : null,
+              uomId: item.uomId ? parseInt(item.uomId) : null,
+              gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+              orderQty: item?.orderQty ? parseInt(item?.orderQty) : null,
+              price: item?.price ? parseFloat(item?.price) : null,
+
+              SaleOrderStyleBreakup:
+                item?.styleBreakup?.length > 0
+                  ? {
+                    create: item.styleBreakup.map((st) => ({
+                      styleId: st.styleId ? parseInt(st.styleId) : null,
+                      SaleOrderSizeBreakup: st?.sizeBreakup?.length > 0
+                        ? {
+                          create: st.sizeBreakup.map((s) => ({
+                            sizeId: s.sizeId ? parseInt(s.sizeId) : null,
+                            qty: s.qty ? parseInt(s.qty) : null,
+                          }))
+                        } : undefined
+                    })),
+                  }
+                  : undefined,
+            })),
+        },
+
+      },
+    });
+
+
+
+
+  });
+
+  return { statusCode: 0, data };
+}
+
+async function remove(id) {
+  const salesOrderId = parseInt(id, 10);
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const dataFound = await tx.SalesOrder.findUnique({
+        where: {
+          id: salesOrderId,
+        },
+      });
+
+      if (!dataFound) {
+        throw new Error("Sales Order not found");
+      }
+
+      const data = await tx.SalesOrder.delete({
+        where: {
+          id: salesOrderId,
+        },
+      });
+
+      if (dataFound.orderId) {
+        await tx.OrderEntry.update({
+          where: {
+            id: parseInt(dataFound.orderId, 10),
+          },
+          data: {
+            isSaleOrderTaken: false,
+          },
+        });
+      }
+
+      return data;
+    });
+
+    return {
+      statusCode: 0,
+      data: result,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+export { get, getOne, create, update, remove, getRefList, geOrderItemsList };
