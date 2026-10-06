@@ -38,3 +38,5 @@ export { default as SalesReportHome } from "./SalesReportHome";
 export { default as ContentMaster } from "./ContentMaster";
 export { default as CountsMaster } from "./CountsMaster";
 export { default as YarnBlendMaster } from "./YarnBlendMaster";
+export { default as YarnMaster } from "./YarnMaster";
+export { default as FabricMaster } from "./FabricMaster";

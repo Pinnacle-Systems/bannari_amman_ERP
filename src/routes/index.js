@@ -87,3 +87,5 @@ export { default as productionReport } from "./productionReport.route.js";
 export { default as contentMaster } from "./contentMaster.route.js";
 export { default as countsMaster } from "./countsMaster.route.js";
 export { default as yarnBlendMaster } from "./yarnBlenMaster.js";
+export { default as yarnMaster } from "./yarnMaster.route.js";
+export { default as fabricMaster } from "./fabricmaster.route.js";

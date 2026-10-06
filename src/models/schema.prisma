@@ -76,6 +76,8 @@ model Company {
   ContentMaster       ContentMaster[]
   CountsMaster        CountsMaster[]
   YarnBlendMaster     YarnBlendMaster[]
+  YarnMaster          YarnMaster[]
+  FabricMaster        FabricMaster[]
 }
 
 model Subscription {
@@ -1351,6 +1353,7 @@ model Hsn {
   PackingItems           PackingItems[]
   SalesReturnItems       SalesReturnItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
+  YarnMaster             YarnMaster[]
 }
 
 model BranchType {
@@ -3465,22 +3468,58 @@ model MobileNotification {
 }
 
 model ContentMaster {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  active     Boolean      @default(true)
+  Company    Company      @relation(fields: [companyId], references: [id])
+  companyId  Int
+  YarnMaster YarnMaster[]
 }
 
 model CountsMaster {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  active     Boolean      @default(true)
+  Company    Company      @relation(fields: [companyId], references: [id])
+  companyId  Int
+  YarnMaster YarnMaster[]
 }
 
 model YarnBlendMaster {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  active           Boolean            @default(true)
+  Company          Company            @relation(fields: [companyId], references: [id])
+  companyId        Int
+  YarnMasterDetail YarnMasterDetail[]
+}
+
+model YarnMaster {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  aliasName        String?
+  active           Boolean            @default(true)
+  Company          Company            @relation(fields: [companyId], references: [id])
+  companyId        Int
+  countsId         Int
+  CountsMaster     CountsMaster       @relation(fields: [countsId], references: [id])
+  contentId        Int
+  ContentMaster    ContentMaster      @relation(fields: [contentId], references: [id])
+  hsnId            Int
+  Hsn              Hsn                @relation(fields: [hsnId], references: [id])
+  YarnMasterDetail YarnMasterDetail[]
+}
+
+model YarnMasterDetail {
+  id              Int             @id @default(autoincrement())
+  yarnMasterId    Int
+  YarnMaster      YarnMaster      @relation(fields: [yarnMasterId], references: [id], onDelete: Cascade)
+  yarnBlendId     Int
+  YarnBlendMaster YarnBlendMaster @relation(fields: [yarnBlendId], references: [id])
+  percentage      Float
+}
+
+model FabricMaster {
   id        Int     @id @default(autoincrement())
   name      String  @unique
   active    Boolean @default(true)

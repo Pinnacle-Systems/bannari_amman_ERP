@@ -82,3 +82,5 @@ export const SALES_BILL_ENTRY_API = "salesBillEntry";
 export const CONTENT_MASTER_API = "contentMaster";
 export const COUNTS_MASTER_API = "countsMaster";
 export const YARN_BLEND_MASTER_API = "yarnBlendMaster";
+export const YARN_MASTER_API = "yarnMaster";
+export const FABRIC_MASTER_API = "fabricMaster";

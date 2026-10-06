@@ -196,7 +196,7 @@ export const DropdownWithModal = forwardRef(
               tabIndex={tabIndex ?? undefined}
               defaultValue={defaultValue}
               required={required}
-              className={`h-7 w-full px-3 py-0 border border-gray-300 rounded-lg
+              className={`h-8.5 w-full px-3 py-1 border border-gray-300 rounded-lg
             focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
             transition-all duration-150 shadow-sm ${readOnly || disabled ? "bg-slate-100" : ""}
             ${FORM_INPUT_TEXT_CLASS} ${className}`}
