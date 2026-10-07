@@ -138,8 +138,8 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
 
   const data = {
     id,
-    countsId: parseInt(countsId),
-    contentId: parseInt(contentId),
+    countsId: countsId ? parseInt(countsId) : null,
+    contentId: contentId ? parseInt(contentId) : null,
     name,
     aliasName,
     hsnId: parseInt(hsnId),
@@ -151,22 +151,6 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
   };
 
   const validateData = (data) => {
-    if (!data.countsId) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validation Error",
-        text: "Counts is mandatory.",
-      });
-      return false;
-    }
-    if (!data.contentId) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validation Error",
-        text: "Content is mandatory.",
-      });
-      return false;
-    }
     if (!data.name) {
       Swal.fire({
         icon: "warning",
@@ -184,15 +168,6 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       return false;
     }
 
-    if (!data.yarnMasterDetail || data.yarnMasterDetail.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validation Error",
-        text: "Please add at least one Yarn Blend.",
-      });
-      return false;
-    }
-
     if (data.yarnMasterDetail && data.yarnMasterDetail.length > 0) {
       const hasMissingPercentage = data.yarnMasterDetail.some(
         (row) => row.yarnBlendId && (!row.percentage || row.percentage === ""),
@@ -202,6 +177,19 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
           icon: "warning",
           title: "Validation Error",
           text: "Percentage is mandatory for all selected Yarn Blends.",
+        });
+        return false;
+      }
+
+      const totalPercentage = data.yarnMasterDetail.reduce((sum, row) => {
+        return sum + (Number(row.percentage) || 0);
+      }, 0);
+
+      if (totalPercentage !== 100) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validation Error",
+          text: "Sum of Percentage should be equal to 100.00.",
         });
         return false;
       }
@@ -393,7 +381,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
 
         const totalPercentage = newBlend.reduce(
           (sum, row) => sum + (Number(row.percentage) || 0),
-          0
+          0,
         );
 
         if (totalPercentage > 100) {
@@ -530,7 +518,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       )}
                       value={countsId}
                       setValue={setCountsId}
-                      required={true}
+                      required={false}
                       readOnly={readOnly}
                       className={`w-[150px]`}
                       disabled={childRecord.current > 0}
@@ -552,7 +540,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       )}
                       value={contentId}
                       setValue={setContentId}
-                      required={true}
+                      required={false}
                       readOnly={readOnly}
                       className={`w-[150px]`}
                       disabled={childRecord.current > 0}
@@ -632,10 +620,10 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       <div className="space-y-3">
                         <div className="bg-white p-2 rounded-md w-[30vw] border border-gray-200 h-full">
                           <div
-                            className={`w-full  overflow-auto bg-white h-[23vh]`}
+                            className={`w-full  overflow-auto bg-white h-[26vh]`}
                           >
                             <table className="w-full  border-collapse table-fixed ">
-                              <thead className="bg-gray-200 text-gray-800">
+                              <thead className="bg-gray-200 text-gray-800 sticky top-0 z-10">
                                 <tr>
                                   <th
                                     className={`w-4  py-2 text-center font-medium text-[11px] `}
@@ -765,6 +753,25 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                                   );
                                 })}
                               </tbody>
+                              <tfoot className="sticky bottom-0 z-10 bg-gray-100">
+                                <tr className="w-full">
+                                  <td
+                                    colSpan={2}
+                                    className="border border-gray-300 text-[12px] font-bold text-right px-2 py-1"
+                                  >
+                                    Total:
+                                  </td>
+                                  <td className="border border-gray-300 text-[12px] font-bold text-right pr-2 py-1">
+                                    {yarnMasterDetail
+                                      ?.reduce(
+                                        (sum, row) =>
+                                          sum + (Number(row.percentage) || 0),
+                                        0,
+                                      )
+                                      .toFixed(2)}
+                                  </td>
+                                </tr>
+                              </tfoot>
                             </table>
                           </div>
                         </div>
@@ -843,7 +850,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[75vw] h-[68vh]"}
+            widthClass={"w-[75vw] h-[70vh]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

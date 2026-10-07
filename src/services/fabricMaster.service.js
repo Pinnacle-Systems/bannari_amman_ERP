@@ -44,12 +44,13 @@ async function getSearch(req) {
 }
 
 async function create(body) {
-  const { name, code, companyId, active } = await body;
+  const { name, code, companyId, active, hsnId } = await body;
   const data = await prisma.fabricMaster.create({
     data: {
       name,
       code,
       companyId: parseInt(companyId),
+      hsnId: parseInt(hsnId),
       active,
     },
   });
@@ -57,7 +58,7 @@ async function create(body) {
 }
 
 async function update(id, body) {
-  const { name, code, active } = await body;
+  const { name, code, active, hsnId } = await body;
   const dataFound = await prisma.fabricMaster.findUnique({
     where: {
       id: parseInt(id),
@@ -72,6 +73,7 @@ async function update(id, body) {
       name,
       code,
       active,
+      hsnId: parseInt(hsnId),
     },
   });
   return { statusCode: 0, data };

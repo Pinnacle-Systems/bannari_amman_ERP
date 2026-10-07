@@ -84,3 +84,7 @@ export const COUNTS_MASTER_API = "countsMaster";
 export const YARN_BLEND_MASTER_API = "yarnBlendMaster";
 export const YARN_MASTER_API = "yarnMaster";
 export const FABRIC_MASTER_API = "fabricMaster";
+export const LOOP_LENGTH_MASTER_API = "loopLengthMaster";
+export const DIA_MASTER_API = "diaMaster";
+export const GAUGE_MASTER_API = "gaugeMaster";
+export const DESIGN_MASTER_API = "designMaster";

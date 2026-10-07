@@ -7,29 +7,23 @@ import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import {
-  useAddFabricMasterMutation,
-  useDeleteFabricMasterMutation,
-  useGetFabricMasterByIdQuery,
-  useGetFabricMasterQuery,
-  useUpdateFabricMasterMutation,
-} from "../../../redux/services/FabricMasterService";
+  useAddCountsMasterMutation,
+  useDeleteCountsMasterMutation,
+  useGetCountsMasterByIdQuery,
+  useGetCountsMasterQuery,
+  useUpdateCountsMasterMutation,
+} from "../../../redux/services/CountsMaster.service";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
-import { HsnMaster } from "../../../HostelStore/Components";
-import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices";
-import { DropdownWithModal } from "../../../Inputs/Reuseable";
-import { dropDownListObject } from "../../../Utils/contructObject";
 
-export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
+export default function CountsMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
   const [name, setName] = useState(defaultName || "");
   const [active, setActive] = useState(true);
-  const [hsnId, setHsnId] = useState("");
-  const [taxPercentage, setTaxPercentage] = useState("");
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
   const [searchValue, setSearchValue] = useState("");
@@ -40,31 +34,20 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
   };
-  const { data: hsnList } = useGetHsnMasterQuery({ params });
-  useEffect(() => {
-    if (hsnId && hsnList?.data) {
-      const selectedHsn = hsnList.data.find((item) => item.id === hsnId);
-      if (selectedHsn) {
-        setTaxPercentage(selectedHsn.tax);
-      }
-    } else {
-      setTaxPercentage("");
-    }
-  }, [hsnId, hsnList]);
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetFabricMasterQuery({ params, searchParams: searchValue });
+  } = useGetCountsMasterQuery({ params, searchParams: searchValue });
   const {
     data: singleData,
     isFetching: isSingleFetching,
     isLoading: isSingleLoading,
-  } = useGetFabricMasterByIdQuery(id, { skip: !id });
+  } = useGetCountsMasterByIdQuery(id, { skip: !id });
 
-  const [addData] = useAddFabricMasterMutation();
-  const [updateData] = useUpdateFabricMasterMutation();
-  const [removeData] = useDeleteFabricMasterMutation();
+  const [addData] = useAddCountsMasterMutation();
+  const [updateData] = useUpdateCountsMasterMutation();
+  const [removeData] = useDeleteCountsMasterMutation();
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { hasPermission } = UserPermissions();
@@ -78,8 +61,6 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name || defaultName || "");
-      setHsnId(data?.hsnId || "");
-
       setActive(id ? (data?.active ? data.active : false) : true);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
@@ -96,15 +77,13 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
     id,
     name,
     active,
-    hsnId: parseInt(hsnId),
-
     companyId: secureLocalStorage.getItem(
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
   };
 
   const validateData = (data) => {
-    if (data.name && data.hsnId) {
+    if (data.name) {
       return true;
     }
     return false;
@@ -177,7 +156,7 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
 
     if (foundItem) {
       Swal.fire({
-        text: "The Fabric Name already exists.",
+        text: "The Counts Name already exists.",
         icon: "warning",
         didClose: () => {
           countryNameRef?.current?.focus();
@@ -246,7 +225,6 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
     setSearchValue("");
     syncFormWithDb(undefined);
     setReadOnly(false);
-    setHsnId("");
   };
 
   const ACTIVE = (
@@ -268,7 +246,7 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
     },
 
     {
-      header: "Fabric Name",
+      header: "Counts Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
       className: "font-medium text-gray-900 text-left uppercase w-72",
@@ -309,10 +287,10 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
           <div className="bg-white p-3 rounded-md border border-gray-200 h-full">
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
-                <div className="flex gap-x-6 my-2">
-                  <div className="w-[50%]">
+                <div className="grid grid-cols-2 my-2">
+                  <div className="w-[50%">
                     <TextInputNew
-                      name="Fabric Name"
+                      name="Counts Name"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -322,37 +300,7 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
                       ref={countryNameRef}
                     />
                   </div>
-                  <div className="w-[20%] mb-3">
-                    <DropdownWithModal
-                      name="Hsn"
-                      options={dropDownListObject(
-                        id
-                          ? hsnList?.data
-                          : hsnList?.data?.filter((item) => item?.active),
-                        "name",
-                        "id",
-                      )}
-                      value={hsnId}
-                      setValue={setHsnId}
-                      readOnly={readOnly}
-                      className={`w-[150px]`}
-                      disabled={childRecord.current > 0}
-                      addNewLabel="+ Add New Hsn"
-                      childComponent={HsnMaster}
-                      addNewModalWidth="w-[40%] h-[50%]"
-                      required={true}
-                    />
-                  </div>
-                  <div className="w-[17%]">
-                    <TextInputNew
-                      name="Tax percentage %"
-                      type="text"
-                      value={taxPercentage}
-                      setValue={setTaxPercentage}
-                      readOnly={true}
-                      disabled={true}
-                    />
-                  </div>
+                  {/* <CheckBox name="Po wise" readOnly={readOnly} value={isPoWise} setValue={setIsPowise} /> */}
                 </div>
                 <ToggleButton
                   name="Status"
@@ -386,7 +334,7 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Fabric Master
+            Add New Counts Master
           </h2>
           <button
             type="button"
@@ -408,13 +356,13 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
   return (
     <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
       <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Fabric Master</h5>
+        <h5 className="text-lg font-bold text-gray-800">Counts Master</h5>
         <div className="flex items-center">
           <button
             onClick={handleCreate}
             className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
           >
-            + Add New Fabric Master
+            + Add New Counts Master
           </button>
         </div>
       </div>
@@ -435,7 +383,7 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[800px] h-[350px]"}
+            widthClass={"w-[600px] h-[350px]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);
@@ -449,9 +397,9 @@ export default function FabricMaster({ onSuccess, defaultName = "" } = {}) {
                   <h2 className="text-lg px-2 py-0.5 font-semibold  text-gray-800">
                     {id
                       ? !readOnly
-                        ? "Edit Fabric Master"
-                        : "Fabric Master"
-                      : "Add New Fabric Master"}
+                        ? "Edit Counts Master"
+                        : "Counts Master"
+                      : "Add New Counts Master"}
                   </h2>
                 </div>
                 <div className="flex gap-2">

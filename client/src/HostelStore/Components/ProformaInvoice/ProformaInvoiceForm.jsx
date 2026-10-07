@@ -19,6 +19,7 @@ import {
   dropDownListObjectMultiple,
 } from "../../../Utils/contructObject";
 import ProformaInvoiceItems from "./ProformaInvoiceItems.jsx";
+import ProformaInvoiceYarnItems from "./ProformaInvoiceYarnItems.jsx";
 import moment from "moment";
 import { PDFViewer } from "@react-pdf/renderer";
 import Modal from "../../../UiComponents/Modal";
@@ -48,13 +49,13 @@ import {
   PayTermMaster,
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
-import { conversionTypes } from "../../../Utils/DropdownData.js";
 import { useDispatch } from "react-redux";
 //need to work
 import { useGetItemGroupMasterQuery } from "../../../redux/services/ItemGroupMasterService.js";
 import { useGetItemSubGroupMasterQuery } from "../../../redux/services/ItemSubGroupService";
 import { useGetStyleMasterQuery } from "../../../redux/services/StyleMasterService.js";
 import { useGetSizeMasterQuery } from "../../../redux/services/SizemasterService.js";
+import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService";
 
 const EMPTY_ROW = {
   styleItemId: "",
@@ -111,7 +112,13 @@ const ProformaInvoiceForm = ({
   const [remarks, setRemarks] = useState("");
   const [termsAndCondition, setTermsAndCondition] = useState("");
   const [termsId, setTermsId] = useState("");
-  const [items, setItems] = useState(padItems([]));
+  const [fabricItems, setFabricItems] = useState(padItems([]));
+  const [yarnItems, setYarnItems] = useState(padItems([]));
+  const [activeGridTab, setActiveGridTab] = useState("Fabric");
+  const items = [
+    ...fabricItems.map((i) => ({ ...i, gridType: "Fabric" })),
+    ...yarnItems.map((i) => ({ ...i, gridType: "Yarn" })),
+  ];
   const [taxTemplateId, setTaxTemplateId] = useState("");
   const [summary, setSummary] = useState(false);
   const [discountType, setDiscountType] = useState("");
@@ -120,16 +127,14 @@ const ProformaInvoiceForm = ({
   const [payTermId, setPayTermId] = useState("");
   const [validityTo, setValidityTo] = useState("");
   const [currencyId, setCurrencyId] = useState("");
-  const [accordionOpen, setAccordionOpen] = useState(true);
   const [loadingId, setLoadingId] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [weightInKg, setWeightInKg] = useState("");
+
   const [carriageCharge, setCarriageCharge] = useState("");
   const [selectedQuoteVersion, setSelectedQuoteVersion] = useState("Latest");
   const [availableVersions, setAvailableVersions] = useState([]);
   const [bankId, setBankId] = useState("");
-  const [conversionType, setConversionType] = useState("PCS");
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const childRecord = useRef(0);
@@ -157,6 +162,10 @@ const ProformaInvoiceForm = ({
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
   });
+  const { data: fabricList } = useGetFabricMasterQuery({
+    params: { companyId },
+  });
+
   const { data: supplierData } = useGetPartyByIdQuery(customerId, {
     skip: !customerId,
   });
@@ -221,9 +230,8 @@ const ProformaInvoiceForm = ({
           ? parseFloat(data.carriageCharge).toFixed(2)
           : "",
       );
-      setWeightInKg(parseFloat(data.weightInKg).toFixed(3) || "");
+
       setBankId(data.bankId || "");
-      setConversionType(data.conversionType || "PCS");
       setCarriageTax(data.carriageTax || "");
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
 
@@ -261,7 +269,11 @@ const ProformaInvoiceForm = ({
             : [{ sizeId: "", qty: "" }],
       }));
 
-      setItems(padItems(mappedItems));
+      const fabricData = mappedItems.filter((i) => i.gridType !== "Yarn");
+      const yarnData = mappedItems.filter((i) => i.gridType === "Yarn");
+      setFabricItems(padItems(fabricData));
+      setYarnItems(padItems(yarnData));
+      setActiveGridTab("Fabric");
 
       const cust = data.customer || data.OrderEntry?.customer;
       if (cust) {
@@ -313,34 +325,13 @@ const ProformaInvoiceForm = ({
             : [{ styleId: "", sizeBreakup: [{ sizeId: "", qty: "" }] }],
       }));
 
-      setItems(padItems(mappedItems));
+      const fabricData = mappedItems.filter((i) => i.gridType !== "Yarn");
+      const yarnData = mappedItems.filter((i) => i.gridType === "Yarn");
+      setFabricItems(padItems(fabricData));
+      setYarnItems(padItems(yarnData));
+      setActiveGridTab("Fabric");
     }
   }, [selectedQuoteVersion, singleData, id, availableVersions]);
-
-  useEffect(() => {
-    if (!conversionType) return;
-
-    setItems((prev) =>
-      prev.map((item) => {
-        const qty = parseFloat(item.qty) || 0;
-        const price = parseFloat(item.price) || 0;
-        const dozen = qty / 12;
-
-        return {
-          ...item,
-          dozen: dozen ? dozen.toFixed(2) : "",
-          amount:
-            conversionType === "DOZEN"
-              ? dozen && price
-                ? (dozen * price).toFixed(2)
-                : ""
-              : qty && price
-                ? (qty * price).toFixed(2)
-                : "",
-        };
-      }),
-    );
-  }, [conversionType]);
 
   useEffect(() => {
     customerRef.current?.focus();
@@ -353,11 +344,45 @@ const ProformaInvoiceForm = ({
     setCarriageFinalAmt(finalAmt ? finalAmt.toFixed(2) : "");
   }, [carriageCharge, carriageTax]);
 
+  const handleTabChange = (newTab) => {
+    if (activeGridTab === newTab) return;
+
+    let hasData = false;
+    if (activeGridTab === "Fabric") {
+      hasData = fabricItems.some((i) => i.itemGroupId || i.styleItemId);
+    } else {
+      hasData = yarnItems.some((i) => i.itemGroupId || i.styleItemId);
+    }
+
+    if (hasData) {
+      Swal.fire({
+        title: "Are you sure?",
+        text: "Changing the type will clear the existing data in the table. Do you want to proceed?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, clear data!",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          if (activeGridTab === "Fabric") {
+            setFabricItems(padItems([]));
+          } else {
+            setYarnItems(padItems([]));
+          }
+          setActiveGridTab(newTab);
+        }
+      });
+    } else {
+      setActiveGridTab(newTab);
+    }
+  };
+
   const validateRows = (items) => {
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (!item.styleItemId) {
+      if (!(item.styleItemId || item.fabricId || item.yarnId)) {
         errors.push(`Row ${index + 1}: Style is required`);
       }
       if (!item.hsnId) {
@@ -543,16 +568,6 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    if (!weightInKg) {
-      Swal.fire({
-        title: "Warning",
-        text: "Weight is required",
-        icon: "warning",
-        confirmButtonColor: "#3085d6",
-      });
-      return;
-    }
-
     if (isCustomerExport && !bankId) {
       Swal.fire({
         title: "Warning",
@@ -563,7 +578,7 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    const filteredItems = items.filter((item) => item.styleItemId);
+    const filteredItems = items.filter((item) => (item.styleItemId || item.fabricId || item.yarnId));
 
     if (filteredItems.length === 0) {
       Swal.fire({
@@ -618,10 +633,9 @@ const ProformaInvoiceForm = ({
       loadingId,
       deliveryId,
       deliveryDate,
-      weightInKg,
+
       carriageCharge,
       bankId,
-      conversionType,
       carriageTax,
     };
 
@@ -692,7 +706,8 @@ const ProformaInvoiceForm = ({
     setTermsId("");
     setTaxTemplateId("");
     setPayTermId("");
-    setItems(padItems([]));
+    setFabricItems(padItems([]));
+    setYarnItems(padItems([]));
     setCustomerDetails({ name: "", contactPerson: "", phone: "" });
     setSelectedQuoteVersion("Latest");
     setAvailableVersions([]);
@@ -701,11 +716,10 @@ const ProformaInvoiceForm = ({
     setLoadingId("");
     setDeliveryId("");
     setDeliveryDate("");
-    setWeightInKg("");
+
     setCarriageCharge("");
     setValidityTo("");
     setCurrencyId("");
-    setAccordionOpen(false);
     setBankId("");
     setCarriageTax("");
   };
@@ -734,121 +748,82 @@ const ProformaInvoiceForm = ({
 
   const shippingAccordion = (
     <div className="border border-slate-200 rounded-md bg-white shadow-sm mt-1">
-      {/* Accordion Header */}
-      <button
-        type="button"
-        onClick={() => setAccordionOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-left"
-      >
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
+      <div className="w-full flex items-center justify-between px-3 py-1.5 text-left bg-gray-50 rounded-t-md border-b border-slate-200">
+        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">
           Other Details
         </span>
-        <svg
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-            accordionOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
+      </div>
+      <div className="px-3 pt-2 pb-2">
+        <div className="flex gap-2 gap-x-4 w-fit ml-6">
+          <div className="w-60">
+            <DropdownInput
+              name="Loading Port"
+              options={dropDownListObject(
+                cityList?.data?.filter((item) => item.active),
+                "name",
+                "id",
+              )}
+              value={loadingId}
+              setValue={setLoadingId}
+              readOnly={effectiveReadOnly || !isCustomerExport}
+              required={true}
+            />
+          </div>
+          <div className="w-60">
+            <DropdownInput
+              name="Delivery Port"
+              options={dropDownListObject(
+                cityList?.data?.filter((item) => item.active),
+                "name",
+                "id",
+              )}
+              value={deliveryId}
+              setValue={setDeliveryId}
+              readOnly={effectiveReadOnly || !isCustomerExport}
+              required={true}
+            />
+          </div>
+
+          <div className="w-[105px]">
+            <DateInputNew
+              name="Delivery Date"
+              value={deliveryDate}
+              setValue={setDeliveryDate}
+              disabled={effectiveReadOnly}
+              type="date"
+              min={docDate}
+              required={true}
+            />
+          </div>
+
+          <TextInput
+            name={`Carriage and Air Freight ${currencyId ? `(${isCurrencySymbol})` : ""}`}
+            value={carriageCharge}
+            setValue={setCarriageCharge}
+            disabled={effectiveReadOnly}
+            type="number"
+            min="0"
+            className="text-right"
+            onBlur={(e) =>
+              setCarriageCharge(
+                e.target.value ? Number(e.target.value).toFixed(2) : "",
+              )
+            }
+            onFocus={(e) => {
+              e.target.select();
+            }}
           />
-        </svg>
-      </button>
-
-      {/* Accordion Body */}
-      {accordionOpen && (
-        <div className="px-3 pb-2 border-t border-slate-100">
-          <div className="flex gap-2 gap-x-4 w-fit ml-6">
-            {isCustomerExport && (
-              <>
-                <div className="w-60">
-                  <DropdownInput
-                    name="Loading Port"
-                    options={dropDownListObject(
-                      cityList?.data?.filter((item) => item.active),
-                      "name",
-                      "id",
-                    )}
-                    value={loadingId}
-                    setValue={setLoadingId}
-                    readOnly={effectiveReadOnly}
-                    required={true}
-                  />
-                </div>
-                <div className="w-60">
-                  <DropdownInput
-                    name="Delivery Port"
-                    options={dropDownListObject(
-                      cityList?.data?.filter((item) => item.active),
-                      "name",
-                      "id",
-                    )}
-                    value={deliveryId}
-                    setValue={setDeliveryId}
-                    readOnly={effectiveReadOnly}
-                    required={true}
-                  />
-                </div>
-              </>
-            )}
-            <div className="w-[105px]">
-              <DateInputNew
-                name="Delivery Date"
-                value={deliveryDate}
-                setValue={setDeliveryDate}
-                disabled={effectiveReadOnly}
-                type="date"
-                min={docDate}
-                required={true}
-              />
-            </div>
-            <div className="w-32">
-              <DropdownInput
-                name="Conversion"
-                options={conversionTypes}
-                value={conversionType}
-                setValue={(value) => setConversionType(value)}
-                required={true}
-                readOnly={effectiveReadOnly}
-                disabled={childRecord.current > 0 || readOnly}
-              />
-            </div>
-            <div className="w-24">
-              <TextInput
-                name="WeightInKg (KG)"
-                value={weightInKg}
-                setValue={setWeightInKg}
-                disabled={effectiveReadOnly}
-                type="number"
-                min="0"
-                className="text-right"
-                required={true}
-                onBlur={(e) =>
-                  setWeightInKg(
-                    e.target.value ? Number(e.target.value).toFixed(3) : "",
-                  )
-                }
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-
+          <div className="w-24">
             <TextInput
-              name={`Carriage and Air Freight ${currencyId ? `(${isCurrencySymbol})` : ""}`}
-              value={carriageCharge}
-              setValue={setCarriageCharge}
+              name="Carriage Tax%"
+              value={carriageTax}
+              setValue={setCarriageTax}
               disabled={effectiveReadOnly}
               type="number"
               min="0"
               className="text-right"
               onBlur={(e) =>
-                setCarriageCharge(
+                setCarriageTax(
                   e.target.value ? Number(e.target.value).toFixed(2) : "",
                 )
               }
@@ -856,62 +831,43 @@ const ProformaInvoiceForm = ({
                 e.target.select();
               }}
             />
-            <div className="w-24">
-              <TextInput
-                name="Carriage Tax%"
-                value={carriageTax}
-                setValue={setCarriageTax}
-                disabled={effectiveReadOnly}
-                type="number"
-                min="0"
-                className="text-right"
-                onBlur={(e) =>
-                  setCarriageTax(
-                    e.target.value ? Number(e.target.value).toFixed(2) : "",
-                  )
-                }
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-            <div className="w-32">
-              <TextInput
-                name="Carriage Final Amount"
-                value={carriageFinalAmt}
-                disabled={true}
-                type="number"
-                min="0"
-                className="text-right"
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-            <div className="w-72">
-              <DropdownWithModal
-                name="Advising Bank"
-                options={dropDownListObjectMultiple(
-                  id
-                    ? bankList?.data
-                    : bankList?.data?.filter((item) => item?.active),
-                  ["name", "Branch.name"],
-                  "id",
-                )}
-                value={bankId}
-                setValue={setBankId}
-                required={isCustomerExport}
-                readOnly={effectiveReadOnly}
-                className={`w-[150px]`}
-                addNewLabel="+ Add New Bank"
-                childComponent={BankMaster}
-                addNewModalWidth="w-[45%] h-[64%]"
-                disabled={readOnly}
-              />
-            </div>
+          </div>
+          <div className="w-32">
+            <TextInput
+              name="Carriage Final Amount"
+              value={carriageFinalAmt}
+              disabled={true}
+              type="number"
+              min="0"
+              className="text-right"
+              onFocus={(e) => {
+                e.target.select();
+              }}
+            />
+          </div>
+          <div className="w-72">
+            <DropdownWithModal
+              name="Advising Bank"
+              options={dropDownListObjectMultiple(
+                id
+                  ? bankList?.data
+                  : bankList?.data?.filter((item) => item?.active),
+                ["name", "Branch.name"],
+                "id",
+              )}
+              value={bankId}
+              setValue={setBankId}
+              required={isCustomerExport}
+              readOnly={effectiveReadOnly}
+              className={`w-[150px]`}
+              addNewLabel="+ Add New Bank"
+              childComponent={BankMaster}
+              addNewModalWidth="w-[45%] h-[64%]"
+              disabled={readOnly}
+            />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -1041,29 +997,27 @@ const ProformaInvoiceForm = ({
                   addNewModalWidth="w-[40%] h-[66%]"
                 />
               </div>
-              {isCustomerExport && (
-                <div className="md:col-span-1">
-                  <DropdownWithModal
-                    name="Currency"
-                    options={dropDownListObject(
-                      id
-                        ? currencyList?.data
-                        : currencyList?.data?.filter((item) => item?.active),
-                      "name",
-                      "id",
-                    )}
-                    value={currencyId}
-                    setValue={setCurrencyId}
-                    required={true}
-                    readOnly={effectiveReadOnly}
-                    className={`w-full max-w-none`}
-                    dropdownMinWidth={240}
-                    addNewLabel="+ Add New Currency"
-                    childComponent={CurrencyMaster}
-                    addNewModalWidth="w-[40%] h-[66%]"
-                  />
-                </div>
-              )}
+              <div className="md:col-span-1">
+                <DropdownWithModal
+                  name="Currency"
+                  options={dropDownListObject(
+                    id
+                      ? currencyList?.data
+                      : currencyList?.data?.filter((item) => item?.active),
+                    "name",
+                    "id",
+                  )}
+                  value={currencyId}
+                  setValue={setCurrencyId}
+                  required={true}
+                  readOnly={effectiveReadOnly || !isCustomerExport}
+                  className={`w-full max-w-none`}
+                  dropdownMinWidth={240}
+                  addNewLabel="+ Add New Currency"
+                  childComponent={CurrencyMaster}
+                  addNewModalWidth="w-[40%] h-[66%]"
+                />
+              </div>
               <div className="w-[105px]">
                 <DateInputNew
                   name="Valid To"
@@ -1088,7 +1042,7 @@ const ProformaInvoiceForm = ({
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const filteredItems = items.filter((i) => i.styleItemId);
+    const filteredItems = items.filter((i) => i.styleItemId || i.fabricId || i.yarnId);
     if (!filteredItems.length)
       return {
         items: [],
@@ -1106,9 +1060,8 @@ const ProformaInvoiceForm = ({
       isSupplierOutside,
       discountType,
       discountValue,
-      conversionType === "DOZEN" ? true : false,
     );
-  }, [items, isSupplierOutside, discountType, discountValue, conversionType]);
+  }, [items, isSupplierOutside, discountType, discountValue]);
 
   const versionDropdown = (
     <div className="flex items-center gap-2 ml-2">
@@ -1172,9 +1125,8 @@ const ProformaInvoiceForm = ({
         setTerms={setTermsAndCondition}
         readOnly={effectiveReadOnly}
         showTermSelect={true}
-        hasSummaryTitle={
-          <span className="block text-center w-full">Summary</span>
-        }
+        rightSummaryTitle="Summary"
+        twoColumnRightSummary={true}
         termsRef={termsRef}
         sectionColClass="md:col-span-4"
         summaryColClass="md:col-span-4"
@@ -1189,191 +1141,102 @@ const ProformaInvoiceForm = ({
         }
         totalsRows={[
           {
-            key: "summary_grid",
-            label: "",
-            valueContainerClassName: "w-full",
-            renderValue: () => {
-              const taxTotals = !isCustomerExport
-                ? (enrichedData.slabBreakup || []).reduce((acc, curr) => {
-                    const type = curr?.tax?.split(" ")[0];
-                    acc[type] = (acc[type] || 0) + curr.amount;
-                    return acc;
-                  }, {})
-                : {};
-
-              return (
-                <div className="grid grid-cols-2 w-full gap-x-4 gap-y-1">
-                  {/* Left Column */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Total Discount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.itemDiscount +
-                            enrichedData.overallDiscount >
-                            0
-                            ? enrichedData.itemDiscount +
-                                enrichedData.overallDiscount
-                            : 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Taxable Amount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.taxable || 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    {taxTotals.CGST !== undefined &&
-                    taxTotals.SGST !== undefined ? (
-                      <div className="flex items-center justify-between w-full max-w-[210px]">
-                        <div className="flex items-center gap-1">
-                          <span className="text-slate-800 w-[32px]">CGST</span>
-                          <span className="text-slate-800">:</span>
-                          <span className="font-medium text-slate-800">
-                            {formatCurrencyAmount(
-                              taxTotals.CGST,
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-slate-800 w-[32px]">SGST</span>
-                          <span className="text-slate-800">:</span>
-                          <span className="font-medium text-slate-800 text-right">
-                            {formatCurrencyAmount(
-                              taxTotals.SGST,
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      Object.keys(taxTotals).map((type) => (
-                        <div
-                          key={type}
-                          className="flex items-center justify-between w-full max-w-[210px]"
-                        >
-                          <div className="flex justify-between w-[130px] text-slate-800">
-                            <span>{type}</span>
-                            <span>:</span>
-                          </div>
-                          <span className="font-medium text-slate-800 text-right w-[65px]">
-                            {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                            {formatCurrencyAmount(
-                              taxTotals[type],
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Round Off</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.roundOff || 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                        <span>Net Amount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-bold text-indigo-700 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          !isCustomerExport
-                            ? enrichedData.net
-                            : (enrichedData.items?.reduce(
-                                (sum, item) =>
-                                  sum + (parseFloat(item.amount) || 0),
-                                0,
-                              ) || 0) -
-                                (enrichedData.itemDiscount +
-                                  enrichedData.overallDiscount >
-                                0
-                                  ? enrichedData.itemDiscount +
-                                    enrichedData.overallDiscount
-                                  : 0),
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Carriage Charges</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {!isNaN(parseFloat(carriageFinalAmt)) &&
-                        carriageFinalAmt !== ""
-                          ? formatCurrencyAmount(
-                              carriageFinalAmt,
-                              currencyCode || isCurrencySymbol,
-                            )
-                          : "0.00"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                        <span>Grand Total</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-bold text-indigo-700 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          (!isCustomerExport
-                            ? enrichedData.net
-                            : (enrichedData.items?.reduce(
-                                (sum, item) =>
-                                  sum + (parseFloat(item.amount) || 0),
-                                0,
-                              ) || 0) -
-                              (enrichedData.itemDiscount +
-                                enrichedData.overallDiscount >
-                              0
-                                ? enrichedData.itemDiscount +
-                                  enrichedData.overallDiscount
-                                : 0)) + (parseFloat(carriageFinalAmt) || 0),
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            },
-            summaryColumn: "left",
-            emphasized: false,
+            key: "totalDiscount",
+            label: "Total Discount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                : 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          {
+            key: "taxableAmount",
+            label: "Taxable Amount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.taxable || 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          ...(!isCustomerExport
+            ? Object.entries(
+                (enrichedData.slabBreakup || []).reduce((acc, curr) => {
+                  const type = curr?.tax?.split(" ")[0];
+                  acc[type] = (acc[type] || 0) + curr.amount;
+                  return acc;
+                }, {}),
+              ).map(([type, amount]) => ({
+                key: `tax-${type}`,
+                label: type,
+                value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                  amount,
+                  currencyCode || isCurrencySymbol,
+                )}`,
+                summaryColumn: "right",
+              }))
+            : []),
+          {
+            key: "roundOff",
+            label: "Round Off",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.roundOff || 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          {
+            key: "netAmount",
+            label: "Net Amount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              !isCustomerExport
+                ? enrichedData.net
+                : (enrichedData.items?.reduce(
+                    (sum, item) => sum + (parseFloat(item.amount) || 0),
+                    0,
+                  ) || 0) -
+                    (enrichedData.itemDiscount + enrichedData.overallDiscount >
+                    0
+                      ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                      : 0),
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+            emphasized: true,
+            valueClassName: "text-indigo-700",
+          },
+          {
+            key: "carriageCharges",
+            label: "Carriage Charges",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
+              !isNaN(parseFloat(carriageFinalAmt)) && carriageFinalAmt !== ""
+                ? formatCurrencyAmount(
+                    carriageFinalAmt,
+                    currencyCode || isCurrencySymbol,
+                  )
+                : "0.00"
+            }`,
+            summaryColumn: "right",
+          },
+          {
+            key: "grandTotal",
+            label: "Grand Total",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              (!isCustomerExport
+                ? enrichedData.net
+                : (enrichedData.items?.reduce(
+                    (sum, item) => sum + (parseFloat(item.amount) || 0),
+                    0,
+                  ) || 0) -
+                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                    : 0)) + (parseFloat(carriageFinalAmt) || 0),
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+            emphasized: true,
+            valueClassName: "text-indigo-700",
           },
         ]}
       />
@@ -1538,23 +1401,69 @@ const ProformaInvoiceForm = ({
         detailsLayout="default"
         detailsLayouts={["default"]}
         gridItems={
-          <ProformaInvoiceItems
-            items={items}
-            enrichedItems={enrichedData}
-            setItems={setItems}
-            readOnly={effectiveReadOnly}
-            taxTemplateId={taxTemplateId}
-            id={id}
-            isCurrencySymbol={isCurrencySymbol}
-            currencyCode={currencyCode}
-            termsRef={termsRef}
-            isCustomerExport={isCustomerExport}
-            conversionType={conversionType}
-            isSupplierOutside={isSupplierOutside}
-            itemGroupList={itemGroupList}
-            itemSubGroupList={itemSubGroupList}
-            styleList={styleList}
-          />
+          <div className="flex flex-col h-full w-full border border-gray-300 rounded bg-white mt-1">
+            <div className="flex justify-start p-2 border-b border-gray-200">
+              <div className="flex bg-gray-100 p-1 rounded-full space-x-1">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("Fabric")}
+                  className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    activeGridTab === "Fabric"
+                      ? "bg-indigo-600 text-white shadow"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
+                  }`}
+                >
+                  Fabric
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("Yarn")}
+                  className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    activeGridTab === "Yarn"
+                      ? "bg-indigo-600 text-white shadow"
+                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
+                  }`}
+                >
+                  Yarn
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {activeGridTab === "Fabric" ? (
+                <ProformaInvoiceItems
+                  items={fabricItems}
+                  enrichedItems={enrichedData}
+                  setItems={setFabricItems}
+                  readOnly={effectiveReadOnly}
+                  taxTemplateId={taxTemplateId}
+                  id={id}
+                  isCurrencySymbol={isCurrencySymbol}
+                  currencyCode={currencyCode}
+                  termsRef={termsRef}
+                  isCustomerExport={isCustomerExport}
+                  isSupplierOutside={isSupplierOutside}
+                  fabricList={fabricList}
+                />
+              ) : (
+                <ProformaInvoiceYarnItems
+                  items={yarnItems}
+                  enrichedItems={enrichedData}
+                  setItems={setYarnItems}
+                  readOnly={effectiveReadOnly}
+                  taxTemplateId={taxTemplateId}
+                  id={id}
+                  isCurrencySymbol={isCurrencySymbol}
+                  currencyCode={currencyCode}
+                  termsRef={termsRef}
+                  isCustomerExport={isCustomerExport}
+                  isSupplierOutside={isSupplierOutside}
+                  itemGroupList={itemGroupList}
+                  itemSubGroupList={itemSubGroupList}
+                  styleList={styleList}
+                />
+              )}
+            </div>
+          </div>
         }
         footer={footerContent}
         versionDropdown={id ? versionDropdown : null}

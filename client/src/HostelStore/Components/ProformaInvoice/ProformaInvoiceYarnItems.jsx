@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs";
-
+import {
+  useGetStyleItemMasterQuery,
+  useLazyGetStyleItemMasterByIdQuery,
+} from "../../../redux/services/StyleItemMasterService";
+import { useGetSizeMasterQuery } from "../../../redux/services/SizemasterService";
 import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService";
 import { useGetUomQuery } from "../../../redux/services/UomMasterService";
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices";
-import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService";
 import {
   findFromList,
   getCommonParams,
@@ -22,13 +25,20 @@ import {
   StyleItemMaster,
   UomMaster,
   StyleMaster,
-  ColorMaster,
 } from "..";
-import { FabricMaster } from "../../../Basic/components";
+import { ItemSubGroupMaster } from "../../../Basic/components";
 import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
+import { FaEye, FaTrash } from "react-icons/fa";
 
-const ProformaInvoiceItems = ({
+// EMPTY DEFINITIONS
+const EMPTY_SIZE_ROW = () => ({ sizeId: "", qty: "" });
+const EMPTY_STYLE_ROW = () => ({
+  styleId: "",
+  sizeBreakup: [EMPTY_SIZE_ROW()],
+});
+
+const ProformaInvoiceYarnItems = ({
   items,
   enrichedItems,
   setItems,
@@ -40,29 +50,33 @@ const ProformaInvoiceItems = ({
   isCustomerExport,
   termsRef,
   isSupplierOutside,
-  fabricList,
+  itemGroupList,
+  itemSubGroupList,
+  styleList,
 }) => {
-  console.log(fabricList, "fabricList");
-
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
-
+  const { data: styleItemList } = useGetStyleItemMasterQuery({
+    params: { companyId },
+  });
+  const { data: sizeList } = useGetSizeMasterQuery({ params: { companyId } });
   const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
   const { data: uomList } = useGetUomQuery({ params: { companyId } });
   const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
-  const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
 
   const EMPTY_ROW = {
-    fabricId: "",
-    hsnId: "",
-    colorId: "",
+    itemGroupId: "",
+    itemSubGroupId: "",
+    styleItemId: "",
     uomId: "",
     gsmId: "",
-    width: "",
-    loop: "",
-
+    hsnId: "",
     qty: "",
+    labelWidth: "",
     price: "",
+    amount: "", // Used for "Gross"
+    dozen: "",
+    styleBreakup: [EMPTY_STYLE_ROW()],
   };
 
   const [contextMenu, setContextMenu] = useState(null);
@@ -71,6 +85,9 @@ const ProformaInvoiceItems = ({
   const [activeStyleIndex, setActiveStyleIndex] = useState(0);
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
+
+  const [triggerGetStyleItem, { data: styleData }] =
+    useLazyGetStyleItemMasterByIdQuery();
 
   const addRow = () => {
     setItems([
@@ -83,6 +100,16 @@ const ProformaInvoiceItems = ({
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const recalculateOrderQty = (rowBreakup) => {
+    let orderQty = 0;
+    rowBreakup.forEach((style) => {
+      style.sizeBreakup.forEach((sz) => {
+        orderQty += Number(sz.qty) || 0;
+      });
+    });
+    return orderQty;
+  };
+
   const handleInputChange = async (value, index, field) => {
     const newItems = [...items];
     newItems[index] = {
@@ -90,33 +117,185 @@ const ProformaInvoiceItems = ({
       [field]: value,
     };
 
-    if (field === "fabricId") {
-      const selectedFabric = fabricList?.data?.find((f) => f.id === value);
-      if (selectedFabric && selectedFabric.hsnId) {
-        newItems[index].hsnId = selectedFabric.hsnId;
-        const hsnObj = hsnList?.data?.find(
-          (h) => h.id === selectedFabric.hsnId,
-        );
-        if (hsnObj) {
-          newItems[index].taxPercent = hsnObj.tax;
-        }
-      }
-    }
-
-    if (field === "hsnId") {
-      const hsnObj = hsnList?.data?.find((h) => h.id === value);
-      if (hsnObj) {
-        newItems[index].taxPercent = hsnObj.tax;
-      }
-    }
-
-    if (field === "qty" || field === "price") {
-      const qty = parseFloat(newItems[index].qty) || 0;
-      const price = parseFloat(newItems[index].price) || 0;
-      newItems[index].amount = (qty * price).toFixed(2);
-    }
+    // Calculate gross (amount)
+    const qty = parseFloat(newItems[index].qty) || 0;
+    const price = parseFloat(newItems[index].price) || 0;
+    const dozen = qty / 12;
+    newItems[index].dozen = dozen ? dozen.toFixed(2) : "";
 
     setItems(newItems);
+    if (field === "styleItemId" && value) {
+      newItems[index].styleItemId = value;
+      setItems([...newItems]);
+
+      try {
+        const response = await triggerGetStyleItem(value).unwrap();
+        const hsnId = response?.data?.hsnId;
+        const hsnObj = hsnList?.data?.find((h) => h.id === hsnId);
+
+        const updatedItems = items.map((item, i) =>
+          i === index
+            ? {
+                ...item,
+                styleItemId: value,
+                hsnId: hsnId,
+                uomId: response?.data?.uomId,
+                taxPercent: hsnObj ? hsnObj.tax : "",
+                styleBreakup:
+                  item.styleBreakup && item.styleBreakup.length > 0
+                    ? item.styleBreakup
+                    : [EMPTY_STYLE_ROW()],
+              }
+            : item,
+        );
+        setItems(updatedItems);
+      } catch (e) {
+        console.error("Style fetch failed", e);
+      }
+    }
+  };
+
+  const handleStyleChange = (rowIndex, styleIndex, field, value) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      const breakup = [...(row.styleBreakup || [])];
+
+      if (field === "styleId" && value) {
+        const isDuplicate = breakup.some(
+          (item, idx) => idx !== styleIndex && item.styleId === value,
+        );
+        if (isDuplicate) {
+          Swal.fire({
+            icon: "warning",
+            title: "Duplicate Style",
+            text: "This style is already selected.",
+          });
+          return prev;
+        }
+      }
+
+      breakup[styleIndex] = { ...breakup[styleIndex], [field]: value };
+      row.styleBreakup = breakup;
+      rows[rowIndex] = row;
+      return rows;
+    });
+  };
+
+  const addStyleRow = (rowIndex) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      row.styleBreakup = [...(row.styleBreakup || []), EMPTY_STYLE_ROW()];
+      rows[rowIndex] = row;
+      return rows;
+    });
+  };
+
+  const deleteStyleRow = (rowIndex, styleIndex) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      const breakup = row.styleBreakup.filter((_, i) => i !== styleIndex);
+      row.styleBreakup = breakup.length > 0 ? breakup : [EMPTY_STYLE_ROW()];
+
+      row.qty = recalculateOrderQty(row.styleBreakup);
+      const price = row.price;
+      const dozen = row.qty / 12;
+      row.dozen = dozen ? dozen.toFixed(2) : "";
+
+      rows[rowIndex] = row;
+      return rows;
+    });
+  };
+
+  const handleNestedSizeChange = (
+    rowIndex,
+    styleIndex,
+    sizeIndex,
+    field,
+    value,
+  ) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      const styleBreakup = [...(row.styleBreakup || [])];
+      const styleObj = { ...styleBreakup[styleIndex] };
+      const sizeBreakup = [...(styleObj.sizeBreakup || [])];
+
+      if (field === "sizeId" && value) {
+        const isDuplicate = sizeBreakup.some(
+          (item, idx) => idx !== sizeIndex && item.sizeId === value,
+        );
+        if (isDuplicate) {
+          Swal.fire({
+            icon: "warning",
+            title: "Duplicate Size",
+            text: "This size is already selected.",
+          });
+          return prev;
+        }
+      }
+
+      sizeBreakup[sizeIndex] = { ...sizeBreakup[sizeIndex], [field]: value };
+      styleObj.sizeBreakup = sizeBreakup;
+      styleBreakup[styleIndex] = styleObj;
+      row.styleBreakup = styleBreakup;
+
+      if (field === "qty") {
+        const orderQty = recalculateOrderQty(styleBreakup);
+        row.qty = orderQty;
+        const price = row.price;
+        const dozen = orderQty / 12;
+        row.dozen = dozen ? dozen.toFixed(2) : "";
+      }
+
+      rows[rowIndex] = row;
+      return rows;
+    });
+  };
+
+  const addNestedSizeRow = (rowIndex, styleIndex) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      const styleBreakup = [...(row.styleBreakup || [])];
+      const styleObj = { ...styleBreakup[styleIndex] };
+
+      styleObj.sizeBreakup = [
+        ...(styleObj.sizeBreakup || []),
+        EMPTY_SIZE_ROW(),
+      ];
+      styleBreakup[styleIndex] = styleObj;
+      row.styleBreakup = styleBreakup;
+      rows[rowIndex] = row;
+      return rows;
+    });
+  };
+
+  const deleteNestedSizeRow = (rowIndex, styleIndex, sizeIndex) => {
+    setItems((prev) => {
+      const rows = [...prev];
+      const row = { ...rows[rowIndex] };
+      const styleBreakup = [...(row.styleBreakup || [])];
+      const styleObj = { ...styleBreakup[styleIndex] };
+
+      const sizeBreakup = styleObj.sizeBreakup.filter(
+        (_, i) => i !== sizeIndex,
+      );
+      styleObj.sizeBreakup =
+        sizeBreakup.length > 0 ? sizeBreakup : [EMPTY_SIZE_ROW()];
+      styleBreakup[styleIndex] = styleObj;
+      row.styleBreakup = styleBreakup;
+
+      row.qty = recalculateOrderQty(styleBreakup);
+      const price = row.price;
+      const dozen = row.qty / 12;
+      row.dozen = dozen ? dozen.toFixed(2) : "";
+
+      rows[rowIndex] = row;
+      return rows;
+    });
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -164,9 +343,7 @@ const ProformaInvoiceItems = ({
   };
 
   const mergedItems = items.map((item) => {
-    const enrichedItem = enrichedItems?.items?.find(
-      (i) => i.rowId === item.rowId,
-    );
+    const enrichedItem = enrichedItems?.items?.find((i) => i.rowId === item.rowId);
     return enrichedItem ? { ...item, totals: enrichedItem.totals } : item;
   });
 
@@ -207,6 +384,13 @@ const ProformaInvoiceItems = ({
                 "w-10 px-1 py-2 text-center text-xs border border-gray-300",
             },
             {
+              key: "itemGroup",
+              label: "Item Group",
+              className:
+                "w-36 px-2 py-2 text-center text-xs  border border-gray-300",
+            },
+
+            {
               key: "desc",
               label: (
                 <>
@@ -223,51 +407,8 @@ const ProformaInvoiceItems = ({
                 "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
-              key: "color",
-              label: "Color",
-              className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "loop",
-              label: "Loop Length",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "gsm",
-              label: "GSM",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "kDia",
-              label: "K-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "fDia",
-              label: "F-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
               key: "uom",
               label: "UOM",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-
-            {
-              key: "width",
-              label: "Width",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "weight",
-              label: "Weight",
               className:
                 "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
             },
@@ -322,7 +463,7 @@ const ProformaInvoiceItems = ({
             <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
               <td
                 className="text-right px-2 border border-gray-300"
-                colSpan={8}
+                colSpan={5}
               >
                 Total
               </td>
@@ -377,149 +518,72 @@ const ProformaInvoiceItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300"
+                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
-                    value={rowItem.fabricId}
+                    value={rowItem.itemGroupId}
                     onChange={(val) =>
-                      handleInputChange(val, originalIndex, "fabricId")
+                      handleInputChange(val, originalIndex, "itemGroupId")
                     }
-                    options={(fabricList?.data || [])
+                    options={(itemGroupList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
                     placeholder=""
                     addNew={true}
-                    childComponent={FabricMaster}
-                    addNewModalWidth="w-[50%] h-[57%]"
-                    ref={(el) => (styleItemRefs.current[originalIndex] = el)}
-                    nextRef={termsRef}
-                  />
-                </td>
-                <td className="border border-gray-300 text-[11px] px-2">
-                  <FxSelect
-                    value={rowItem.hsnId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "hsnId")
-                    }
-                    options={(hsnList?.data || [])
-                      .filter((i) => (id ? true : i.active))
-                      .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={true}
-                    disabled={true}
-                    placeholder=""
-                  />
-                </td>
-                <td className="border border-gray-300 text-[11px] px-2">
-                  <FxSelectWithAdd
-                    value={rowItem.colorId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "colorId")
-                    }
-                    options={(colorList?.data || [])
-                      .filter((i) => (id ? true : i.active))
-                      .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
-                    placeholder=""
-                    childComponent={ColorMaster}
-                    addNewModalWidth="w-[50%] h-[57%]"
+                    childComponent={ItemGroup}
+                    addNewModalWidth="w-[38%] h-[50%]"
                   />
                 </td>
                 <td
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="grid-editable-cell border border-gray-300"
                 >
-                  <FxSelect
-                    value={rowItem.uomId}
+                  <FxSelectWithAdd
+                    value={rowItem.styleItemId}
                     onChange={(val) =>
-                      handleInputChange(val, originalIndex, "uomId")
+                      handleInputChange(val, originalIndex, "styleItemId")
                     }
-                    options={(uomList?.data || [])
-                      .filter((i) => (id ? true : i.active))
+                    options={(styleItemList?.data || [])
+                      .filter(
+                        (i) =>
+                          (id ? true : i.active) &&
+                          i.itemGroupId === rowItem.itemGroupId &&
+                          true,
+                      )
                       .map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
-                    addNew={true}
                     placeholder=""
-                    childComponent={UomMaster}
+                    addNew={true}
+                    childComponent={StyleItemMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
+                    ref={(el) => (styleItemRefs.current[originalIndex] = el)}
+                    nextRef={termsRef}
                   />
+                </td>
+                <td className="border border-gray-300 text-[11px] px-2">
+                  <span className="">
+                    {findFromList(rowItem.hsnId, hsnList?.data, "name") || ""}
+                  </span>
+                </td>
+                <td className="border border-gray-300 text-[11px] px-2 text-center">
+                  <span>
+                    {findFromList(rowItem.uomId, uomList?.data, "name") || ""}
+                  </span>
                 </td>
                 <td
                   data-grid-row={index}
                   data-grid-col={3}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="grid-editable-cell text-[11px] border border-gray-300 text-right pr-2 font-medium"
                 >
-                  <FxSelect
-                    value={rowItem.gsmId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "gsmId")
-                    }
-                    options={(gsmList?.data || [])
-                      .filter((i) => (id ? true : i.active))
-                      .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
-                    placeholder=""
-                    childComponent={Gsm}
-                    addNewModalWidth="w-[50%] h-[57%]"
-                  />
+                  {rowItem.qty ? Number(rowItem.qty) : ""}
                 </td>
                 <td
                   data-grid-row={index}
                   data-grid-col={4}
-                  data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
-                >
-                  <input
-                    type="text"
-                    className="text-left px-3 w-full table-data-input bg-transparent"
-                    value={rowItem.loop}
-                    onChange={(e) =>
-                      handleInputChange(e.target.value, originalIndex, "loop")
-                    }
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={5}
-                  data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
-                >
-                  <input
-                    type="text"
-                    className="text-left px-3 w-full table-data-input bg-transparent"
-                    value={rowItem.width}
-                    onChange={(e) =>
-                      handleInputChange(e.target.value, originalIndex, "width")
-                    }
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={6}
-                  data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
-                >
-                  <input
-                    type="number"
-                    step="any"
-                    className="text-right px-3 w-full table-data-input bg-transparent"
-                    value={rowItem.qty}
-                    onChange={(e) =>
-                      handleInputChange(e.target.value, originalIndex, "qty")
-                    }
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={7}
                   data-grid-editable="true"
                   className="grid-editable-cell text-[11px] border border-gray-300 text-right"
                 >
@@ -573,11 +637,11 @@ const ProformaInvoiceItems = ({
                 </td>
                 <td className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2">
                   <span className="pr-1">
-                    {isCurrencySymbol && rowItem.fabricId
+                    {isCurrencySymbol && rowItem.styleItemId
                       ? ` ${isCurrencySymbol}`
                       : ""}
                   </span>
-                  {rowItem.fabricId
+                  {rowItem.styleItemId
                     ? formatCurrencyAmount(
                         rowItem.amount || 0,
                         currencyCode || isCurrencySymbol,
@@ -586,12 +650,12 @@ const ProformaInvoiceItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  data-grid-col={6}
+                  data-grid-col={5}
                   data-grid-editable="true"
                   className="grid-editable-cell border border-gray-300 text-center text-[11px]"
                 >
                   <button
-                    disabled={!rowItem.fabricId || isCustomerExport}
+                    disabled={!rowItem.styleItemId || !isCustomerExport}
                     className="text-indigo-600 w-full hover:text-indigo-800 disabled:text-gray-300 table-data-input"
                     onClick={() => {
                       if (!taxTemplateId) {
@@ -670,4 +734,4 @@ const ProformaInvoiceItems = ({
   );
 };
 
-export default ProformaInvoiceItems;
+export default ProformaInvoiceYarnItems;

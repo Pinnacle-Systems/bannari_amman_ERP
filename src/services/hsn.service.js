@@ -14,6 +14,7 @@ async function get(req) {
         select: {
           styleItems: true,
           YarnMaster: true,
+          fabricMasters: true,
         },
       },
     },
@@ -22,7 +23,10 @@ async function get(req) {
     statusCode: 0,
     data: (data = data.map((color) => ({
       ...color,
-      childRecord: color?._count.styleItems + color?._count.YarnMaster,
+      childRecord:
+        color?._count.styleItems +
+        color?._count.YarnMaster +
+        color?._count.fabricMasters,
     }))),
   };
 }
@@ -34,6 +38,9 @@ async function getOne(id) {
   const childRecordYarn = await prisma.YarnMaster.count({
     where: { hsnId: parseInt(id) },
   });
+  const childRecordFabric = await prisma.fabricMasters.count({
+    where: { hsnId: parseInt(id) },
+  });
   const data = await prisma.hsn.findUnique({
     where: {
       id: parseInt(id),
@@ -42,7 +49,10 @@ async function getOne(id) {
   if (!data) return NoRecordFound("hsn");
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord: childRecord + childRecordYarn } },
+    data: {
+      ...data,
+      ...{ childRecord: childRecord + childRecordYarn + childRecordFabric },
+    },
   };
 }
 

@@ -1354,6 +1354,7 @@ model Hsn {
   SalesReturnItems       SalesReturnItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
   YarnMaster             YarnMaster[]
+  fabricMasters          FabricMaster[]
 }
 
 model BranchType {
@@ -3501,22 +3502,22 @@ model YarnMaster {
   active           Boolean            @default(true)
   Company          Company            @relation(fields: [companyId], references: [id])
   companyId        Int
-  countsId         Int
-  CountsMaster     CountsMaster       @relation(fields: [countsId], references: [id])
-  contentId        Int
-  ContentMaster    ContentMaster      @relation(fields: [contentId], references: [id])
+  countsId         Int?
+  CountsMaster     CountsMaster?      @relation(fields: [countsId], references: [id])
+  contentId        Int?
+  ContentMaster    ContentMaster?     @relation(fields: [contentId], references: [id])
   hsnId            Int
   Hsn              Hsn                @relation(fields: [hsnId], references: [id])
   YarnMasterDetail YarnMasterDetail[]
 }
 
 model YarnMasterDetail {
-  id              Int             @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   yarnMasterId    Int
-  YarnMaster      YarnMaster      @relation(fields: [yarnMasterId], references: [id], onDelete: Cascade)
+  YarnMaster      YarnMaster       @relation(fields: [yarnMasterId], references: [id], onDelete: Cascade)
   yarnBlendId     Int
-  YarnBlendMaster YarnBlendMaster @relation(fields: [yarnBlendId], references: [id])
-  percentage      Float
+  YarnBlendMaster YarnBlendMaster? @relation(fields: [yarnBlendId], references: [id])
+  percentage      Float?
 }
 
 model FabricMaster {
@@ -3525,4 +3526,6 @@ model FabricMaster {
   active    Boolean @default(true)
   Company   Company @relation(fields: [companyId], references: [id])
   companyId Int
+  hsnId     Int
+  Hsn       Hsn     @relation(fields: [hsnId], references: [id])
 }
