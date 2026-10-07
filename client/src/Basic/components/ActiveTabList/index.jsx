@@ -27,6 +27,10 @@ import {
   SalesReportHome,
   Dashboard,
   ContentMaster,
+  CountsMaster,
+  YarnBlendMaster,
+  YarnMaster,
+  FabricMaster,
 } from "..";
 
 import { CLOSE_ICON, DOUBLE_NEXT_ICON } from "../../../icons";
@@ -196,6 +200,10 @@ const ActiveTabList = () => {
     ///////////////////////////////////////////
 
     "CONTENT MASTER": <ContentMaster />,
+    "COUNTS MASTER": <CountsMaster />,
+    "YARN BLEND MASTER": <YarnBlendMaster />,
+    "YARN MASTER": <YarnMaster />,
+    "FABRIC MASTER": <FabricMaster />,
   };
   const innerWidth = window.innerWidth;
   const itemsToShow = innerWidth / 130;

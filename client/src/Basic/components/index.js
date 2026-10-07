@@ -32,4 +32,11 @@ export { default as CustomerWiseSalesReport } from "./CustomerWiseSalesReport";
 export { default as YearWiseSalesReport } from "./YearWiseSalesReport";
 export { default as QuarterWiseSalesReport } from "./QuarterWiseSalesReport";
 export { default as SalesReportHome } from "./SalesReportHome";
+
+//////////////////////////
+
 export { default as ContentMaster } from "./ContentMaster";
+export { default as CountsMaster } from "./CountsMaster";
+export { default as YarnBlendMaster } from "./YarnBlendMaster";
+export { default as YarnMaster } from "./YarnMaster";
+export { default as FabricMaster } from "./FabricMaster";

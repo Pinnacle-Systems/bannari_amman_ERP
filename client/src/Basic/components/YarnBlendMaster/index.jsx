@@ -7,17 +7,17 @@ import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import {
-  useAddContentMasterMutation,
-  useDeleteContentMasterMutation,
-  useGetContentMasterByIdQuery,
-  useGetContentMasterQuery,
-  useUpdateContentMasterMutation,
-} from "../../../redux/services/contentMasterService";
+  useAddYarnBlendMasterMutation,
+  useDeleteYarnBlendMasterMutation,
+  useGetYarnBlendMasterByIdQuery,
+  useGetYarnBlendMasterQuery,
+  useUpdateYarnBlendMasterMutation,
+} from "../../../redux/services/YarnBlenMasterService";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
 
-export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
+export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
@@ -38,16 +38,16 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetContentMasterQuery({ params, searchParams: searchValue });
+  } = useGetYarnBlendMasterQuery({ params, searchParams: searchValue });
   const {
     data: singleData,
     isFetching: isSingleFetching,
     isLoading: isSingleLoading,
-  } = useGetContentMasterByIdQuery(id, { skip: !id });
+  } = useGetYarnBlendMasterByIdQuery(id, { skip: !id });
 
-  const [addData] = useAddContentMasterMutation();
-  const [updateData] = useUpdateContentMasterMutation();
-  const [removeData] = useDeleteContentMasterMutation();
+  const [addData] = useAddYarnBlendMasterMutation();
+  const [updateData] = useUpdateYarnBlendMasterMutation();
+  const [removeData] = useDeleteYarnBlendMasterMutation();
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { hasPermission } = UserPermissions();
@@ -156,7 +156,7 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
 
     if (foundItem) {
       Swal.fire({
-        text: "The Content Name already exists.",
+        text: "The Yarn Blend Name already exists.",
         icon: "warning",
         didClose: () => {
           countryNameRef?.current?.focus();
@@ -170,12 +170,7 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
       }
     }
     if (id) {
-      handleSubmitCustom(
-        updateData,
-        { id, body: data },
-        "Updated",
-        nextProcess,
-      );
+      handleSubmitCustom(updateData, { id, body: data }, "Updated", nextProcess);
     } else {
       handleSubmitCustom(addData, data, "Added", nextProcess);
     }
@@ -246,7 +241,7 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
     },
 
     {
-      header: "Content Name",
+      header: "Yarn Blend Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
       className: "font-medium text-gray-900 text-left uppercase w-72",
@@ -290,7 +285,7 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
                 <div className="grid grid-cols-2 my-2">
                   <div className="w-[50%">
                     <TextInputNew
-                      name="Content Name"
+                      name="Yarn Blend Name"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -334,7 +329,7 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Content Master
+            Add New Yarn Blend Master
           </h2>
           <button
             type="button"
@@ -356,13 +351,13 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
   return (
     <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
       <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Content Master</h5>
+        <h5 className="text-lg font-bold text-gray-800">Yarn Blend Master</h5>
         <div className="flex items-center">
           <button
             onClick={handleCreate}
             className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
           >
-            + Add New Content Master
+            + Add New Yarn Blend Master
           </button>
         </div>
       </div>
@@ -397,9 +392,9 @@ export default function ContentMaster({ onSuccess, defaultName = "" } = {}) {
                   <h2 className="text-lg px-2 py-0.5 font-semibold  text-gray-800">
                     {id
                       ? !readOnly
-                        ? "Edit Content Master"
-                        : "Content Master"
-                      : "Add New Content Master"}
+                        ? "Edit Yarn Blend Master"
+                        : "Yarn Blend Master"
+                      : "Add New Yarn Blend Master"}
                   </h2>
                 </div>
                 <div className="flex gap-2">

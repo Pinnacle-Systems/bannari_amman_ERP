@@ -73,11 +73,19 @@ export { default as productionInward } from "./productionInward.route.js";
 export { default as processBill } from "./processBill.route.js";
 export { default as salesDelivery } from "./salesDelivery.route.js";
 export { default as itemSubGroup } from "./itemSubGroup.route.js";
-export { default as packing } from "./packing.route.js"
-export { default as salesOrder } from "./saleOrder.route.js"
+export { default as packing } from "./packing.route.js";
+export { default as salesOrder } from "./saleOrder.route.js";
 export { default as avilableMachine } from "./availableMachine.route.js";
 export { default as processMob } from "./process_mob.route.js";
 export { default as PackingControl } from "./packingControl.route.js";
 export { default as salesBillEntry } from "./salesBillEntry.route.js";
 export { default as salesReport } from "./salesReport.route.js";
 export { default as productionReport } from "./productionReport.route.js";
+
+///////////////////////
+
+export { default as contentMaster } from "./contentMaster.route.js";
+export { default as countsMaster } from "./countsMaster.route.js";
+export { default as yarnBlendMaster } from "./yarnBlenMaster.js";
+export { default as yarnMaster } from "./yarnMaster.route.js";
+export { default as fabricMaster } from "./fabricmaster.route.js";

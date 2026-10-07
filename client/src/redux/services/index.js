@@ -49,3 +49,11 @@ export { default as MachineMasterApi } from "./MachineMasterService";
 export { default as ItemSubGroupMasterApi } from "./ItemSubGroupService";
 export { default as ProductionReportApi } from "./ProductionReportApi";
 export { default as salesReportApi } from "./salesReportApi";
+
+///////////////////////
+
+export { default as contentMasterApi } from "./contentMasterService";
+export { default as CountsMasterApi } from "./CountsMaster.service";
+export { default as YarnBlendMasterApi } from "./YarnBlenMasterService";
+export { default as YarnMasterApi } from "./YarnMasterService";
+export { default as FabricMasterApi } from "./FabricMasterService";
