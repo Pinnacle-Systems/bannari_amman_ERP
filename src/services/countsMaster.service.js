@@ -8,20 +8,45 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
+    include: {
+      _count: {
+        select: {
+          YarnMaster: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
-  return { statusCode: 0, data };
+  return {
+    statusCode: 0,
+    data: data.map((counts) => ({
+      ...counts,
+      childRecord: counts._count.YarnMaster > 0,
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = 0;
   const data = await prisma.countsMaster.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: {
+          YarnMaster: true,
+        },
+      },
+    },
   });
   if (!data) return NoRecordFound("countsMaster");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: data._count.YarnMaster > 0,
+    },
+  };
 }
 
 async function getSearch(req) {

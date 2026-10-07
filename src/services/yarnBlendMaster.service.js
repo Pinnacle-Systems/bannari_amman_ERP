@@ -8,20 +8,45 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
+    include: {
+      _count: {
+        select: {
+          YarnMasterDetail: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
-  return { statusCode: 0, data };
+  return {
+    statusCode: 0,
+    data: data.map((yarnBlend) => ({
+      ...yarnBlend,
+      childRecord: yarnBlend._count.YarnMasterDetail > 0,
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = 0;
   const data = await prisma.yarnBlendMaster.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: {
+          YarnMasterDetail: true,
+        },
+      },
+    },
   });
-  if (!data) return NoRecordFound("yarnBlendMaster");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  if (!data) return NoRecordFound("Yarn Blend Master");
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: data._count.YarnMasterDetail > 0,
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -63,7 +88,7 @@ async function update(id, body) {
       id: parseInt(id),
     },
   });
-  if (!dataFound) return NoRecordFound("yarnBlendMaster");
+  if (!dataFound) return NoRecordFound("Yarn Blend Master");
   const data = await prisma.yarnBlendMaster.update({
     where: {
       id: parseInt(id),

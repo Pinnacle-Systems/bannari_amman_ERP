@@ -8,20 +8,45 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
+    include: {
+      _count: {
+        select: {
+          YarnMaster: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
-  return { statusCode: 0, data };
+  return {
+    statusCode: 0,
+    data: data.map((content) => ({
+      ...content,
+      childRecord: content._count.YarnMaster > 0,
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = 0;
   const data = await prisma.contentMaster.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: {
+          YarnMaster: true,
+        },
+      },
+    },
   });
-  if (!data) return NoRecordFound("contentMaster");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  if (!data) return NoRecordFound("Content Master");
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: data._count.YarnMaster > 0,
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -63,7 +88,7 @@ async function update(id, body) {
       id: parseInt(id),
     },
   });
-  if (!dataFound) return NoRecordFound("contentMaster");
+  if (!dataFound) return NoRecordFound("Content Master");
   const data = await prisma.contentMaster.update({
     where: {
       id: parseInt(id),
