@@ -688,6 +688,7 @@ model Uom {
   PackingItems           PackingItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
   PackingBreakup         PackingBreakup[]
+  fabricItems            FabricItems[]
 }
 
 model ProductUomPriceDetails {
@@ -1187,6 +1188,7 @@ model Color {
   inwardItems            InwardItems[]
   stocks                 Stock[]
   JobCards               JobCard[]
+  fabricItems            FabricItems[]
 }
 
 model DeliveryInvoice {
@@ -1359,6 +1361,7 @@ model Hsn {
   SalesBillEntryItems    SalesBillEntryItems[]
   YarnMaster             YarnMaster[]
   fabricMasters          FabricMaster[]
+  fabricItems            FabricItems[]
 }
 
 model BranchType {
@@ -1857,6 +1860,7 @@ model Gsm {
   SalesDeliveryItems     SalesDeliveryItems[]
   SalesReturnItems       SalesReturnItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
+  fabricItems            FabricItems[]
 }
 
 model ItemGroup {
@@ -2595,6 +2599,44 @@ model ProformaInvoice {
   Bank              Bank?                 @relation(fields: [bankId], references: [id])
   conversionType    String?
   orderEntries      OrderEntry[]
+  customerPoNo      String?
+  fabricItems       FabricItems[]
+}
+
+model FabricItems {
+  id                Int             @id @default(autoincrement())
+  ProformaInvoice   ProformaInvoice @relation(fields: [proformaInvoiceId], references: [id], onDelete: Cascade)
+  proformaInvoiceId Int
+  fabricId          Int?
+  fabric            FabricMaster?   @relation(fields: [fabricId], references: [id])
+  hsnId             Int?
+  hsn               Hsn?            @relation(fields: [hsnId], references: [id])
+  colorId           Int?
+  color             Color?          @relation(fields: [colorId], references: [id])
+  designId          Int?
+  design            DesignMaster?   @relation(fields: [designId], references: [id])
+  gaugeId           Int?
+  gauge             Gauge?          @relation(fields: [gaugeId], references: [id])
+  loopLengthId      Int?
+  loopLength        LoopLength?     @relation(fields: [loopLengthId], references: [id])
+  gsmId             Int?
+  gsm               Gsm?            @relation(fields: [gsmId], references: [id])
+  kDiaId            Int?
+  kDia              DiaMaster?      @relation("kDia", fields: [kDiaId], references: [id])
+  fDiaId            Int?
+  fDia              DiaMaster?      @relation("fDia", fields: [fDiaId], references: [id])
+  uomId             Int?
+  uom               Uom?            @relation(fields: [uomId], references: [id])
+  width             String?
+  numberOfRolls     Float?
+  weightPerRoll     Float?
+  pricePerKg        Float?
+  qty               Float?
+  price             Float?
+  taxPercent        Float?
+  discountType      String?
+  discountValue     Float?
+  quoteVersion      Int             @default(1)
 }
 
 model ProformaInvoiceItem {
@@ -3525,48 +3567,54 @@ model YarnMasterDetail {
 }
 
 model FabricMaster {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
-  hsnId     Int
-  Hsn       Hsn     @relation(fields: [hsnId], references: [id])
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  active      Boolean       @default(true)
+  Company     Company       @relation(fields: [companyId], references: [id])
+  companyId   Int
+  hsnId       Int
+  Hsn         Hsn           @relation(fields: [hsnId], references: [id])
+  fabricItems FabricItems[]
 }
 
 model Gauge {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  active      Boolean       @default(true)
+  Company     Company       @relation(fields: [companyId], references: [id])
+  companyId   Int
+  fabricItems FabricItems[]
 }
 
 model LoopLength {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  active      Boolean       @default(true)
+  Company     Company       @relation(fields: [companyId], references: [id])
+  companyId   Int
+  fabricItems FabricItems[]
 }
 
 model DesignMaster {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  active    Boolean @default(true)
-  Company   Company @relation(fields: [companyId], references: [id])
-  companyId Int
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  active      Boolean       @default(true)
+  Company     Company       @relation(fields: [companyId], references: [id])
+  companyId   Int
+  fabricItems FabricItems[]
 }
 
 model DiaMaster {
-  id          Int     @id @default(autoincrement())
-  name        String
-  active      Boolean @default(true)
-  Company     Company @relation(fields: [companyId], references: [id])
-  companyId   Int
-  kDia        Boolean @default(false)
-  fDia        Boolean @default(false)
-  measurement String?
+  id              Int           @id @default(autoincrement())
+  name            String
+  active          Boolean       @default(true)
+  Company         Company       @relation(fields: [companyId], references: [id])
+  companyId       Int
+  kDia            Boolean       @default(false)
+  fDia            Boolean       @default(false)
+  measurement     String?
+  FabricItemskDia FabricItems[] @relation("kDia")
+  FabricItemsfDia FabricItems[] @relation("fDia")
 
   @@unique([name, kDia, fDia])
 }

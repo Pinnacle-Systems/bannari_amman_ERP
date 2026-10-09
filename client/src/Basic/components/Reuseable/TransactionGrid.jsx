@@ -25,7 +25,17 @@ const TransactionGrid = ({
         </div>
       ) : null}
 
-      <div className={`w-full flex-1 min-h-0 overflow-auto my-1 ${className}`}>
+      <div
+        className={`w-full flex-1 min-h-0 overflow-auto my-1 ${className}`}
+        onScroll={(e) => {
+          if (
+            document.activeElement &&
+            (document.activeElement.closest(".grid-editable-cell") || document.activeElement.closest("td"))
+          ) {
+            document.activeElement.blur();
+          }
+        }}
+      >
         <table className={tableClassName}>
           <thead className={headClassName}>
             <tr>

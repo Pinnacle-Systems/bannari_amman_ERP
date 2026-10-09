@@ -54,13 +54,25 @@ const EMPTY_ROW = {
   fabricId: "",
   hsnId: "",
   colorId: "",
-  uomId: "",
+  designId: "",
+  gaugeId: "",
+  loopLengthId: "",
   gsmId: "",
+  kDiaId: "",
+  fDiaId: "",
+  uomId: "",
   width: "",
-  loop: "",
-
+  numberOfRolls: "",
+  weightPerRoll: "",
+  totalKgs: "",
+  pricePerKg: "",
+  totalPrice: "",
   qty: "",
   price: "",
+  amount: "",
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
 };
 
 const padItems = (itemsArray = []) => {
@@ -160,7 +172,6 @@ const ProformaInvoiceFabricForm = ({
   const [addData, { isLoading: isSaving }] = useAddProformaInvoiceMutation();
   const [updateData, { isLoading: isUpdating }] =
     useUpdateProformaInvoiceMutation();
-  const [removeData] = useDeleteProformaInvoiceMutation();
 
   const isCustomerExport = supplierData?.data?.isCustomerExport;
   const isCurrencySymbol = currencyList?.data?.find(
@@ -213,9 +224,11 @@ const ProformaInvoiceFabricForm = ({
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
 
       let loadedVersions = [];
-      if (data.items?.length > 0) {
+      if (data.fabricItems?.length > 0) {
         loadedVersions = [
-          ...new Set(data.items.map((i) => i.quoteVersion).filter(Boolean)),
+          ...new Set(
+            data.fabricItems.map((i) => i.quoteVersion).filter(Boolean),
+          ),
         ].sort((a, b) => b - a);
       }
       setAvailableVersions(loadedVersions);
@@ -223,31 +236,11 @@ const ProformaInvoiceFabricForm = ({
 
       const targetVersion =
         loadedVersions.length > 0 ? Math.max(...loadedVersions, 1) : 1;
-      const filteredItems = (data.items || []).filter(
+      const filteredItems = (data.fabricItems || []).filter(
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
-      const mappedItems = filteredItems.map((item) => ({
-        ...item,
-        itemGroupId: item?.ItemGroup?.id || "",
-        itemSubGroupId: item?.ItemSubGroup?.id || "",
-        styleItemId: item?.StyleItem?.id || "",
-        uomId: item?.Uom?.id || "",
-        gsmId: item?.Gsm?.id || "",
-        hsnId: item?.Hsn?.id || "",
-
-        sizeBreakup:
-          item?.pisizeBreakups?.length > 0
-            ? item.pisizeBreakups.map((val) => {
-                return {
-                  ...val,
-                  sizeId: val.sizeId || "",
-                };
-              })
-            : [{ sizeId: "", qty: "" }],
-      }));
-
-      const fabricData = mappedItems;
-      setFabricItems(padItems(fabricData));
+      console.log(filteredItems, "filteredItems");
+      setFabricItems(padItems(filteredItems));
 
       const cust = data?.customer;
       if (cust) {
@@ -263,8 +256,8 @@ const ProformaInvoiceFabricForm = ({
   }, [id, singleData]);
 
   useEffect(() => {
-    if (singleData?.data?.items && id) {
-      const itemsArr = singleData.data.items;
+    if (singleData?.data?.fabricItems && id) {
+      const itemsArr = singleData.data.fabricItems;
       const maxVersion =
         availableVersions.length > 0 ? Math.max(...availableVersions, 1) : 1;
       let targetVersion = maxVersion;
@@ -277,32 +270,7 @@ const ProformaInvoiceFabricForm = ({
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
 
-      const mappedItems = filteredItems.map((item) => ({
-        ...item,
-        itemGroupId: item?.ItemGroup?.id || "",
-        itemSubGroupId: item?.ItemSubGroup?.id || "",
-        styleItemId: item?.StyleItem?.id || "",
-        uomId: item?.Uom?.id || "",
-        gsmId: item?.Gsm?.id || "",
-        hsnId: item?.Hsn?.id || "",
-
-        styleBreakup:
-          item?.PIStyleBreakup?.length > 0
-            ? item.PIStyleBreakup.map((st) => ({
-                styleId: st.styleId || "",
-                sizeBreakup:
-                  st.PISizeBreakup?.length > 0
-                    ? st.PISizeBreakup.map((sz) => ({
-                        sizeId: sz.sizeId || "",
-                        qty: sz.qty || "",
-                      }))
-                    : [{ sizeId: "", qty: "" }],
-              }))
-            : [{ styleId: "", sizeBreakup: [{ sizeId: "", qty: "" }] }],
-      }));
-
-      const fabricData = mappedItems;
-      setFabricItems(padItems(fabricData));
+      setFabricItems(padItems(filteredItems));
     }
   }, [selectedQuoteVersion, singleData, id, availableVersions]);
 
@@ -333,66 +301,11 @@ const ProformaInvoiceFabricForm = ({
       if (!item.qty || Number(item.qty) <= 0) {
         errors.push(`Row ${index + 1}: Qty is required`);
       }
-      const key = `${item.styleItemId}_${item.uomId}`;
+      const key = `${item.fabricId}_${item.designId}_${item.gsmId}_${item.colorId}`;
       if (seen.has(key)) {
         errors.push(`Row ${index + 1}: Duplicate item found`);
       } else {
         seen.add(key);
-      }
-
-      if (item.styleBreakup?.length) {
-        const sizeSeen = new Set();
-        let sizeSum = 0;
-
-        item.styleBreakup.forEach((style, styleIndex) => {
-          if (!style.styleId) {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Style is required`,
-            );
-          }
-
-          if (style.sizeBreakup?.length) {
-            style.sizeBreakup.forEach((size, sizeIndex) => {
-              if (!size.sizeId) {
-                errors.push(
-                  `Row ${index + 1}, Style Row ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Size is required`,
-                );
-              }
-
-              const qty = Number(size.qty || 0);
-              sizeSum += qty;
-
-              if (qty <= 0) {
-                errors.push(
-                  `Row ${index + 1}, Style Row ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Qty must be greater than 0`,
-                );
-              }
-
-              if (style.styleId && size.sizeId) {
-                const key = `${style.styleId}_${size.sizeId}`;
-                if (sizeSeen.has(key)) {
-                  errors.push(
-                    `Row ${index + 1}: Duplicate style and size combination found`,
-                  );
-                } else {
-                  sizeSeen.add(key);
-                }
-              }
-            });
-          } else {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Size breakup is required`,
-            );
-          }
-        });
-
-        if (sizeSum !== Number(item.qty)) {
-          errors.push(
-            `Row ${index + 1}: Sum of size quantities (${sizeSum}) must match the total quantity (${item.qty})`,
-          );
-        }
-      } else {
-        errors.push(`Row ${index + 1}: Style breakup is required`);
       }
     });
 
@@ -517,9 +430,7 @@ const ProformaInvoiceFabricForm = ({
       return;
     }
 
-    const filteredItems = items.filter(
-      (item) => item.styleItemId || item.fabricId || item.yarnId,
-    );
+    const filteredItems = fabricItems.filter((item) => item.fabricId);
 
     if (filteredItems.length === 0) {
       Swal.fire({
@@ -560,24 +471,23 @@ const ProformaInvoiceFabricForm = ({
       docDate,
       userDate,
       customerId,
-      // orderEntryId,
-      remarks,
-      termsAndCondition,
-      termsId,
+      customerPoNo,
       taxTemplateId,
-      items: JSON.stringify(filteredItems),
       payTermId,
-      discountType,
-      discountValue,
-      validityTo,
       currencyId,
+      validityTo,
       loadingId,
       deliveryId,
       deliveryDate,
-
       carriageCharge,
-      bankId,
       carriageTax,
+      bankId,
+      filteredItems,
+      termsAndCondition,
+      termsId,
+      remarks,
+      discountType,
+      discountValue,
     };
 
     try {
@@ -679,13 +589,6 @@ const ProformaInvoiceFabricForm = ({
       );
     }
   }, [taxTypeList, id]);
-
-  const totalAmount = fabricItems.reduce(
-    (sum, item) => sum + (parseFloat(item.amount) || 0),
-    0,
-  );
-
-  // Actions moved to JSX
 
   const shippingAccordion = (
     <div className="border border-slate-200 rounded-md bg-white shadow-sm mt-1">
@@ -1353,9 +1256,9 @@ const ProformaInvoiceFabricForm = ({
           <div className="flex flex-col h-full w-full border border-gray-300 rounded bg-white mt-1">
             <div className="flex-1 overflow-hidden">
               <ProformaInvoiceFabricItems
-                items={fabricItems}
+                fabricItems={fabricItems}
                 enrichedItems={enrichedData}
-                setItems={setFabricItems}
+                setFabricItems={setFabricItems}
                 readOnly={effectiveReadOnly}
                 taxTemplateId={taxTemplateId}
                 id={id}

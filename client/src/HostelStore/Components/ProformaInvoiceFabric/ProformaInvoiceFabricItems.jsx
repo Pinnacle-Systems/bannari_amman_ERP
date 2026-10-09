@@ -29,9 +29,9 @@ import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
 
 const ProformaInvoiceFabricItems = ({
-  items,
+  fabricItems,
   enrichedItems,
-  setItems,
+  setFabricItems,
   readOnly,
   taxTemplateId,
   id,
@@ -66,19 +66,26 @@ const ProformaInvoiceFabricItems = ({
   const EMPTY_ROW = {
     fabricId: "",
     hsnId: "",
-    designId: "",
     colorId: "",
+    designId: "",
+    gaugeId: "",
     loopLengthId: "",
     gsmId: "",
     kDiaId: "",
     fDiaId: "",
     uomId: "",
     width: "",
+    numberOfRolls: "",
+    weightPerRoll: "",
+    totalKgs: "",
+    pricePerKg: "",
+    totalPrice: "",
     qty: "",
     price: "",
+    amount: "",
+    taxPercent: "",
     discountvalue: "",
     discounttype: "",
-    taxPercent: "",
   };
 
   const [contextMenu, setContextMenu] = useState(null);
@@ -89,18 +96,28 @@ const ProformaInvoiceFabricItems = ({
   const gridWrapperRef = useRef(null);
 
   const addRow = () => {
-    setItems([
-      ...items,
+    setFabricItems([
+      ...fabricItems,
       { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
     ]);
   };
 
   const deleteRow = (index) => {
-    setItems(items.filter((_, i) => i !== index));
+    if (fabricItems.length <= 14) {
+      const newItems = [...fabricItems];
+      newItems[index] = {
+        ...EMPTY_ROW,
+        rowId:
+          newItems[index].rowId || Math.random().toString(36).substring(2, 9),
+      };
+      setFabricItems(newItems);
+    } else {
+      setFabricItems(fabricItems.filter((_, i) => i !== index));
+    }
   };
 
   const handleInputChange = async (value, index, field) => {
-    const newItems = [...items];
+    const newItems = [...fabricItems];
     newItems[index] = {
       ...newItems[index],
       [field]: value,
@@ -126,13 +143,34 @@ const ProformaInvoiceFabricItems = ({
       }
     }
 
+    if (field === "numberOfRolls" || field === "weightPerRoll") {
+      const num = parseFloat(newItems[index].numberOfRolls) || 0;
+      const weight = parseFloat(newItems[index].weightPerRoll) || 0;
+      newItems[index].totalKgs = (num * weight).toFixed(3);
+      newItems[index].qty = newItems[index].totalKgs;
+
+      const totalKgs = parseFloat(newItems[index].totalKgs) || 0;
+      const pricePerKg = parseFloat(newItems[index].pricePerKg) || 0;
+      newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
+      newItems[index].amount = newItems[index].totalPrice;
+    }
+
+    if (field === "pricePerKg") {
+      newItems[index].price = newItems[index].pricePerKg;
+
+      const totalKgs = parseFloat(newItems[index].totalKgs) || 0;
+      const pricePerKg = parseFloat(newItems[index].pricePerKg) || 0;
+      newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
+      newItems[index].amount = newItems[index].totalPrice;
+    }
+
     if (field === "qty" || field === "price") {
       const qty = parseFloat(newItems[index].qty) || 0;
       const price = parseFloat(newItems[index].price) || 0;
       newItems[index].amount = (qty * price).toFixed(2);
     }
 
-    setItems(newItems);
+    setFabricItems(newItems);
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -150,8 +188,8 @@ const ProformaInvoiceFabricItems = ({
 
   const handleFocusNextRow = (index) => {
     const nextIndex = index + 1;
-    if (!items[nextIndex]) {
-      setItems((prev) => [
+    if (!fabricItems[nextIndex]) {
+      setFabricItems((prev) => [
         ...prev,
         { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
       ]);
@@ -166,25 +204,19 @@ const ProformaInvoiceFabricItems = ({
   };
 
   const deleteSelectedRows = () => {
-    setItems((rows) => rows.filter((r) => !r.selected));
+    setFabricItems((rows) => rows.filter((r) => !r.selected));
     setContextMenu(null);
   };
 
   const handleDeleteAllRows = () => {
-    setItems(
+    setFabricItems(
       Array.from({ length: 14 }, () => ({
         ...EMPTY_ROW,
         rowId: Math.random().toString(36).substring(2, 9),
       })),
     );
   };
-
-  const mergedItems = items.map((item) => {
-    const enrichedItem = enrichedItems?.items?.find(
-      (i) => i.rowId === item.rowId,
-    );
-    return enrichedItem ? { ...item, totals: enrichedItem.totals } : item;
-  });
+  console.log(fabricItems, "fabricItems");
 
   return (
     <>
@@ -194,11 +226,139 @@ const ProformaInvoiceFabricItems = ({
           setCurrentWeightSelectedIndex("");
         }}
       >
-        <div className="p-4 bg-white rounded-lg min-w-[50vw] min-h-[40vh]">
+        <div className="p-4 bg-white rounded-lg min-w-[40vw]">
           <h2 className="text-lg font-bold mb-4 text-gray-800">
             Weight Details
           </h2>
-          <p className="text-gray-600">Weight configuration goes here...</p>
+          {Number.isInteger(currentWeightSelectedIndex) &&
+            fabricItems[currentWeightSelectedIndex] && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Number of Rolls
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      value={
+                        fabricItems[currentWeightSelectedIndex].numberOfRolls ||
+                        ""
+                      }
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.value,
+                          currentWeightSelectedIndex,
+                          "numberOfRolls",
+                        )
+                      }
+                      readOnly={readOnly}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Weight per Roll
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      value={
+                        fabricItems[currentWeightSelectedIndex].weightPerRoll ||
+                        ""
+                      }
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.value,
+                          currentWeightSelectedIndex,
+                          "weightPerRoll",
+                        )
+                      }
+                      readOnly={readOnly}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Kgs
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
+                      value={
+                        (fabricItems[currentWeightSelectedIndex]
+                          .numberOfRolls || 0) *
+                        (
+                          fabricItems[currentWeightSelectedIndex]
+                            .weightPerRoll || 0
+                        )?.toFixed(3)
+                      }
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Price per Kg
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      value={
+                        fabricItems[currentWeightSelectedIndex].pricePerKg || ""
+                      }
+                      onChange={(e) =>
+                        handleInputChange(
+                          e.target.value,
+                          currentWeightSelectedIndex,
+                          "pricePerKg",
+                        )
+                      }
+                      onBlur={() => {
+                        const val = fabricItems[currentWeightSelectedIndex].pricePerKg;
+                        handleInputChange(
+                          val ? parseFloat(val).toFixed(3) : "",
+                          currentWeightSelectedIndex,
+                          "pricePerKg",
+                        );
+                      }}
+                      readOnly={readOnly}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Price
+                    </label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
+                      value={
+                        (fabricItems[currentWeightSelectedIndex]
+                          .numberOfRolls || 0) *
+                        (
+                          fabricItems[currentWeightSelectedIndex]
+                            .weightPerRoll || 0
+                        )?.toFixed(3) *
+                        (
+                          fabricItems[currentWeightSelectedIndex].pricePerKg ||
+                          0
+                        )?.toFixed(3)
+                      }
+                      readOnly
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentWeightSelectedIndex("")}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
         </div>
       </Modal>
 
@@ -216,7 +376,7 @@ const ProformaInvoiceFabricItems = ({
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
-          poItems={mergedItems}
+          poItems={enrichedItems?.items || fabricItems}
           handleInputChange={handleInputChange}
           id={id}
           isNewVersion={false}
@@ -226,7 +386,32 @@ const ProformaInvoiceFabricItems = ({
         />
       </Modal>
 
-      <div ref={gridWrapperRef} className="h-full overflow-x-auto w-[100vw]">
+      <div
+        ref={gridWrapperRef}
+        className="h-full overflow-x-auto w-[100vw]"
+        onScroll={(e) => {
+          if (
+            document.activeElement &&
+            (document.activeElement.closest(".grid-editable-cell") ||
+              document.activeElement.closest("td"))
+          ) {
+            document.activeElement.blur();
+          }
+        }}
+        onContextMenu={(e) => {
+          const td = e.target.closest("td[data-grid-row]");
+          if (td && !readOnly) {
+            e.preventDefault();
+            const rowIndex = parseInt(td.getAttribute("data-grid-row"), 10);
+            handleRightClick(e, rowIndex);
+          }
+        }}
+        onMouseDownCapture={(e) => {
+          if (e.button === 2) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <TransactionGrid
           title=""
           columns={[
@@ -356,7 +541,7 @@ const ProformaInvoiceFabricItems = ({
             },
           ]}
           rows={
-            items?.map((item, index) => ({
+            fabricItems?.map((item, index) => ({
               row: item,
               originalIndex: index,
             })) || []
@@ -370,20 +555,20 @@ const ProformaInvoiceFabricItems = ({
                 Total
               </td>
               <td className="text-right px-1 border border-gray-300">
-                {items
+                {fabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
               <td className="text-right px-1 border border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
-                {items
+                {fabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
               <td className="text-right px-1 border border-gray-300 text-black">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
-                  items?.reduce(
+                  fabricItems?.reduce(
                     (sum, i) => sum + (parseFloat(i.amount) || 0),
                     0,
                   ),
@@ -407,11 +592,6 @@ const ProformaInvoiceFabricItems = ({
                   data-grid-row={index}
                   data-grid-col={0}
                   className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
-                  onContextMenu={(e) => {
-                    if (!readOnly) {
-                      handleRightClick(e, originalIndex);
-                    }
-                  }}
                 >
                   {index + 1}
                 </td>
@@ -438,7 +618,10 @@ const ProformaInvoiceFabricItems = ({
                     nextRef={termsRef}
                   />
                 </td>
-                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]">
+                <td
+                  data-grid-row={index}
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                >
                   <FxSelect
                     value={rowItem.hsnId}
                     onChange={(val) =>
@@ -453,7 +636,10 @@ const ProformaInvoiceFabricItems = ({
                   />
                 </td>
 
-                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
+                <td
+                  data-grid-row={index}
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
                     onChange={(val) =>
@@ -469,7 +655,10 @@ const ProformaInvoiceFabricItems = ({
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
-                <td className=" grid-editable-cell border border-gray-300 text-[11px] px-2">
+                <td
+                  data-grid-row={index}
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                >
                   <FxSelectWithAdd
                     value={rowItem.designId}
                     onChange={(val) =>
@@ -485,9 +674,12 @@ const ProformaInvoiceFabricItems = ({
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
-                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
+                <td
+                  data-grid-row={index}
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                >
                   <FxSelectWithAdd
-                    value={rowItem.gaugeId}
+                    value={rowItem?.gaugeId}
                     onChange={(val) =>
                       handleInputChange(val, originalIndex, "gaugeId")
                     }
@@ -501,7 +693,10 @@ const ProformaInvoiceFabricItems = ({
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
-                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
+                <td
+                  data-grid-row={index}
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                >
                   <FxSelectWithAdd
                     value={rowItem.loopLengthId}
                     onChange={(val) =>
@@ -546,9 +741,9 @@ const ProformaInvoiceFabricItems = ({
                   className="grid-editable-cell border border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
-                    value={rowItem.kDia}
+                    value={rowItem.kDiaId}
                     onChange={(val) =>
-                      handleInputChange(val, originalIndex, "kDia")
+                      handleInputChange(val, originalIndex, "kDiaId")
                     }
                     options={(kDiaList || [])
                       ?.filter((i) => (id ? true : i.active))
@@ -567,9 +762,9 @@ const ProformaInvoiceFabricItems = ({
                   className="grid-editable-cell border border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
-                    value={rowItem.fDia}
+                    value={rowItem.fDiaId}
                     onChange={(val) =>
-                      handleInputChange(val, originalIndex, "fDia")
+                      handleInputChange(val, originalIndex, "fDiaId")
                     }
                     options={(fDiaList || [])
                       ?.filter((i) => (id ? true : i.active))
@@ -649,7 +844,11 @@ const ProformaInvoiceFabricItems = ({
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
-                    readOnly={readOnly}
+                    readOnly={
+                      readOnly ||
+                      rowItem.pricePerKg > 0 ||
+                      rowItem.weightPerRoll > 0
+                    }
                   />
                 </td>
                 <td
@@ -684,7 +883,11 @@ const ProformaInvoiceFabricItems = ({
                           "price",
                         )
                       }
-                      readOnly={readOnly}
+                      readOnly={
+                        readOnly ||
+                        rowItem.pricePerKg > 0 ||
+                        rowItem.weightPerRoll > 0
+                      }
                       onFocus={(e) => {
                         e.target.select();
                         setFocusedField(`price-${originalIndex}`);
@@ -706,7 +909,10 @@ const ProformaInvoiceFabricItems = ({
                     />
                   </div>
                 </td>
-                <td className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2">
+                <td
+                  data-grid-row={index}
+                  className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2"
+                >
                   <span className="pr-1">
                     {isCurrencySymbol && rowItem.fabricId
                       ? ` ${isCurrencySymbol}`
@@ -714,7 +920,7 @@ const ProformaInvoiceFabricItems = ({
                   </span>
                   {rowItem.fabricId
                     ? formatCurrencyAmount(
-                        rowItem.amount || 0,
+                        ((rowItem.qty || 0) * (rowItem.price || 0)).toFixed(2),
                         currencyCode || isCurrencySymbol,
                       )
                     : ""}
@@ -744,7 +950,10 @@ const ProformaInvoiceFabricItems = ({
                   </button>
                 </td>
 
-                <td className="w-12 border border-gray-300 align-top pt-1 bg-gray-50">
+                <td
+                  data-grid-row={index}
+                  className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
+                >
                   {!readOnly && (
                     <div className="flex items-center justify-center">
                       <button
