@@ -93,7 +93,6 @@
 //   };
 // }
 
-
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import secureLocalStorage from "react-secure-storage";
@@ -101,67 +100,50 @@ import { useGetPagePermissionsByIdQuery } from "../redux/services/PageMasterServ
 import Swal from "sweetalert2";
 import { childRecordCount } from "../Inputs";
 
-
-
 export function UserPermissions() {
-
-
-
   const openTabs = useSelector((state) => state.openTabs);
 
-  console.log(openTabs, "openTabs")
-
-
-  const activeTab = openTabs?.tabs?.find(tab => tab.active);
-  const currentPageId = activeTab?.id
+  const activeTab = openTabs?.tabs?.find((tab) => tab.active);
+  const currentPageId = activeTab?.id;
 
   const userRoleId = secureLocalStorage.getItem(
-    sessionStorage.getItem("sessionId") + "userRoleId"
+    sessionStorage.getItem("sessionId") + "userRoleId",
   );
   const {
-    data:
-    currentPagePermissions,
+    data: currentPagePermissions,
     isLoading,
     isFetching,
-  } = useGetPagePermissionsByIdQuery({ currentPageId, userRoleId }, { skip: !(currentPageId && userRoleId) });
-
-
-  console.log(currentPagePermissions, "currentPagePermissions", userRoleId, "currentPageId", currentPageId)
+  } = useGetPagePermissionsByIdQuery(
+    { currentPageId, userRoleId },
+    { skip: !(currentPageId && userRoleId) },
+  );
 
   const IsSuperAdmin = () => {
     return JSON.parse(
       secureLocalStorage.getItem(
-        sessionStorage.getItem("sessionId") + "superAdmin"
-      )
+        sessionStorage.getItem("sessionId") + "superAdmin",
+      ),
     );
   };
 
   const IsDefaultAdmin = () => {
     return JSON.parse(
       secureLocalStorage.getItem(
-        sessionStorage.getItem("sessionId") + "defaultAdmin"
-      )
+        sessionStorage.getItem("sessionId") + "defaultAdmin",
+      ),
     );
   };
 
   const isCurrentFinYearActive = () => {
     return Boolean(
       secureLocalStorage.getItem(
-        sessionStorage.getItem("sessionId") + "currentFinYearActive"
-      )
+        sessionStorage.getItem("sessionId") + "currentFinYearActive",
+      ),
     );
   };
 
-
-
   const hasPermission = (callback, type, childRecord = 0) => {
-
-    console.log("currentPagePermissions", currentPagePermissions, type)
-
-    const childRecordValidationActions = ["delete"]
-
-    console.log(childRecord, "childRecord", childRecordCount(childRecord), childRecordValidationActions?.includes(type))
-
+    const childRecordValidationActions = ["delete"];
 
     if (callback) {
       if (IsSuperAdmin()) {
@@ -169,7 +151,10 @@ export function UserPermissions() {
       } else {
         if (isCurrentFinYearActive()) {
           if (IsDefaultAdmin()) {
-            if (childRecordValidationActions?.includes(type) && childRecordCount(childRecord)) {
+            if (
+              childRecordValidationActions?.includes(type) &&
+              childRecordCount(childRecord)
+            ) {
               Swal.fire({
                 title: `Child Record Exists`,
                 icon: "warning",
@@ -179,7 +164,10 @@ export function UserPermissions() {
 
             callback();
           } else if (currentPagePermissions?.data[type]) {
-            if (childRecordValidationActions?.includes(type) && childRecordCount(childRecord)) {
+            if (
+              childRecordValidationActions?.includes(type) &&
+              childRecordCount(childRecord)
+            ) {
               Swal.fire({
                 title: `Child Record Exists`,
                 icon: "warning",
@@ -188,10 +176,7 @@ export function UserPermissions() {
             }
 
             callback();
-
-
           } else {
-
             Swal.fire({
               title: `No Permission to ${type == "save" ? "Add" : type}...!`,
               icon: "warning",
@@ -206,15 +191,9 @@ export function UserPermissions() {
         }
       }
     }
-
   };
 
-
   return {
-    hasPermission
-  }
-
-
+    hasPermission,
+  };
 }
-
-

@@ -1,46 +1,45 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Swal from "sweetalert2";
-import { TextInput, DropdownInput, DateInputNew } from "../../../Inputs";
+import {
+  TextInput,
+  DropdownInput,
+  DateInputNew,
+} from "../../../Inputs/index.js";
 import {
   useAddProformaInvoiceMutation,
   useUpdateProformaInvoiceMutation,
   useDeleteProformaInvoiceMutation,
   useGetProformaInvoiceByIdQuery,
   useGetProformaInvoiceQuery,
-} from "../../../redux/uniformService/ProformaInvoiceService";
+} from "../../../redux/uniformService/ProformaInvoiceService.js";
 import {
   findFromList,
   getCommonParams,
   ModeChip,
   formatCurrencyAmount,
-} from "../../../Utils/helper";
+} from "../../../Utils/helper.js";
 import {
   dropDownListObject,
   dropDownListObjectMultiple,
-} from "../../../Utils/contructObject";
-import ProformaInvoiceItems from "./ProformaInvoiceItems.jsx";
-import ProformaInvoiceYarnItems from "./ProformaInvoiceYarnItems.jsx";
+} from "../../../Utils/contructObject.js";
+import ProformaInvoiceFabricItems from "./ProformaInvoiceFabricItems.jsx";
 import moment from "moment";
 import { PDFViewer } from "@react-pdf/renderer";
-import Modal from "../../../UiComponents/Modal";
-import ProformaInvoicePrintFormat from "./ProformaInvoicePrintFormat.jsx";
-import tw from "../../../Utils/tailwind-react-pdf";
+import Modal from "../../../UiComponents/Modal/index.js";
+import ProformaInvoiceFabricPrintFormat from "./ProformaInvoiceFabricPrintFormat.jsx";
+import tw from "../../../Utils/tailwind-react-pdf.js";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { FiEdit2, FiSave, FiPrinter, FiEye } from "react-icons/fi";
-import { HiOutlineRefresh, HiX } from "react-icons/hi";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService";
+import { HiOutlineRefresh } from "react-icons/hi";
+import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import {
   CommonFormFooter,
-  TransactionActions,
   TransactionLayout,
-} from "../../../Basic/components/Reuseable";
-import {
-  useGetTaxTemplateQuery,
-  useGetTaxTemplateByIdQuery,
-} from "../../../redux/services/TaxTemplateServices.js";
-import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
-import PoSummary from "../PurchaseOrder/PoSummary";
-import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService";
+} from "../../../Basic/components/Reuseable/index.js";
+import { useGetTaxTemplateQuery } from "../../../redux/services/TaxTemplateServices.js";
+import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary.js";
+import PoSummary from "../PurchaseOrder/PoSummary.js";
+import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService.js";
 import { DropdownWithModal } from "../../../Inputs/Reuseable.js";
 import { PartyMaster } from "../index.js";
 import {
@@ -50,23 +49,18 @@ import {
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
-//need to work
-import { useGetItemGroupMasterQuery } from "../../../redux/services/ItemGroupMasterService.js";
-import { useGetItemSubGroupMasterQuery } from "../../../redux/services/ItemSubGroupService";
-import { useGetStyleMasterQuery } from "../../../redux/services/StyleMasterService.js";
-import { useGetSizeMasterQuery } from "../../../redux/services/SizemasterService.js";
-import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService";
 
 const EMPTY_ROW = {
-  styleItemId: "",
-  sizeId: "",
+  fabricId: "",
+  hsnId: "",
+  colorId: "",
   uomId: "",
   gsmId: "",
-  hsnId: "",
+  width: "",
+  loop: "",
+
   qty: "",
   price: "",
-  amount: "",
-  sizeBreakup: [],
 };
 
 const padItems = (itemsArray = []) => {
@@ -89,7 +83,7 @@ const padItems = (itemsArray = []) => {
   return formattedItems;
 };
 
-const ProformaInvoiceForm = ({
+const ProformaInvoiceFabricForm = ({
   readOnly,
   setReadOnly,
   id,
@@ -113,12 +107,6 @@ const ProformaInvoiceForm = ({
   const [termsAndCondition, setTermsAndCondition] = useState("");
   const [termsId, setTermsId] = useState("");
   const [fabricItems, setFabricItems] = useState(padItems([]));
-  const [yarnItems, setYarnItems] = useState(padItems([]));
-  const [activeGridTab, setActiveGridTab] = useState("Fabric");
-  const items = [
-    ...fabricItems.map((i) => ({ ...i, gridType: "Fabric" })),
-    ...yarnItems.map((i) => ({ ...i, gridType: "Yarn" })),
-  ];
   const [taxTemplateId, setTaxTemplateId] = useState("");
   const [summary, setSummary] = useState(false);
   const [discountType, setDiscountType] = useState("");
@@ -137,8 +125,8 @@ const ProformaInvoiceForm = ({
   const [bankId, setBankId] = useState("");
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
+  const [customerPoNo, setCustomerPoNo] = useState("");
   const childRecord = useRef(0);
-  console.log(availableVersions, selectedQuoteVersion, "selectedQuoteVersion");
 
   const customerRef = useRef(null);
   const termsRef = useRef(null);
@@ -162,22 +150,11 @@ const ProformaInvoiceForm = ({
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
   });
-  const { data: fabricList } = useGetFabricMasterQuery({
-    params: { companyId },
-  });
 
   const { data: supplierData } = useGetPartyByIdQuery(customerId, {
     skip: !customerId,
   });
 
-  const { data: itemGroupList } = useGetItemGroupMasterQuery({});
-  const { data: itemSubGroupList } = useGetItemSubGroupMasterQuery({});
-  const { data: styleList } = useGetStyleMasterQuery({
-    params: { companyId },
-  });
-  const { data: sizeList } = useGetSizeMasterQuery({
-    params: { companyId },
-  });
   const [dispatchInvalidate] = useInvalidateTags();
 
   const [addData, { isLoading: isSaving }] = useAddProformaInvoiceMutation();
@@ -269,13 +246,10 @@ const ProformaInvoiceForm = ({
             : [{ sizeId: "", qty: "" }],
       }));
 
-      const fabricData = mappedItems.filter((i) => i.gridType !== "Yarn");
-      const yarnData = mappedItems.filter((i) => i.gridType === "Yarn");
+      const fabricData = mappedItems;
       setFabricItems(padItems(fabricData));
-      setYarnItems(padItems(yarnData));
-      setActiveGridTab("Fabric");
 
-      const cust = data.customer || data.OrderEntry?.customer;
+      const cust = data?.customer;
       if (cust) {
         setCustomerDetails({
           name: cust.name || "",
@@ -283,6 +257,8 @@ const ProformaInvoiceForm = ({
           phone: cust.contactNumber || "",
         });
       }
+
+      setCustomerPoNo(data?.customerPoNo);
     }
   }, [id, singleData]);
 
@@ -325,11 +301,8 @@ const ProformaInvoiceForm = ({
             : [{ styleId: "", sizeBreakup: [{ sizeId: "", qty: "" }] }],
       }));
 
-      const fabricData = mappedItems.filter((i) => i.gridType !== "Yarn");
-      const yarnData = mappedItems.filter((i) => i.gridType === "Yarn");
+      const fabricData = mappedItems;
       setFabricItems(padItems(fabricData));
-      setYarnItems(padItems(yarnData));
-      setActiveGridTab("Fabric");
     }
   }, [selectedQuoteVersion, singleData, id, availableVersions]);
 
@@ -344,46 +317,12 @@ const ProformaInvoiceForm = ({
     setCarriageFinalAmt(finalAmt ? finalAmt.toFixed(2) : "");
   }, [carriageCharge, carriageTax]);
 
-  const handleTabChange = (newTab) => {
-    if (activeGridTab === newTab) return;
-
-    let hasData = false;
-    if (activeGridTab === "Fabric") {
-      hasData = fabricItems.some((i) => i.itemGroupId || i.styleItemId);
-    } else {
-      hasData = yarnItems.some((i) => i.itemGroupId || i.styleItemId);
-    }
-
-    if (hasData) {
-      Swal.fire({
-        title: "Are you sure?",
-        text: "Changing the type will clear the existing data in the table. Do you want to proceed?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, clear data!",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          if (activeGridTab === "Fabric") {
-            setFabricItems(padItems([]));
-          } else {
-            setYarnItems(padItems([]));
-          }
-          setActiveGridTab(newTab);
-        }
-      });
-    } else {
-      setActiveGridTab(newTab);
-    }
-  };
-
   const validateRows = (items) => {
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (!(item.styleItemId || item.fabricId || item.yarnId)) {
-        errors.push(`Row ${index + 1}: Style is required`);
+      if (!item.fabricId) {
+        errors.push(`Row ${index + 1}: Fabric is required`);
       }
       if (!item.hsnId) {
         errors.push(`Row ${index + 1}: HSN is required`);
@@ -578,7 +517,9 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    const filteredItems = items.filter((item) => (item.styleItemId || item.fabricId || item.yarnId));
+    const filteredItems = items.filter(
+      (item) => item.styleItemId || item.fabricId || item.yarnId,
+    );
 
     if (filteredItems.length === 0) {
       Swal.fire({
@@ -707,7 +648,6 @@ const ProformaInvoiceForm = ({
     setTaxTemplateId("");
     setPayTermId("");
     setFabricItems(padItems([]));
-    setYarnItems(padItems([]));
     setCustomerDetails({ name: "", contactPerson: "", phone: "" });
     setSelectedQuoteVersion("Latest");
     setAvailableVersions([]);
@@ -722,6 +662,7 @@ const ProformaInvoiceForm = ({
     setCurrencyId("");
     setBankId("");
     setCarriageTax("");
+    setCustomerPoNo("");
   };
 
   useEffect(() => {
@@ -739,7 +680,7 @@ const ProformaInvoiceForm = ({
     }
   }, [taxTypeList, id]);
 
-  const totalAmount = items.reduce(
+  const totalAmount = fabricItems.reduce(
     (sum, item) => sum + (parseFloat(item.amount) || 0),
     0,
   );
@@ -755,6 +696,17 @@ const ProformaInvoiceForm = ({
       </div>
       <div className="px-3 pt-2 pb-2">
         <div className="flex gap-2 gap-x-4 w-fit ml-6">
+          <div className="w-[105px]">
+            <DateInputNew
+              name="Valid To"
+              value={validityTo}
+              setValue={setValidityTo}
+              disabled={effectiveReadOnly}
+              required={true}
+              type="date"
+              min={docDate}
+            />
+          </div>
           <div className="w-60">
             <DropdownInput
               name="Loading Port"
@@ -795,24 +747,25 @@ const ProformaInvoiceForm = ({
               required={true}
             />
           </div>
-
-          <TextInput
-            name={`Carriage and Air Freight ${currencyId ? `(${isCurrencySymbol})` : ""}`}
-            value={carriageCharge}
-            setValue={setCarriageCharge}
-            disabled={effectiveReadOnly}
-            type="number"
-            min="0"
-            className="text-right"
-            onBlur={(e) =>
-              setCarriageCharge(
-                e.target.value ? Number(e.target.value).toFixed(2) : "",
-              )
-            }
-            onFocus={(e) => {
-              e.target.select();
-            }}
-          />
+          <div className="w-28">
+            <TextInput
+              name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
+              value={carriageCharge}
+              setValue={setCarriageCharge}
+              disabled={effectiveReadOnly}
+              type="number"
+              min="0"
+              className="text-right"
+              onBlur={(e) =>
+                setCarriageCharge(
+                  e.target.value ? Number(e.target.value).toFixed(2) : "",
+                )
+              }
+              onFocus={(e) => {
+                e.target.select();
+              }}
+            />
+          </div>
           <div className="w-24">
             <TextInput
               name="Carriage Tax%"
@@ -962,6 +915,17 @@ const ProformaInvoiceForm = ({
                   disabled={true}
                 />
               </div>
+
+              <TextInput
+                name="Customer Po No"
+                value={customerPoNo}
+                setValue={setCustomerPoNo}
+                disabled={effectiveReadOnly}
+                type="text"
+                onFocus={(e) => {
+                  e.target.select();
+                }}
+              />
               <div className="md:col-span-1">
                 <DropdownInput
                   name="Tax Type"
@@ -1018,17 +982,6 @@ const ProformaInvoiceForm = ({
                   addNewModalWidth="w-[40%] h-[66%]"
                 />
               </div>
-              <div className="w-[105px]">
-                <DateInputNew
-                  name="Valid To"
-                  value={validityTo}
-                  setValue={setValidityTo}
-                  disabled={effectiveReadOnly}
-                  required={true}
-                  type="date"
-                  min={docDate}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -1042,7 +995,7 @@ const ProformaInvoiceForm = ({
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const filteredItems = items.filter((i) => i.styleItemId || i.fabricId || i.yarnId);
+    const filteredItems = fabricItems.filter((i) => i.fabricId);
     if (!filteredItems.length)
       return {
         items: [],
@@ -1061,7 +1014,7 @@ const ProformaInvoiceForm = ({
       discountType,
       discountValue,
     );
-  }, [items, isSupplierOutside, discountType, discountValue]);
+  }, [fabricItems, isSupplierOutside, discountType, discountValue]);
 
   const versionDropdown = (
     <div className="flex items-center gap-2 ml-2">
@@ -1341,13 +1294,11 @@ const ProformaInvoiceForm = ({
     </>
   );
 
-  console.log(items, "ITEMS");
-
   return (
     <>
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
-          poItems={items}
+          poItems={fabricItems}
           totals={enrichedData}
           readOnly={effectiveReadOnly}
           discountType={discountType}
@@ -1365,10 +1316,10 @@ const ProformaInvoiceForm = ({
         widthClass={"w-[90%] h-[90%]"}
       >
         <PDFViewer style={tw("w-full h-full")}>
-          <ProformaInvoicePrintFormat
+          <ProformaInvoiceFabricPrintFormat
             data={{
               ...singleData?.data,
-              items: items.filter(
+              items: fabricItems.filter(
                 (i) =>
                   i.styleItemId ||
                   (i.styleBreakup && i.styleBreakup.length > 0) ||
@@ -1385,14 +1336,12 @@ const ProformaInvoiceForm = ({
             currencyList={currencyList}
             payTermList={payTermList}
             carriageFinalAmt={carriageFinalAmt}
-            styleItemList={styleList}
-            sizeList={sizeList}
           />
         </PDFViewer>
       </Modal>
 
       <TransactionLayout
-        title="Proforma Invoice"
+        title="Fabric Proforma Invoice"
         badge={<ModeChip id={id} readOnly={readOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-7 h-7" />}
         onClose={onClose}
@@ -1402,66 +1351,20 @@ const ProformaInvoiceForm = ({
         detailsLayouts={["default"]}
         gridItems={
           <div className="flex flex-col h-full w-full border border-gray-300 rounded bg-white mt-1">
-            <div className="flex justify-start p-2 border-b border-gray-200">
-              <div className="flex bg-gray-100 p-1 rounded-full space-x-1">
-                <button
-                  type="button"
-                  onClick={() => handleTabChange("Fabric")}
-                  className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    activeGridTab === "Fabric"
-                      ? "bg-indigo-600 text-white shadow"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-                  }`}
-                >
-                  Fabric
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTabChange("Yarn")}
-                  className={`px-6 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                    activeGridTab === "Yarn"
-                      ? "bg-indigo-600 text-white shadow"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-                  }`}
-                >
-                  Yarn
-                </button>
-              </div>
-            </div>
             <div className="flex-1 overflow-hidden">
-              {activeGridTab === "Fabric" ? (
-                <ProformaInvoiceItems
-                  items={fabricItems}
-                  enrichedItems={enrichedData}
-                  setItems={setFabricItems}
-                  readOnly={effectiveReadOnly}
-                  taxTemplateId={taxTemplateId}
-                  id={id}
-                  isCurrencySymbol={isCurrencySymbol}
-                  currencyCode={currencyCode}
-                  termsRef={termsRef}
-                  isCustomerExport={isCustomerExport}
-                  isSupplierOutside={isSupplierOutside}
-                  fabricList={fabricList}
-                />
-              ) : (
-                <ProformaInvoiceYarnItems
-                  items={yarnItems}
-                  enrichedItems={enrichedData}
-                  setItems={setYarnItems}
-                  readOnly={effectiveReadOnly}
-                  taxTemplateId={taxTemplateId}
-                  id={id}
-                  isCurrencySymbol={isCurrencySymbol}
-                  currencyCode={currencyCode}
-                  termsRef={termsRef}
-                  isCustomerExport={isCustomerExport}
-                  isSupplierOutside={isSupplierOutside}
-                  itemGroupList={itemGroupList}
-                  itemSubGroupList={itemSubGroupList}
-                  styleList={styleList}
-                />
-              )}
+              <ProformaInvoiceFabricItems
+                items={fabricItems}
+                enrichedItems={enrichedData}
+                setItems={setFabricItems}
+                readOnly={effectiveReadOnly}
+                taxTemplateId={taxTemplateId}
+                id={id}
+                isCurrencySymbol={isCurrencySymbol}
+                currencyCode={currencyCode}
+                termsRef={termsRef}
+                isCustomerExport={isCustomerExport}
+                isSupplierOutside={isSupplierOutside}
+              />
             </div>
           </div>
         }
@@ -1472,4 +1375,4 @@ const ProformaInvoiceForm = ({
   );
 };
 
-export default ProformaInvoiceForm;
+export default ProformaInvoiceFabricForm;

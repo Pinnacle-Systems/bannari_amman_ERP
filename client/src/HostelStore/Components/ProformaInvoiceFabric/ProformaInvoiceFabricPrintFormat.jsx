@@ -397,7 +397,7 @@ const ContinuationBar = ({ docId, branchName }) => (
 );
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-const ProformaInvoicePrintFormat = ({
+const ProformaInvoiceFabricPrintFormat = ({
   data,
   taxDetails,
   isCustomerExport: isExportProp,
@@ -1549,4 +1549,4 @@ const ProformaInvoicePrintFormat = ({
   );
 };
 
-export default ProformaInvoicePrintFormat;
+export default ProformaInvoiceFabricPrintFormat;

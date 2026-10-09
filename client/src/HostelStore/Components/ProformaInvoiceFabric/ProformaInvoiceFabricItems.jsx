@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs";
-
+import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
 import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService";
 import { useGetUomQuery } from "../../../redux/services/UomMasterService";
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices";
 import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService";
+import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterService";
+import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
+import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
+import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
 import {
   findFromList,
   getCommonParams,
@@ -14,21 +18,17 @@ import { VIEW } from "../../../icons";
 import Modal from "../../../UiComponents/Modal";
 import TaxDetailsFullTemplate from "../TaxDetailsCompleteTemplate";
 import Swal from "sweetalert2";
+import { Gsm, UomMaster, ColorMaster } from "..";
 import {
-  Gsm,
-  HsnMaster,
-  ItemGroup,
-  Size,
-  StyleItemMaster,
-  UomMaster,
-  StyleMaster,
-  ColorMaster,
-} from "..";
-import { FabricMaster } from "../../../Basic/components";
+  DesignMaster,
+  DiaMaster,
+  FabricMaster,
+  GaugeMaster,
+} from "../../../Basic/components";
 import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
 
-const ProformaInvoiceItems = ({
+const ProformaInvoiceFabricItems = ({
   items,
   enrichedItems,
   setItems,
@@ -40,35 +40,51 @@ const ProformaInvoiceItems = ({
   isCustomerExport,
   termsRef,
   isSupplierOutside,
-  fabricList,
 }) => {
-  console.log(fabricList, "fabricList");
-
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
-
+  const { data: fabricList } = useGetFabricMasterQuery({
+    params: { companyId },
+  });
   const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
   const { data: uomList } = useGetUomQuery({ params: { companyId } });
   const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
   const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
+  const { data: designList } = useGetDesignMasterQuery({
+    params: { companyId },
+  });
+  const { data: loopLengthList } = useGetLoopLengthMasterQuery({
+    params: { companyId },
+  });
+  const { data: diaList } = useGetDiaMasterQuery({
+    params: { companyId },
+  });
+  const { data: gaugeList } = useGetGaugeMasterQuery({ params: { companyId } });
+  const kDiaList = diaList?.data?.filter((val) => val?.kDia);
+  const fDiaList = diaList?.data?.filter((val) => val?.fDia);
 
   const EMPTY_ROW = {
     fabricId: "",
     hsnId: "",
+    designId: "",
     colorId: "",
-    uomId: "",
+    loopLengthId: "",
     gsmId: "",
+    kDiaId: "",
+    fDiaId: "",
+    uomId: "",
     width: "",
-    loop: "",
-
     qty: "",
     price: "",
+    discountvalue: "",
+    discounttype: "",
+    taxPercent: "",
   };
 
   const [contextMenu, setContextMenu] = useState(null);
   const [currentSelectedIndex, setCurrentSelectedIndex] = useState(null);
-  const [activeModalRowIndex, setActiveModalRowIndex] = useState(null);
-  const [activeStyleIndex, setActiveStyleIndex] = useState(0);
+  const [currentWeightSelectedIndex, setCurrentWeightSelectedIndex] =
+    useState(null);
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
 
@@ -173,6 +189,20 @@ const ProformaInvoiceItems = ({
   return (
     <>
       <Modal
+        isOpen={Number.isInteger(currentWeightSelectedIndex)}
+        onClose={() => {
+          setCurrentWeightSelectedIndex("");
+        }}
+      >
+        <div className="p-4 bg-white rounded-lg min-w-[50vw] min-h-[40vh]">
+          <h2 className="text-lg font-bold mb-4 text-gray-800">
+            Weight Details
+          </h2>
+          <p className="text-gray-600">Weight configuration goes here...</p>
+        </div>
+      </Modal>
+
+      <Modal
         isOpen={Number.isInteger(currentSelectedIndex)}
         onClose={() => {
           setCurrentSelectedIndex("");
@@ -196,7 +226,7 @@ const ProformaInvoiceItems = ({
         />
       </Modal>
 
-      <div ref={gridWrapperRef} className="h-full">
+      <div ref={gridWrapperRef} className="h-full overflow-x-auto w-[100vw]">
         <TransactionGrid
           title=""
           columns={[
@@ -204,7 +234,7 @@ const ProformaInvoiceItems = ({
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300",
+                "w-10 px-1 py-2 text-center text-xs border border-gray-300 sticky left-0 bg-gray-200 z-[2]",
             },
             {
               key: "desc",
@@ -214,17 +244,30 @@ const ProformaInvoiceItems = ({
                 </>
               ),
               className:
-                "w-80 px-2 py-2 text-center text-xs  border border-gray-300",
+                "w-72 px-2 py-2 text-center text-xs  border border-gray-300 sticky left-[40px] bg-gray-200 z-[2]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center text-xs  border border-gray-300 sticky left-[328px] bg-gray-200 z-[2]",
             },
+
             {
               key: "color",
               label: "Color",
+              className:
+                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+            },
+            {
+              key: "design",
+              label: "Design",
+              className:
+                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+            },
+            {
+              key: "gauge",
+              label: "Gauge",
               className:
                 "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
             },
@@ -232,13 +275,13 @@ const ProformaInvoiceItems = ({
               key: "loop",
               label: "Loop Length",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "gsm",
               label: "GSM",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "kDia",
@@ -279,7 +322,7 @@ const ProformaInvoiceItems = ({
                 </>
               ),
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-20 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "price",
@@ -290,13 +333,13 @@ const ProformaInvoiceItems = ({
                 </>
               ),
               className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "tax",
@@ -321,8 +364,8 @@ const ProformaInvoiceItems = ({
           footer={
             <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300"
-                colSpan={8}
+                className="text-right px-2 border border-gray-300 sticky left-0 bg-gray-200 z-[1]"
+                colSpan={13}
               >
                 Total
               </td>
@@ -348,13 +391,12 @@ const ProformaInvoiceItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-gray-50" colSpan={1} />
-              <td className="border border-gray-300 bg-gray-50" colSpan={1} />
+              <td className="border border-gray-300 bg-gray-200" colSpan={3} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
           getRowClassName={(_, index) =>
-            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`
+            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`
           }
           renderRow={(item, index) => {
             const rowItem = item.row;
@@ -364,7 +406,7 @@ const ProformaInvoiceItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300"
+                  className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
                   onContextMenu={(e) => {
                     if (!readOnly) {
                       handleRightClick(e, originalIndex);
@@ -377,7 +419,7 @@ const ProformaInvoiceItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300"
+                  className="grid-editable-cell border border-gray-300 sticky left-[40px] bg-inherit z-[1]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -396,7 +438,7 @@ const ProformaInvoiceItems = ({
                     nextRef={termsRef}
                   />
                 </td>
-                <td className="border border-gray-300 text-[11px] px-2">
+                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]">
                   <FxSelect
                     value={rowItem.hsnId}
                     onChange={(val) =>
@@ -410,7 +452,8 @@ const ProformaInvoiceItems = ({
                     placeholder=""
                   />
                 </td>
-                <td className="border border-gray-300 text-[11px] px-2">
+
+                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
                   <FxSelectWithAdd
                     value={rowItem.colorId}
                     onChange={(val) =>
@@ -426,13 +469,125 @@ const ProformaInvoiceItems = ({
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
+                <td className=" grid-editable-cell border border-gray-300 text-[11px] px-2">
+                  <FxSelectWithAdd
+                    value={rowItem.designId}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "designId")
+                    }
+                    options={(designList?.data || [])
+                      .filter((i) => (id ? true : i.active))
+                      .map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={DesignMaster}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
+                  <FxSelectWithAdd
+                    value={rowItem.gaugeId}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "gaugeId")
+                    }
+                    options={(gaugeList?.data || [])
+                      .filter((i) => (id ? true : i.active))
+                      .map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={GaugeMaster}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+                <td className="grid-editable-cell border border-gray-300 text-[11px] px-2">
+                  <FxSelectWithAdd
+                    value={rowItem.loopLengthId}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "loopLengthId")
+                    }
+                    options={(loopLengthList?.data || [])
+                      .filter((i) => (id ? true : i.active))
+                      .map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={ColorMaster}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={3}
+                  data-grid-editable="true"
+                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                >
+                  <FxSelectWithAdd
+                    value={rowItem.gsmId}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "gsmId")
+                    }
+                    options={(gsmList?.data || [])
+                      .filter((i) => (id ? true : i.active))
+                      .map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={Gsm}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+
                 <td
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
                   className="grid-editable-cell border border-gray-300 text-[11px] items-center"
                 >
-                  <FxSelect
+                  <FxSelectWithAdd
+                    value={rowItem.kDia}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "kDia")
+                    }
+                    options={(kDiaList || [])
+                      ?.filter((i) => (id ? true : i.active))
+                      ?.map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={DiaMaster}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={2}
+                  data-grid-editable="true"
+                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                >
+                  <FxSelectWithAdd
+                    value={rowItem.fDia}
+                    onChange={(val) =>
+                      handleInputChange(val, originalIndex, "fDia")
+                    }
+                    options={(fDiaList || [])
+                      ?.filter((i) => (id ? true : i.active))
+                      ?.map((i) => ({ label: i.name, value: i.id }))}
+                    readOnly={readOnly}
+                    addNew={true}
+                    placeholder=""
+                    childComponent={DiaMaster}
+                    addNewModalWidth="w-[50%] h-[57%]"
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={2}
+                  data-grid-editable="true"
+                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                >
+                  <FxSelectWithAdd
                     value={rowItem.uomId}
                     onChange={(val) =>
                       handleInputChange(val, originalIndex, "uomId")
@@ -449,44 +604,7 @@ const ProformaInvoiceItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  data-grid-col={3}
-                  data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
-                >
-                  <FxSelect
-                    value={rowItem.gsmId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "gsmId")
-                    }
-                    options={(gsmList?.data || [])
-                      .filter((i) => (id ? true : i.active))
-                      .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
-                    placeholder=""
-                    childComponent={Gsm}
-                    addNewModalWidth="w-[50%] h-[57%]"
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
                   data-grid-col={4}
-                  data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
-                >
-                  <input
-                    type="text"
-                    className="text-left px-3 w-full table-data-input bg-transparent"
-                    value={rowItem.loop}
-                    onChange={(e) =>
-                      handleInputChange(e.target.value, originalIndex, "loop")
-                    }
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={5}
                   data-grid-editable="true"
                   className="grid-editable-cell text-[11px] border border-gray-300 text-right"
                 >
@@ -500,6 +618,23 @@ const ProformaInvoiceItems = ({
                     readOnly={readOnly}
                   />
                 </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={5}
+                  data-grid-editable="true"
+                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
+                >
+                  <button
+                    disabled={!rowItem.fabricId || readOnly}
+                    className="text-indigo-600 w-full hover:text-indigo-800 disabled:text-gray-300 table-data-input"
+                    onClick={() => {
+                      setCurrentWeightSelectedIndex(originalIndex);
+                    }}
+                  >
+                    {VIEW}
+                  </button>
+                </td>
+
                 <td
                   data-grid-row={index}
                   data-grid-col={6}
@@ -670,4 +805,4 @@ const ProformaInvoiceItems = ({
   );
 };
 
-export default ProformaInvoiceItems;
+export default ProformaInvoiceFabricItems;

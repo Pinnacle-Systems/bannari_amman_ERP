@@ -52,7 +52,7 @@ export { default as JobCard } from "./JobCard";
 export { default as PlateMaster } from "./PlateMaster";
 export { default as DieMaster } from "./DieMaster";
 export { default as BoardMaster } from "./BoardMaster";
-export { default as ProformaInvoice } from "./ProformaInvoice/ProfomaInvoice";
+export { default as ProfomaInvoicefabric } from "./ProformaInvoiceFabric/ProfomaInvoicefabric";
 export { default as ProductionAllocation } from "./ProductionAllocation";
 export { default as MachineMaster } from "./MachineMaster";
 export { default as ProductionOutward } from "./ProductionOutward";
