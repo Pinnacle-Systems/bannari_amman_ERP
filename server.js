@@ -89,6 +89,10 @@ import {
   yarnBlendMaster,
   yarnMaster,
   fabricMaster,
+  gaugeMaster,
+  designMaster,
+  loopLengthMaster,
+  diaMaster,
 } from "./src/routes/index.js";
 import { setIo } from "./src/utils/notificationHelper.js";
 import { socketMain } from "./src/sockets/socket.js";
@@ -225,6 +229,10 @@ app.use("/countsMaster", countsMaster);
 app.use("/yarnBlendMaster", yarnBlendMaster);
 app.use("/yarnMaster", yarnMaster);
 app.use("/fabricMaster", fabricMaster);
+app.use("/gaugeMaster", gaugeMaster);
+app.use("/designMaster", designMaster);
+app.use("/loopLengthMaster", loopLengthMaster);
+app.use("/diaMaster", diaMaster);
 
 app.get("/retreiveFile/:fileName", (req, res) => {
   const { fileName } = req.params;
@@ -241,7 +249,7 @@ export const io = new Server(httpServer, {
 setIo(io);
 io.on("connection", socketMain);
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 6800;
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });

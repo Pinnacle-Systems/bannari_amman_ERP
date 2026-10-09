@@ -57,3 +57,7 @@ export { default as CountsMasterApi } from "./CountsMaster.service";
 export { default as YarnBlendMasterApi } from "./YarnBlenMasterService";
 export { default as YarnMasterApi } from "./YarnMasterService";
 export { default as FabricMasterApi } from "./FabricMasterService";
+export { default as LoopLengthMasterApi } from "./LooplengthMasterService";
+export { default as GaugeMasterApi } from "./GaugeMasterService";
+export { default as DesignMasterApi } from "./DesignMasterService";
+export { default as DiaMasterApi } from "./DiaMasterService";

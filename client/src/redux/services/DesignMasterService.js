@@ -1,20 +1,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { DIA_MASTER_API } from "../../Api";
+import { DESIGN_MASTER_API } from "../../Api";
 
 const BASE_URL = process.env.REACT_APP_SERVER_URL;
 
-const DiaMasterApi = createApi({
-  reducerPath: "DiaMaster",
+const DesignMasterApi = createApi({
+  reducerPath: "DesignMaster",
   baseQuery: fetchBaseQuery({
     baseUrl: BASE_URL,
   }),
-  tagTypes: ["DiaMaster"],
+  tagTypes: ["DesignMaster"],
   endpoints: (builder) => ({
-    getDiaMaster: builder.query({
+    getDesignMaster: builder.query({
       query: ({ params, searchParams }) => {
         if (searchParams) {
           return {
-            url: DIA_MASTER_API + "/search/" + searchParams,
+            url: DESIGN_MASTER_API + "/search/" + searchParams,
             method: "GET",
             headers: {
               "Content-type": "application/json; charset=UTF-8",
@@ -23,7 +23,7 @@ const DiaMasterApi = createApi({
           };
         }
         return {
-          url: DIA_MASTER_API,
+          url: DESIGN_MASTER_API,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -31,56 +31,56 @@ const DiaMasterApi = createApi({
           params,
         };
       },
-      providesTags: ["DiaMaster"],
+      providesTags: ["DesignMaster"],
     }),
-    getDiaMasterById: builder.query({
+    getDesignMasterById: builder.query({
       query: (id) => {
         return {
-          url: `${DIA_MASTER_API}/${id}`,
+          url: `${DESIGN_MASTER_API}/${id}`,
           method: "GET",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
         };
       },
-      providesTags: ["DiaMaster"],
+      providesTags: ["DesignMaster"],
     }),
-    addDiaMaster: builder.mutation({
+    addDesignMaster: builder.mutation({
       query: (payload) => ({
-        url: DIA_MASTER_API,
+        url: DESIGN_MASTER_API,
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["DiaMaster"],
+      invalidatesTags: ["DesignMaster"],
     }),
 
-    updateDiaMaster: builder.mutation({
+    updateDesignMaster: builder.mutation({
       query: ({ id, body }) => {
         return {
-          url: `${DIA_MASTER_API}/${id}`,
+          url: `${DESIGN_MASTER_API}/${id}`,
           method: "PUT",
           body,
         };
       },
-      invalidatesTags: ["DiaMaster"],
+      invalidatesTags: ["DesignMaster"],
     }),
-    deleteDiaMaster: builder.mutation({
+    deleteDesignMaster: builder.mutation({
       query: (id) => ({
-        url: `${DIA_MASTER_API}/${id}`,
+        url: `${DESIGN_MASTER_API}/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["DiaMaster"],
+      invalidatesTags: ["DesignMaster"],
     }),
   }),
 });
 
 export const {
-  useGetDiaMasterQuery,
-  useGetDiaMasterByIdQuery,
-  useLazyGetDiaMasterByIdQuery,
-  useAddDiaMasterMutation,
-  useUpdateDiaMasterMutation,
-  useDeleteDiaMasterMutation,
-} = DiaMasterApi;
+  useGetDesignMasterQuery,
+  useGetDesignMasterByIdQuery,
+  useLazyGetDesignMasterByIdQuery,
+  useAddDesignMasterMutation,
+  useUpdateDesignMasterMutation,
+  useDeleteDesignMasterMutation,
+} = DesignMasterApi;
 
-export default DiaMasterApi;
+export default DesignMasterApi;

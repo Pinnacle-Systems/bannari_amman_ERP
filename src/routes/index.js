@@ -89,3 +89,7 @@ export { default as countsMaster } from "./countsMaster.route.js";
 export { default as yarnBlendMaster } from "./yarnBlenMaster.js";
 export { default as yarnMaster } from "./yarnMaster.route.js";
 export { default as fabricMaster } from "./fabricmaster.route.js";
+export { default as gaugeMaster } from "./gaugeMaster.route.js";
+export { default as designMaster } from "./designMaster.route.js";
+export { default as loopLengthMaster } from "./looplengthMaster.route.js";
+export { default as diaMaster } from "./diaMaster.route.js";

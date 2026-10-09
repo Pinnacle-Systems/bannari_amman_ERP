@@ -78,6 +78,10 @@ model Company {
   YarnBlendMaster     YarnBlendMaster[]
   YarnMaster          YarnMaster[]
   FabricMaster        FabricMaster[]
+  gauges              Gauge[]
+  loopLengths         LoopLength[]
+  designMasters       DesignMaster[]
+  diaMasters          DiaMaster[]
 }
 
 model Subscription {
@@ -3528,4 +3532,41 @@ model FabricMaster {
   companyId Int
   hsnId     Int
   Hsn       Hsn     @relation(fields: [hsnId], references: [id])
+}
+
+model Gauge {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  active    Boolean @default(true)
+  Company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+}
+
+model LoopLength {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  active    Boolean @default(true)
+  Company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+}
+
+model DesignMaster {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  active    Boolean @default(true)
+  Company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+}
+
+model DiaMaster {
+  id          Int     @id @default(autoincrement())
+  name        String
+  active      Boolean @default(true)
+  Company     Company @relation(fields: [companyId], references: [id])
+  companyId   Int
+  kDia        Boolean @default(false)
+  fDia        Boolean @default(false)
+  measurement String?
+
+  @@unique([name, kDia, fDia])
 }

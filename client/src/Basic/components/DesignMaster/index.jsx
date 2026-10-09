@@ -7,17 +7,17 @@ import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import {
-  useAddLoopLengthMasterMutation,
-  useDeleteLoopLengthMasterMutation,
-  useGetLoopLengthMasterByIdQuery,
-  useGetLoopLengthMasterQuery,
-  useUpdateLoopLengthMasterMutation,
-} from "../../../redux/services/LooplengthMasterService";
+  useAddDesignMasterMutation,
+  useDeleteDesignMasterMutation,
+  useGetDesignMasterByIdQuery,
+  useGetDesignMasterQuery,
+  useUpdateDesignMasterMutation,
+} from "../../../redux/services/DesignMasterService";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
 
-export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
+export default function DesignMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
@@ -38,16 +38,16 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetLoopLengthMasterQuery({ params, searchParams: searchValue });
+  } = useGetDesignMasterQuery({ params, searchParams: searchValue });
   const {
     data: singleData,
     isFetching: isSingleFetching,
     isLoading: isSingleLoading,
-  } = useGetLoopLengthMasterByIdQuery(id, { skip: !id });
+  } = useGetDesignMasterByIdQuery(id, { skip: !id });
 
-  const [addData] = useAddLoopLengthMasterMutation();
-  const [updateData] = useUpdateLoopLengthMasterMutation();
-  const [removeData] = useDeleteLoopLengthMasterMutation();
+  const [addData] = useAddDesignMasterMutation();
+  const [updateData] = useUpdateDesignMasterMutation();
+  const [removeData] = useDeleteDesignMasterMutation();
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { hasPermission } = UserPermissions();
@@ -156,7 +156,7 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
 
     if (foundItem) {
       Swal.fire({
-        text: "The Loop Length Name already exists.",
+        text: "The Design Name already exists.",
         icon: "warning",
         didClose: () => {
           countryNameRef?.current?.focus();
@@ -246,7 +246,7 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     },
 
     {
-      header: "Loop Length Name",
+      header: "Design Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
       className: "font-medium text-gray-900 text-left uppercase w-72",
@@ -288,7 +288,7 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
                 <div className="grid grid-cols-2 my-2">
                   <div className="w-[50%">
                     <TextInputNew
-                      name="Loop Length Name"
+                      name="Design Name"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -331,7 +331,7 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Loop Length Master
+            Add New Design Master
           </h2>
           <button
             type="button"
@@ -353,13 +353,13 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
   return (
     <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
       <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Loop Length Master</h5>
+        <h5 className="text-lg font-bold text-gray-800">Design Master</h5>
         <div className="flex items-center">
           <button
             onClick={handleCreate}
             className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
           >
-            + Add New Loop Length Master
+            + Add New Design Master
           </button>
         </div>
       </div>
@@ -394,9 +394,9 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
                   <h2 className="text-lg px-2 py-0.5 font-semibold  text-gray-800">
                     {id
                       ? !readOnly
-                        ? "Edit Loop Length Master"
-                        : "Loop Length Master"
-                      : "Add New Loop Length Master"}
+                        ? "Edit Design Master"
+                        : "Design Master"
+                      : "Add New Design Master"}
                   </h2>
                 </div>
                 <div className="flex gap-2">

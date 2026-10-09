@@ -40,3 +40,7 @@ export { default as CountsMaster } from "./CountsMaster";
 export { default as YarnBlendMaster } from "./YarnBlendMaster";
 export { default as YarnMaster } from "./YarnMaster";
 export { default as FabricMaster } from "./FabricMaster";
+export { default as LoopLengthMaster } from "./LoopLengthMaster";
+export { default as GaugeMaster } from "./GaugeMaster";
+export { default as DiaMaster } from "./DiaMaster";
+export { default as DesignMaster } from "./DesignMaster";

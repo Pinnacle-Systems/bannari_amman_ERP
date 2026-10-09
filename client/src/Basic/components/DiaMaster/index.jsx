@@ -3,25 +3,34 @@ import secureLocalStorage from "react-secure-storage";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { Check, Power } from "lucide-react";
-import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
+import {
+  ReusableTable,
+  TextInputNew,
+  ToggleButton,
+  CheckBox,
+  DropdownInput,
+} from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import {
-  useAddLoopLengthMasterMutation,
-  useDeleteLoopLengthMasterMutation,
-  useGetLoopLengthMasterByIdQuery,
-  useGetLoopLengthMasterQuery,
-  useUpdateLoopLengthMasterMutation,
-} from "../../../redux/services/LooplengthMasterService";
+  useAddDiaMasterMutation,
+  useDeleteDiaMasterMutation,
+  useGetDiaMasterByIdQuery,
+  useGetDiaMasterQuery,
+  useUpdateDiaMasterMutation,
+} from "../../../redux/services/DiaMasterService";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
-
-export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
+import { measurementType } from "../../../Utils/DropdownData";
+export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
+  const [kDia, setKDia] = useState(false);
+  const [fDia, setFDia] = useState(false);
+  const [measurement, setMeasurement] = useState("");
   const [name, setName] = useState(defaultName || "");
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
@@ -38,16 +47,16 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetLoopLengthMasterQuery({ params, searchParams: searchValue });
+  } = useGetDiaMasterQuery({ params, searchParams: searchValue });
   const {
     data: singleData,
     isFetching: isSingleFetching,
     isLoading: isSingleLoading,
-  } = useGetLoopLengthMasterByIdQuery(id, { skip: !id });
+  } = useGetDiaMasterByIdQuery(id, { skip: !id });
 
-  const [addData] = useAddLoopLengthMasterMutation();
-  const [updateData] = useUpdateLoopLengthMasterMutation();
-  const [removeData] = useDeleteLoopLengthMasterMutation();
+  const [addData] = useAddDiaMasterMutation();
+  const [updateData] = useUpdateDiaMasterMutation();
+  const [removeData] = useDeleteDiaMasterMutation();
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { hasPermission } = UserPermissions();
@@ -61,6 +70,9 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name || defaultName || "");
+      setKDia(data?.kDia || false);
+      setFDia(data?.fDia || false);
+      setMeasurement(data?.measurement || "");
       setActive(id ? (data?.active ? data.active : false) : true);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
@@ -76,6 +88,9 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
   const data = {
     id,
     name,
+    kDia,
+    fDia,
+    measurement,
     active,
     companyId: secureLocalStorage.getItem(
       sessionStorage.getItem("sessionId") + "userCompanyId",
@@ -149,14 +164,20 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     if (id) {
       foundItem = allData?.data
         ?.filter((i) => i.id != id)
-        ?.some((item) => item.name === name);
+        ?.some(
+          (item) =>
+            item.name === name && item.kDia === kDia && item.fDia === fDia,
+        );
     } else {
-      foundItem = allData?.data?.some((item) => item.name === name);
+      foundItem = allData?.data?.some(
+        (item) =>
+          item.name === name && item.kDia === kDia && item.fDia === fDia,
+      );
     }
 
     if (foundItem) {
       Swal.fire({
-        text: "The Loop Length Name already exists.",
+        text: "The Dia Name already exists.",
         icon: "warning",
         didClose: () => {
           countryNameRef?.current?.focus();
@@ -246,10 +267,22 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     },
 
     {
-      header: "Loop Length Name",
+      header: "Dia Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
       className: "font-medium text-gray-900 text-left uppercase w-72",
+    },
+    {
+      header: "K Dia",
+      accessor: (item) => (item?.kDia ? ACTIVE : INACTIVE),
+      //   cellClass: () => "font-medium  text-gray-900",
+      className: "font-medium text-gray-900 text-center uppercase w-24",
+    },
+    {
+      header: "F Dia",
+      accessor: (item) => (item?.fDia ? ACTIVE : INACTIVE),
+      //   cellClass: () => "font-medium  text-gray-900",
+      className: "font-medium text-gray-900 text-center uppercase w-24",
     },
 
     {
@@ -285,10 +318,35 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
           <div className="bg-white p-3 rounded-md border border-gray-200 h-full">
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
-                <div className="grid grid-cols-2 my-2">
-                  <div className="w-[50%">
+                <div className="flex gap-4 mb-2 w-1/2">
+                  <CheckBox
+                    name="K Dia"
+                    value={kDia}
+                    setValue={(val) => {
+                      setKDia(val);
+                      if (val) {
+                        setFDia(false);
+                        if (measurement === "cms" || measurement === "inches") {
+                          setMeasurement("");
+                        }
+                      }
+                    }}
+                    readOnly={readOnly}
+                  />
+                  <CheckBox
+                    name="F Dia"
+                    value={fDia}
+                    setValue={(val) => {
+                      setFDia(val);
+                      if (val) setKDia(false);
+                    }}
+                    readOnly={readOnly}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 my-2">
+                  <div className="w-full">
                     <TextInputNew
-                      name="Loop Length Name"
+                      name="Dia Name"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -296,6 +354,22 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
                       readOnly={readOnly}
                       disabled={childRecord.current > 0}
                       ref={countryNameRef}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <DropdownInput
+                      name="Measurement Type"
+                      options={
+                        kDia
+                          ? measurementType.filter(
+                              (opt) =>
+                                opt.value !== "cms" && opt.value !== "inches",
+                            )
+                          : measurementType
+                      }
+                      value={measurement}
+                      setValue={setMeasurement}
+                      readOnly={readOnly}
                     />
                   </div>
                 </div>
@@ -331,7 +405,7 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Loop Length Master
+            Add New Dia Master
           </h2>
           <button
             type="button"
@@ -353,13 +427,13 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
   return (
     <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
       <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Loop Length Master</h5>
+        <h5 className="text-lg font-bold text-gray-800">Dia Master</h5>
         <div className="flex items-center">
           <button
             onClick={handleCreate}
             className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
           >
-            + Add New Loop Length Master
+            + Add New Dia Master
           </button>
         </div>
       </div>
@@ -394,9 +468,9 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
                   <h2 className="text-lg px-2 py-0.5 font-semibold  text-gray-800">
                     {id
                       ? !readOnly
-                        ? "Edit Loop Length Master"
-                        : "Loop Length Master"
-                      : "Add New Loop Length Master"}
+                        ? "Edit Dia Master"
+                        : "Dia Master"
+                      : "Add New Dia Master"}
                   </h2>
                 </div>
                 <div className="flex gap-2">
