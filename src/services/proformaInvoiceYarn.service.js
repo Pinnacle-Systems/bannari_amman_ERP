@@ -217,7 +217,9 @@ async function create(body) {
           contentId: item.contentId ? parseInt(item.contentId) : null,
           countsId: item.countsId ? parseInt(item.countsId) : null,
           uomId: item.uomId ? parseInt(item.uomId) : null,
+          noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
 
+          weightPerBag: parseFloat(item.weightPerBag || 0),
           qty: parseFloat(item.qty || 0),
           price: parseFloat(item.price || 0),
           amount: item.amount ? parseFloat(item.amount) : null,
@@ -353,6 +355,9 @@ async function update(id, body, files) {
         parseInt(newItem.contentId || 0) !== parseInt(oldItem.contentId || 0) ||
         parseInt(newItem.countsId || 0) !== parseInt(oldItem.countsId || 0) ||
         parseInt(newItem.uomId || 0) !== parseInt(oldItem.uomId || 0) ||
+        parseInt(newItem.noOfbags || 0) !== parseInt(oldItem.noOfbags || 0) ||
+        parseFloat(newItem.weightPerBag || 0) !==
+          parseFloat(oldItem.weightPerBag || 0) ||
         parseFloat(newItem.qty || 0) !== parseFloat(oldItem.qty || 0) ||
         parseFloat(newItem.price || 0) !== parseFloat(oldItem.price || 0) ||
         parseFloat(newItem.amount || 0) !== parseFloat(oldItem.amount || 0) ||
@@ -408,7 +413,9 @@ async function update(id, body, files) {
               contentId: item.contentId ? parseInt(item.contentId) : null,
               countsId: item.countsId ? parseInt(item.countsId) : null,
               uomId: item.uomId ? parseInt(item.uomId) : null,
+              noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
 
+              weightPerBag: parseFloat(item.weightPerBag || 0),
               qty: parseFloat(item.qty || 0),
               price: parseFloat(item.price || 0),
               amount: item.amount ? parseFloat(item.amount) : null,

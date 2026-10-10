@@ -336,7 +336,7 @@ const ProformaInvoiceFabricForm = ({
     if (userDate < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "User Date cannot be smaller than Doc Date",
+        text: "User Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
@@ -411,19 +411,19 @@ const ProformaInvoiceFabricForm = ({
       return;
     }
 
-    if (validityTo < docDate) {
+    if (validityTo && validityTo < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "Valid To Date cannot be smaller than Doc Date",
+        text: "Valid To Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
       return;
     }
-    if (deliveryDate < docDate) {
+    if (deliveryDate && deliveryDate < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "Delivery Date cannot be smaller than Doc Date",
+        text: "Delivery Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });

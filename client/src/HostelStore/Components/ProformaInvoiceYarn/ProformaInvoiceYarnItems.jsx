@@ -126,6 +126,11 @@ const ProformaInvoiceYarnItems = ({
         newItems[index].taxPercent = hsnObj.tax;
       }
     }
+    if (field === "noOfbags" || field === "weightPerBag") {
+      const noOfbags = parseFloat(newItems[index].noOfbags) || 0;
+      const weightPerBag = parseFloat(newItems[index].weightPerBag) || 0;
+      newItems[index].qty = (noOfbags * weightPerBag).toFixed(3);
+    }
     if (field === "qty" || field === "price") {
       const qty = parseFloat(newItems[index].qty) || 0;
       const price = parseFloat(newItems[index].price) || 0;
@@ -256,18 +261,18 @@ const ProformaInvoiceYarnItems = ({
                 "w-28 px-1 py-2 text-center text-xs  border border-gray-300 sticky left-[328px] bg-gray-200 z-[2]",
             },
 
-            {
-              key: "content",
-              label: "Content",
-              className:
-                "w-36 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
-            {
-              key: "counts",
-              label: "Counts",
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
-            },
+            // {
+            //   key: "content",
+            //   label: "Content",
+            //   className:
+            //     "w-36 px-1 py-2 text-center text-xs  border border-gray-300",
+            // },
+            // {
+            //   key: "counts",
+            //   label: "Counts",
+            //   className:
+            //     "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+            // },
             {
               key: "color",
               label: "Color",
@@ -280,12 +285,24 @@ const ProformaInvoiceYarnItems = ({
               className:
                 "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
             },
+            {
+              key: "noOfbags",
+              label: "No of Bags",
+              className:
+                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+            },
+            {
+              key: "weightPerBag",
+              label: "Weight per Bag",
+              className:
+                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+            },
 
             {
               key: "qty",
               label: (
                 <>
-                  Qty<span className="text-red-500">*</span>
+                  Total Weight<span className="text-red-500">*</span>
                 </>
               ),
               className:
@@ -295,7 +312,7 @@ const ProformaInvoiceYarnItems = ({
               key: "price",
               label: (
                 <>
-                  Price {isCurrencySymbol && `(${isCurrencySymbol})`}
+                  Rate Per KG{isCurrencySymbol && `(${isCurrencySymbol})`}
                   <span className="text-red-500">*</span>
                 </>
               ),
@@ -418,7 +435,7 @@ const ProformaInvoiceYarnItems = ({
                   />
                 </td>
 
-                <td
+                {/* <td
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
@@ -459,7 +476,7 @@ const ProformaInvoiceYarnItems = ({
                     childComponent={CountsMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
-                </td>
+                </td> */}
                 <td
                   data-grid-row={index}
                   className="grid-editable-cell border border-gray-300 text-[11px] px-2"
@@ -512,15 +529,64 @@ const ProformaInvoiceYarnItems = ({
                     type="number"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.noOfbags}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "noOfbags",
+                      )
+                    }
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={6}
+                  data-grid-editable="true"
+                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.weightPerBag}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "weightPerBag",
+                      )
+                    }
+                    onBlur={(e) => {
+                      const val = e.target.value;
+                      if (val) {
+                        handleInputChange(
+                          parseFloat(val).toFixed(3),
+                          originalIndex,
+                          "weightPerBag",
+                        );
+                      }
+                    }}
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-col={6}
+                  data-grid-editable="true"
+                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.qty}
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
-                    readOnly={
-                      readOnly ||
-                      rowItem.pricePerKg > 0 ||
-                      rowItem.weightPerRoll > 0
-                    }
+                    readOnly={true}
+                    disabled={true}
                   />
                 </td>
                 <td
@@ -555,11 +621,7 @@ const ProformaInvoiceYarnItems = ({
                           "price",
                         )
                       }
-                      readOnly={
-                        readOnly ||
-                        rowItem.pricePerKg > 0 ||
-                        rowItem.weightPerRoll > 0
-                      }
+                      readOnly={readOnly}
                       onFocus={(e) => {
                         e.target.select();
                         setFocusedField(`price-${originalIndex}`);
