@@ -2630,9 +2630,12 @@ model FabricItems {
   width             String?
   numberOfRolls     Float?
   weightPerRoll     Float?
+  totalKgs          Float?
   pricePerKg        Float?
+  totalPrice        Float?
   qty               Float?
   price             Float?
+  amount            Float?
   taxPercent        Float?
   discountType      String?
   discountValue     Float?

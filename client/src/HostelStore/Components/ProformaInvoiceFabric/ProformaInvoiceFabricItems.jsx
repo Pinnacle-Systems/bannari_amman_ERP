@@ -275,6 +275,15 @@ const ProformaInvoiceFabricItems = ({
                           "weightPerRoll",
                         )
                       }
+                      onBlur={() => {
+                        const val =
+                          fabricItems[currentWeightSelectedIndex].weightPerRoll;
+                        handleInputChange(
+                          val ? parseFloat(val).toFixed(3) : "",
+                          currentWeightSelectedIndex,
+                          "weightPerRoll",
+                        );
+                      }}
                       readOnly={readOnly}
                     />
                   </div>
@@ -286,12 +295,7 @@ const ProformaInvoiceFabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        (fabricItems[currentWeightSelectedIndex]
-                          .numberOfRolls || 0) *
-                        (
-                          fabricItems[currentWeightSelectedIndex]
-                            .weightPerRoll || 0
-                        )?.toFixed(3)
+                        fabricItems[currentWeightSelectedIndex]?.totalKgs || ""
                       }
                       readOnly
                     />
@@ -315,7 +319,8 @@ const ProformaInvoiceFabricItems = ({
                         )
                       }
                       onBlur={() => {
-                        const val = fabricItems[currentWeightSelectedIndex].pricePerKg;
+                        const val =
+                          fabricItems[currentWeightSelectedIndex].pricePerKg;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(3) : "",
                           currentWeightSelectedIndex,
@@ -333,16 +338,8 @@ const ProformaInvoiceFabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        (fabricItems[currentWeightSelectedIndex]
-                          .numberOfRolls || 0) *
-                        (
-                          fabricItems[currentWeightSelectedIndex]
-                            .weightPerRoll || 0
-                        )?.toFixed(3) *
-                        (
-                          fabricItems[currentWeightSelectedIndex].pricePerKg ||
-                          0
-                        )?.toFixed(3)
+                        fabricItems[currentWeightSelectedIndex]?.totalPrice ||
+                        ""
                       }
                       readOnly
                     />
@@ -507,7 +504,7 @@ const ProformaInvoiceFabricItems = ({
                 </>
               ),
               className:
-                "w-20 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "price",
@@ -518,13 +515,13 @@ const ProformaInvoiceFabricItems = ({
                 </>
               ),
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
             },
             {
               key: "tax",
@@ -549,7 +546,7 @@ const ProformaInvoiceFabricItems = ({
           footer={
             <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 sticky left-0 bg-gray-200 z-[1]"
+                className="text-right px-2 border border-gray-300 bg-gray-200"
                 colSpan={13}
               >
                 Total
@@ -902,7 +899,10 @@ const ProformaInvoiceFabricItems = ({
                         setFocusedField(null);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && index === items.length - 1) {
+                        if (
+                          e.key === "Enter" &&
+                          index === fabricItems.length - 1
+                        ) {
                           addRow();
                         }
                       }}
@@ -920,7 +920,7 @@ const ProformaInvoiceFabricItems = ({
                   </span>
                   {rowItem.fabricId
                     ? formatCurrencyAmount(
-                        ((rowItem.qty || 0) * (rowItem.price || 0)).toFixed(2),
+                        rowItem.amount,
                         currencyCode || isCurrencySymbol,
                       )
                     : ""}

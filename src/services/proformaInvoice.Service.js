@@ -275,9 +275,12 @@ async function create(body) {
           weightPerRoll: item.weightPerRoll
             ? parseFloat(item.weightPerRoll)
             : null,
+          totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
           pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+          totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
           qty: parseFloat(item.qty || 0),
           price: parseFloat(item.price || 0),
+          amount: item.amount ? parseFloat(item.amount) : null,
           taxPercent: parseFloat(item.taxPercent || 0),
           discountType: item.discountType,
           discountValue: parseFloat(item.discountValue || 0),
@@ -422,8 +425,13 @@ async function update(id, body, files) {
           parseFloat(oldItem.weightPerRoll || 0) ||
         parseFloat(newItem.pricePerKg || 0) !==
           parseFloat(oldItem.pricePerKg || 0) ||
+        parseFloat(newItem.totalKgs || 0) !==
+          parseFloat(oldItem.totalKgs || 0) ||
+        parseFloat(newItem.totalPrice || 0) !==
+          parseFloat(oldItem.totalPrice || 0) ||
         parseFloat(newItem.qty || 0) !== parseFloat(oldItem.qty || 0) ||
         parseFloat(newItem.price || 0) !== parseFloat(oldItem.price || 0) ||
+        parseFloat(newItem.amount || 0) !== parseFloat(oldItem.amount || 0) ||
         parseFloat(newItem.taxPercent || 0) !==
           parseFloat(oldItem.taxPercent || 0) ||
         (newItem.discountType || null) !== (oldItem.discountType || null) ||
@@ -489,9 +497,12 @@ async function update(id, body, files) {
               weightPerRoll: item.weightPerRoll
                 ? parseFloat(item.weightPerRoll)
                 : null,
+              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
               pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
               qty: parseFloat(item.qty || 0),
               price: parseFloat(item.price || 0),
+              amount: item.amount ? parseFloat(item.amount) : null,
               taxPercent: parseFloat(item.taxPercent || 0),
               discountType: item.discountType,
               discountValue: parseFloat(item.discountValue || 0),

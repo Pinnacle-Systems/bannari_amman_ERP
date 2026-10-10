@@ -236,11 +236,21 @@ const ProformaInvoiceFabricForm = ({
 
       const targetVersion =
         loadedVersions.length > 0 ? Math.max(...loadedVersions, 1) : 1;
-      const filteredItems = (data.fabricItems || []).filter(
+      const filteredItems = (data?.fabricItems || []).filter(
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
-      console.log(filteredItems, "filteredItems");
-      setFabricItems(padItems(filteredItems));
+      const mappedItems = filteredItems?.map((item) => ({
+        ...item,
+        weightPerRoll: item?.weightPerRoll?.toFixed(3),
+        totalKgs: item?.totalKgs?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(3),
+        totalPrice: item?.totalPrice?.toFixed(2),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
+      }));
+
+      setFabricItems(padItems(mappedItems));
 
       const cust = data?.customer;
       if (cust) {
@@ -269,8 +279,18 @@ const ProformaInvoiceFabricForm = ({
       const filteredItems = itemsArr.filter(
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
+      const mappedItems = filteredItems?.map((item) => ({
+        ...item,
+        weightPerRoll: item?.weightPerRoll?.toFixed(3),
+        totalKgs: item?.totalKgs?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(3),
+        totalPrice: item?.totalPrice?.toFixed(2),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
+      }));
 
-      setFabricItems(padItems(filteredItems));
+      setFabricItems(padItems(mappedItems));
     }
   }, [selectedQuoteVersion, singleData, id, availableVersions]);
 
@@ -385,16 +405,6 @@ const ProformaInvoiceFabricForm = ({
       Swal.fire({
         title: "Warning",
         text: "Delivery Port is required",
-        icon: "warning",
-        confirmButtonColor: "#3085d6",
-      });
-      return;
-    }
-
-    if (!deliveryDate) {
-      Swal.fire({
-        title: "Warning",
-        text: "Delivery Date is required",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
@@ -621,7 +631,7 @@ const ProformaInvoiceFabricForm = ({
               value={loadingId}
               setValue={setLoadingId}
               readOnly={effectiveReadOnly || !isCustomerExport}
-              required={true}
+              required={isCustomerExport}
             />
           </div>
           <div className="w-60">
@@ -635,7 +645,7 @@ const ProformaInvoiceFabricForm = ({
               value={deliveryId}
               setValue={setDeliveryId}
               readOnly={effectiveReadOnly || !isCustomerExport}
-              required={true}
+              required={isCustomerExport}
             />
           </div>
 
@@ -647,7 +657,6 @@ const ProformaInvoiceFabricForm = ({
               disabled={effectiveReadOnly}
               type="date"
               min={docDate}
-              required={true}
             />
           </div>
           <div className="w-28">
@@ -788,7 +797,7 @@ const ProformaInvoiceFabricForm = ({
                   addNewLabel="+ Add New Customer"
                   childComponent={PartyMaster}
                   addNewModalWidth="w-[90%] h-[95%]"
-                  disabled={readOnly || childRecord.current > 0}
+                  disabled={effectiveReadOnly}
                   openOnFocus={true}
                   // autoFocus={true}
                   ref={customerRef}
@@ -876,7 +885,7 @@ const ProformaInvoiceFabricForm = ({
                   )}
                   value={currencyId}
                   setValue={setCurrencyId}
-                  required={true}
+                  required={isCustomerExport}
                   readOnly={effectiveReadOnly || !isCustomerExport}
                   className={`w-full max-w-none`}
                   dropdownMinWidth={240}
@@ -984,8 +993,8 @@ const ProformaInvoiceFabricForm = ({
         rightSummaryTitle="Summary"
         twoColumnRightSummary={true}
         termsRef={termsRef}
-        sectionColClass="md:col-span-4"
-        summaryColClass="md:col-span-4"
+        sectionColClass="md:col-span-3"
+        summaryColClass="md:col-span-6"
         termValue={termsId}
         onTermChange={(value) => setTermsId(value)}
         termOptions={
@@ -1044,7 +1053,7 @@ const ProformaInvoiceFabricForm = ({
           },
           {
             key: "netAmount",
-            label: "Net Amount",
+            label: "Total Amount",
             value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
               !isCustomerExport
                 ? enrichedData.net
@@ -1077,7 +1086,7 @@ const ProformaInvoiceFabricForm = ({
           },
           {
             key: "grandTotal",
-            label: "Grand Total",
+            label: "Net Amount",
             value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
               (!isCustomerExport
                 ? enrichedData.net
