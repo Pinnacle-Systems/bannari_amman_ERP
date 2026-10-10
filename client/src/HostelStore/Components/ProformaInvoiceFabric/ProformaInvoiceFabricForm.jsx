@@ -1192,7 +1192,7 @@ const ProformaInvoiceFabricForm = ({
               Edit
             </button>
           )}
-          {id && (
+          {/* {id && (
             <button
               onClick={() => setPrintModalOpen(true)}
               className="bg-slate-600 text-white px-4 py-1 rounded hover:bg-slate-700 flex items-center text-xs"
@@ -1200,7 +1200,7 @@ const ProformaInvoiceFabricForm = ({
               <FiPrinter className="w-4 h-4 mr-2" />
               Print
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </>
