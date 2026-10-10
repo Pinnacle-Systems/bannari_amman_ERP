@@ -1,45 +1,45 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Swal from "sweetalert2";
-import { TextInput, DropdownInput, DateInputNew } from "../../../Inputs";
+import {
+  TextInput,
+  DropdownInput,
+  DateInputNew,
+} from "../../../Inputs/index.js";
 import {
   useAddProformaInvoiceMutation,
   useUpdateProformaInvoiceMutation,
   useDeleteProformaInvoiceMutation,
   useGetProformaInvoiceByIdQuery,
   useGetProformaInvoiceQuery,
-} from "../../../redux/uniformService/ProformaInvoiceService";
+} from "../../../redux/uniformService/ProformaInvoiceService.js";
 import {
   findFromList,
   getCommonParams,
   ModeChip,
   formatCurrencyAmount,
-} from "../../../Utils/helper";
+} from "../../../Utils/helper.js";
 import {
   dropDownListObject,
   dropDownListObjectMultiple,
-} from "../../../Utils/contructObject";
-import ProformaInvoiceItems from "./ProformaInvoiceItems.jsx";
+} from "../../../Utils/contructObject.js";
+import ProformaInvoiceFabricItems from "./ProformaInvoiceFabricItems.jsx";
 import moment from "moment";
 import { PDFViewer } from "@react-pdf/renderer";
-import Modal from "../../../UiComponents/Modal";
-import ProformaInvoicePrintFormat from "./ProformaInvoicePrintFormat.jsx";
-import tw from "../../../Utils/tailwind-react-pdf";
+import Modal from "../../../UiComponents/Modal/index.js";
+import ProformaInvoiceFabricPrintFormat from "./ProformaInvoiceFabricPrintFormat.jsx";
+import tw from "../../../Utils/tailwind-react-pdf.js";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { FiEdit2, FiSave, FiPrinter, FiEye } from "react-icons/fi";
-import { HiOutlineRefresh, HiX } from "react-icons/hi";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService";
+import { HiOutlineRefresh } from "react-icons/hi";
+import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import {
   CommonFormFooter,
-  TransactionActions,
   TransactionLayout,
-} from "../../../Basic/components/Reuseable";
-import {
-  useGetTaxTemplateQuery,
-  useGetTaxTemplateByIdQuery,
-} from "../../../redux/services/TaxTemplateServices.js";
-import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
-import PoSummary from "../PurchaseOrder/PoSummary";
-import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService";
+} from "../../../Basic/components/Reuseable/index.js";
+import { useGetTaxTemplateQuery } from "../../../redux/services/TaxTemplateServices.js";
+import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary.js";
+import PoSummary from "../PurchaseOrder/PoSummary.js";
+import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService.js";
 import { DropdownWithModal } from "../../../Inputs/Reuseable.js";
 import { PartyMaster } from "../index.js";
 import {
@@ -48,24 +48,31 @@ import {
   PayTermMaster,
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
-import { conversionTypes } from "../../../Utils/DropdownData.js";
 import { useDispatch } from "react-redux";
-//need to work
-import { useGetItemGroupMasterQuery } from "../../../redux/services/ItemGroupMasterService.js";
-import { useGetItemSubGroupMasterQuery } from "../../../redux/services/ItemSubGroupService";
-import { useGetStyleMasterQuery } from "../../../redux/services/StyleMasterService.js";
-import { useGetSizeMasterQuery } from "../../../redux/services/SizemasterService.js";
 
 const EMPTY_ROW = {
-  styleItemId: "",
-  sizeId: "",
-  uomId: "",
-  gsmId: "",
+  fabricId: "",
   hsnId: "",
+  colorId: "",
+  designId: "",
+  gaugeId: "",
+  loopLengthId: "",
+  gsmId: "",
+  kDiaId: "",
+  fDiaId: "",
+  uomId: "",
+  width: "",
+  numberOfRolls: "",
+  weightPerRoll: "",
+  totalKgs: "",
+  pricePerKg: "",
+  totalPrice: "",
   qty: "",
   price: "",
   amount: "",
-  sizeBreakup: [],
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
 };
 
 const padItems = (itemsArray = []) => {
@@ -88,7 +95,7 @@ const padItems = (itemsArray = []) => {
   return formattedItems;
 };
 
-const ProformaInvoiceForm = ({
+const ProformaInvoiceFabricForm = ({
   readOnly,
   setReadOnly,
   id,
@@ -111,7 +118,7 @@ const ProformaInvoiceForm = ({
   const [remarks, setRemarks] = useState("");
   const [termsAndCondition, setTermsAndCondition] = useState("");
   const [termsId, setTermsId] = useState("");
-  const [items, setItems] = useState(padItems([]));
+  const [fabricItems, setFabricItems] = useState(padItems([]));
   const [taxTemplateId, setTaxTemplateId] = useState("");
   const [summary, setSummary] = useState(false);
   const [discountType, setDiscountType] = useState("");
@@ -120,20 +127,18 @@ const ProformaInvoiceForm = ({
   const [payTermId, setPayTermId] = useState("");
   const [validityTo, setValidityTo] = useState("");
   const [currencyId, setCurrencyId] = useState("");
-  const [accordionOpen, setAccordionOpen] = useState(true);
   const [loadingId, setLoadingId] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [weightInKg, setWeightInKg] = useState("");
+
   const [carriageCharge, setCarriageCharge] = useState("");
   const [selectedQuoteVersion, setSelectedQuoteVersion] = useState("Latest");
   const [availableVersions, setAvailableVersions] = useState([]);
   const [bankId, setBankId] = useState("");
-  const [conversionType, setConversionType] = useState("PCS");
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
+  const [customerPoNo, setCustomerPoNo] = useState("");
   const childRecord = useRef(0);
-  console.log(availableVersions, selectedQuoteVersion, "selectedQuoteVersion");
 
   const customerRef = useRef(null);
   const termsRef = useRef(null);
@@ -157,24 +162,16 @@ const ProformaInvoiceForm = ({
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
   });
+
   const { data: supplierData } = useGetPartyByIdQuery(customerId, {
     skip: !customerId,
   });
 
-  const { data: itemGroupList } = useGetItemGroupMasterQuery({});
-  const { data: itemSubGroupList } = useGetItemSubGroupMasterQuery({});
-  const { data: styleList } = useGetStyleMasterQuery({
-    params: { companyId },
-  });
-  const { data: sizeList } = useGetSizeMasterQuery({
-    params: { companyId },
-  });
   const [dispatchInvalidate] = useInvalidateTags();
 
   const [addData, { isLoading: isSaving }] = useAddProformaInvoiceMutation();
   const [updateData, { isLoading: isUpdating }] =
     useUpdateProformaInvoiceMutation();
-  const [removeData] = useDeleteProformaInvoiceMutation();
 
   const isCustomerExport = supplierData?.data?.isCustomerExport;
   const isCurrencySymbol = currencyList?.data?.find(
@@ -221,16 +218,17 @@ const ProformaInvoiceForm = ({
           ? parseFloat(data.carriageCharge).toFixed(2)
           : "",
       );
-      setWeightInKg(parseFloat(data.weightInKg).toFixed(3) || "");
+
       setBankId(data.bankId || "");
-      setConversionType(data.conversionType || "PCS");
       setCarriageTax(data.carriageTax || "");
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
 
       let loadedVersions = [];
-      if (data.items?.length > 0) {
+      if (data.fabricItems?.length > 0) {
         loadedVersions = [
-          ...new Set(data.items.map((i) => i.quoteVersion).filter(Boolean)),
+          ...new Set(
+            data.fabricItems.map((i) => i.quoteVersion).filter(Boolean),
+          ),
         ].sort((a, b) => b - a);
       }
       setAvailableVersions(loadedVersions);
@@ -238,32 +236,23 @@ const ProformaInvoiceForm = ({
 
       const targetVersion =
         loadedVersions.length > 0 ? Math.max(...loadedVersions, 1) : 1;
-      const filteredItems = (data.items || []).filter(
+      const filteredItems = (data?.fabricItems || []).filter(
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
-      const mappedItems = filteredItems.map((item) => ({
+      const mappedItems = filteredItems?.map((item) => ({
         ...item,
-        itemGroupId: item?.ItemGroup?.id || "",
-        itemSubGroupId: item?.ItemSubGroup?.id || "",
-        styleItemId: item?.StyleItem?.id || "",
-        uomId: item?.Uom?.id || "",
-        gsmId: item?.Gsm?.id || "",
-        hsnId: item?.Hsn?.id || "",
-
-        sizeBreakup:
-          item?.pisizeBreakups?.length > 0
-            ? item.pisizeBreakups.map((val) => {
-                return {
-                  ...val,
-                  sizeId: val.sizeId || "",
-                };
-              })
-            : [{ sizeId: "", qty: "" }],
+        weightPerRoll: item?.weightPerRoll?.toFixed(3),
+        totalKgs: item?.totalKgs?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(3),
+        totalPrice: item?.totalPrice?.toFixed(2),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
       }));
 
-      setItems(padItems(mappedItems));
+      setFabricItems(padItems(mappedItems));
 
-      const cust = data.customer || data.OrderEntry?.customer;
+      const cust = data?.customer;
       if (cust) {
         setCustomerDetails({
           name: cust.name || "",
@@ -271,12 +260,14 @@ const ProformaInvoiceForm = ({
           phone: cust.contactNumber || "",
         });
       }
+
+      setCustomerPoNo(data?.customerPoNo);
     }
   }, [id, singleData]);
 
   useEffect(() => {
-    if (singleData?.data?.items && id) {
-      const itemsArr = singleData.data.items;
+    if (singleData?.data?.fabricItems && id) {
+      const itemsArr = singleData.data.fabricItems;
       const maxVersion =
         availableVersions.length > 0 ? Math.max(...availableVersions, 1) : 1;
       let targetVersion = maxVersion;
@@ -288,59 +279,20 @@ const ProformaInvoiceForm = ({
       const filteredItems = itemsArr.filter(
         (i) => (i.quoteVersion || 1) === targetVersion,
       );
-
-      const mappedItems = filteredItems.map((item) => ({
+      const mappedItems = filteredItems?.map((item) => ({
         ...item,
-        itemGroupId: item?.ItemGroup?.id || "",
-        itemSubGroupId: item?.ItemSubGroup?.id || "",
-        styleItemId: item?.StyleItem?.id || "",
-        uomId: item?.Uom?.id || "",
-        gsmId: item?.Gsm?.id || "",
-        hsnId: item?.Hsn?.id || "",
-
-        styleBreakup:
-          item?.PIStyleBreakup?.length > 0
-            ? item.PIStyleBreakup.map((st) => ({
-                styleId: st.styleId || "",
-                sizeBreakup:
-                  st.PISizeBreakup?.length > 0
-                    ? st.PISizeBreakup.map((sz) => ({
-                        sizeId: sz.sizeId || "",
-                        qty: sz.qty || "",
-                      }))
-                    : [{ sizeId: "", qty: "" }],
-              }))
-            : [{ styleId: "", sizeBreakup: [{ sizeId: "", qty: "" }] }],
+        weightPerRoll: item?.weightPerRoll?.toFixed(3),
+        totalKgs: item?.totalKgs?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(3),
+        totalPrice: item?.totalPrice?.toFixed(2),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
       }));
 
-      setItems(padItems(mappedItems));
+      setFabricItems(padItems(mappedItems));
     }
   }, [selectedQuoteVersion, singleData, id, availableVersions]);
-
-  useEffect(() => {
-    if (!conversionType) return;
-
-    setItems((prev) =>
-      prev.map((item) => {
-        const qty = parseFloat(item.qty) || 0;
-        const price = parseFloat(item.price) || 0;
-        const dozen = qty / 12;
-
-        return {
-          ...item,
-          dozen: dozen ? dozen.toFixed(2) : "",
-          amount:
-            conversionType === "DOZEN"
-              ? dozen && price
-                ? (dozen * price).toFixed(2)
-                : ""
-              : qty && price
-                ? (qty * price).toFixed(2)
-                : "",
-        };
-      }),
-    );
-  }, [conversionType]);
 
   useEffect(() => {
     customerRef.current?.focus();
@@ -357,8 +309,8 @@ const ProformaInvoiceForm = ({
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (!item.styleItemId) {
-        errors.push(`Row ${index + 1}: Style is required`);
+      if (!item.fabricId) {
+        errors.push(`Row ${index + 1}: Fabric is required`);
       }
       if (!item.hsnId) {
         errors.push(`Row ${index + 1}: HSN is required`);
@@ -369,66 +321,11 @@ const ProformaInvoiceForm = ({
       if (!item.qty || Number(item.qty) <= 0) {
         errors.push(`Row ${index + 1}: Qty is required`);
       }
-      const key = `${item.styleItemId}_${item.uomId}`;
+      const key = `${item.fabricId}_${item.designId}_${item.gsmId}_${item.colorId}`;
       if (seen.has(key)) {
         errors.push(`Row ${index + 1}: Duplicate item found`);
       } else {
         seen.add(key);
-      }
-
-      if (item.styleBreakup?.length) {
-        const sizeSeen = new Set();
-        let sizeSum = 0;
-
-        item.styleBreakup.forEach((style, styleIndex) => {
-          if (!style.styleId) {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Style is required`,
-            );
-          }
-
-          if (style.sizeBreakup?.length) {
-            style.sizeBreakup.forEach((size, sizeIndex) => {
-              if (!size.sizeId) {
-                errors.push(
-                  `Row ${index + 1}, Style Row ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Size is required`,
-                );
-              }
-
-              const qty = Number(size.qty || 0);
-              sizeSum += qty;
-
-              if (qty <= 0) {
-                errors.push(
-                  `Row ${index + 1}, Style Row ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Qty must be greater than 0`,
-                );
-              }
-
-              if (style.styleId && size.sizeId) {
-                const key = `${style.styleId}_${size.sizeId}`;
-                if (sizeSeen.has(key)) {
-                  errors.push(
-                    `Row ${index + 1}: Duplicate style and size combination found`,
-                  );
-                } else {
-                  sizeSeen.add(key);
-                }
-              }
-            });
-          } else {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Size breakup is required`,
-            );
-          }
-        });
-
-        if (sizeSum !== Number(item.qty)) {
-          errors.push(
-            `Row ${index + 1}: Sum of size quantities (${sizeSum}) must match the total quantity (${item.qty})`,
-          );
-        }
-      } else {
-        errors.push(`Row ${index + 1}: Style breakup is required`);
       }
     });
 
@@ -514,16 +411,6 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    if (!deliveryDate) {
-      Swal.fire({
-        title: "Warning",
-        text: "Delivery Date is required",
-        icon: "warning",
-        confirmButtonColor: "#3085d6",
-      });
-      return;
-    }
-
     if (validityTo < docDate) {
       Swal.fire({
         title: "Warning",
@@ -543,16 +430,6 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    if (!weightInKg) {
-      Swal.fire({
-        title: "Warning",
-        text: "Weight is required",
-        icon: "warning",
-        confirmButtonColor: "#3085d6",
-      });
-      return;
-    }
-
     if (isCustomerExport && !bankId) {
       Swal.fire({
         title: "Warning",
@@ -563,7 +440,7 @@ const ProformaInvoiceForm = ({
       return;
     }
 
-    const filteredItems = items.filter((item) => item.styleItemId);
+    const filteredItems = fabricItems.filter((item) => item.fabricId);
 
     if (filteredItems.length === 0) {
       Swal.fire({
@@ -604,25 +481,23 @@ const ProformaInvoiceForm = ({
       docDate,
       userDate,
       customerId,
-      // orderEntryId,
-      remarks,
-      termsAndCondition,
-      termsId,
+      customerPoNo,
       taxTemplateId,
-      items: JSON.stringify(filteredItems),
       payTermId,
-      discountType,
-      discountValue,
-      validityTo,
       currencyId,
+      validityTo,
       loadingId,
       deliveryId,
       deliveryDate,
-      weightInKg,
       carriageCharge,
-      bankId,
-      conversionType,
       carriageTax,
+      bankId,
+      filteredItems,
+      termsAndCondition,
+      termsId,
+      remarks,
+      discountType,
+      discountValue,
     };
 
     try {
@@ -692,7 +567,7 @@ const ProformaInvoiceForm = ({
     setTermsId("");
     setTaxTemplateId("");
     setPayTermId("");
-    setItems(padItems([]));
+    setFabricItems(padItems([]));
     setCustomerDetails({ name: "", contactPerson: "", phone: "" });
     setSelectedQuoteVersion("Latest");
     setAvailableVersions([]);
@@ -701,13 +576,13 @@ const ProformaInvoiceForm = ({
     setLoadingId("");
     setDeliveryId("");
     setDeliveryDate("");
-    setWeightInKg("");
+
     setCarriageCharge("");
     setValidityTo("");
     setCurrencyId("");
-    setAccordionOpen(false);
     setBankId("");
     setCarriageTax("");
+    setCustomerPoNo("");
   };
 
   useEffect(() => {
@@ -725,122 +600,68 @@ const ProformaInvoiceForm = ({
     }
   }, [taxTypeList, id]);
 
-  const totalAmount = items.reduce(
-    (sum, item) => sum + (parseFloat(item.amount) || 0),
-    0,
-  );
-
-  // Actions moved to JSX
-
   const shippingAccordion = (
     <div className="border border-slate-200 rounded-md bg-white shadow-sm mt-1">
-      {/* Accordion Header */}
-      <button
-        type="button"
-        onClick={() => setAccordionOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-left"
-      >
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
+      <div className="w-full flex items-center justify-between px-3 py-1.5 text-left bg-gray-50 rounded-t-md border-b border-slate-200">
+        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">
           Other Details
         </span>
-        <svg
-          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-            accordionOpen ? "rotate-180" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </button>
+      </div>
+      <div className="px-3 pt-2 pb-2">
+        <div className="flex gap-2 gap-x-4 w-fit ml-6">
+          <div className="w-[105px]">
+            <DateInputNew
+              name="Valid To"
+              value={validityTo}
+              setValue={setValidityTo}
+              disabled={effectiveReadOnly}
+              required={true}
+              type="date"
+              min={docDate}
+            />
+          </div>
+          <div className="w-60">
+            <DropdownInput
+              name="Loading Port"
+              options={dropDownListObject(
+                cityList?.data?.filter((item) => item.active),
+                "name",
+                "id",
+              )}
+              value={loadingId}
+              setValue={setLoadingId}
+              readOnly={effectiveReadOnly || !isCustomerExport}
+              required={isCustomerExport}
+            />
+          </div>
+          <div className="w-60">
+            <DropdownInput
+              name="Delivery Port"
+              options={dropDownListObject(
+                cityList?.data?.filter((item) => item.active),
+                "name",
+                "id",
+              )}
+              value={deliveryId}
+              setValue={setDeliveryId}
+              readOnly={effectiveReadOnly || !isCustomerExport}
+              required={isCustomerExport}
+            />
+          </div>
 
-      {/* Accordion Body */}
-      {accordionOpen && (
-        <div className="px-3 pb-2 border-t border-slate-100">
-          <div className="flex gap-2 gap-x-4 w-fit ml-6">
-            {isCustomerExport && (
-              <>
-                <div className="w-60">
-                  <DropdownInput
-                    name="Loading Port"
-                    options={dropDownListObject(
-                      cityList?.data?.filter((item) => item.active),
-                      "name",
-                      "id",
-                    )}
-                    value={loadingId}
-                    setValue={setLoadingId}
-                    readOnly={effectiveReadOnly}
-                    required={true}
-                  />
-                </div>
-                <div className="w-60">
-                  <DropdownInput
-                    name="Delivery Port"
-                    options={dropDownListObject(
-                      cityList?.data?.filter((item) => item.active),
-                      "name",
-                      "id",
-                    )}
-                    value={deliveryId}
-                    setValue={setDeliveryId}
-                    readOnly={effectiveReadOnly}
-                    required={true}
-                  />
-                </div>
-              </>
-            )}
-            <div className="w-[105px]">
-              <DateInputNew
-                name="Delivery Date"
-                value={deliveryDate}
-                setValue={setDeliveryDate}
-                disabled={effectiveReadOnly}
-                type="date"
-                min={docDate}
-                required={true}
-              />
-            </div>
-            <div className="w-32">
-              <DropdownInput
-                name="Conversion"
-                options={conversionTypes}
-                value={conversionType}
-                setValue={(value) => setConversionType(value)}
-                required={true}
-                readOnly={effectiveReadOnly}
-                disabled={childRecord.current > 0 || readOnly}
-              />
-            </div>
-            <div className="w-24">
-              <TextInput
-                name="WeightInKg (KG)"
-                value={weightInKg}
-                setValue={setWeightInKg}
-                disabled={effectiveReadOnly}
-                type="number"
-                min="0"
-                className="text-right"
-                required={true}
-                onBlur={(e) =>
-                  setWeightInKg(
-                    e.target.value ? Number(e.target.value).toFixed(3) : "",
-                  )
-                }
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-
+          <div className="w-[105px]">
+            <DateInputNew
+              name="Delivery Date"
+              value={deliveryDate}
+              setValue={setDeliveryDate}
+              disabled={effectiveReadOnly}
+              type="date"
+              min={docDate}
+            />
+          </div>
+          <div className="w-28">
             <TextInput
-              name={`Carriage and Air Freight ${currencyId ? `(${isCurrencySymbol})` : ""}`}
+              name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
               value={carriageCharge}
               setValue={setCarriageCharge}
               disabled={effectiveReadOnly}
@@ -856,62 +677,62 @@ const ProformaInvoiceForm = ({
                 e.target.select();
               }}
             />
-            <div className="w-24">
-              <TextInput
-                name="Carriage Tax%"
-                value={carriageTax}
-                setValue={setCarriageTax}
-                disabled={effectiveReadOnly}
-                type="number"
-                min="0"
-                className="text-right"
-                onBlur={(e) =>
-                  setCarriageTax(
-                    e.target.value ? Number(e.target.value).toFixed(2) : "",
-                  )
-                }
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-            <div className="w-32">
-              <TextInput
-                name="Carriage Final Amount"
-                value={carriageFinalAmt}
-                disabled={true}
-                type="number"
-                min="0"
-                className="text-right"
-                onFocus={(e) => {
-                  e.target.select();
-                }}
-              />
-            </div>
-            <div className="w-72">
-              <DropdownWithModal
-                name="Advising Bank"
-                options={dropDownListObjectMultiple(
-                  id
-                    ? bankList?.data
-                    : bankList?.data?.filter((item) => item?.active),
-                  ["name", "Branch.name"],
-                  "id",
-                )}
-                value={bankId}
-                setValue={setBankId}
-                required={isCustomerExport}
-                readOnly={effectiveReadOnly}
-                className={`w-[150px]`}
-                addNewLabel="+ Add New Bank"
-                childComponent={BankMaster}
-                addNewModalWidth="w-[45%] h-[64%]"
-                disabled={readOnly}
-              />
-            </div>
+          </div>
+          <div className="w-24">
+            <TextInput
+              name="Carriage Tax%"
+              value={carriageTax}
+              setValue={setCarriageTax}
+              disabled={effectiveReadOnly}
+              type="number"
+              min="0"
+              className="text-right"
+              onBlur={(e) =>
+                setCarriageTax(
+                  e.target.value ? Number(e.target.value).toFixed(2) : "",
+                )
+              }
+              onFocus={(e) => {
+                e.target.select();
+              }}
+            />
+          </div>
+          <div className="w-32">
+            <TextInput
+              name="Carriage Final Amount"
+              value={carriageFinalAmt}
+              disabled={true}
+              type="number"
+              min="0"
+              className="text-right"
+              onFocus={(e) => {
+                e.target.select();
+              }}
+            />
+          </div>
+          <div className="w-72">
+            <DropdownWithModal
+              name="Advising Bank"
+              options={dropDownListObjectMultiple(
+                id
+                  ? bankList?.data
+                  : bankList?.data?.filter((item) => item?.active),
+                ["name", "Branch.name"],
+                "id",
+              )}
+              value={bankId}
+              setValue={setBankId}
+              required={isCustomerExport}
+              readOnly={effectiveReadOnly}
+              className={`w-[150px]`}
+              addNewLabel="+ Add New Bank"
+              childComponent={BankMaster}
+              addNewModalWidth="w-[45%] h-[64%]"
+              disabled={readOnly}
+            />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -976,7 +797,7 @@ const ProformaInvoiceForm = ({
                   addNewLabel="+ Add New Customer"
                   childComponent={PartyMaster}
                   addNewModalWidth="w-[90%] h-[95%]"
-                  disabled={readOnly || childRecord.current > 0}
+                  disabled={effectiveReadOnly}
                   openOnFocus={true}
                   // autoFocus={true}
                   ref={customerRef}
@@ -1006,6 +827,17 @@ const ProformaInvoiceForm = ({
                   disabled={true}
                 />
               </div>
+
+              <TextInput
+                name="Customer Po No"
+                value={customerPoNo}
+                setValue={setCustomerPoNo}
+                disabled={effectiveReadOnly}
+                type="text"
+                onFocus={(e) => {
+                  e.target.select();
+                }}
+              />
               <div className="md:col-span-1">
                 <DropdownInput
                   name="Tax Type"
@@ -1041,38 +873,25 @@ const ProformaInvoiceForm = ({
                   addNewModalWidth="w-[40%] h-[66%]"
                 />
               </div>
-              {isCustomerExport && (
-                <div className="md:col-span-1">
-                  <DropdownWithModal
-                    name="Currency"
-                    options={dropDownListObject(
-                      id
-                        ? currencyList?.data
-                        : currencyList?.data?.filter((item) => item?.active),
-                      "name",
-                      "id",
-                    )}
-                    value={currencyId}
-                    setValue={setCurrencyId}
-                    required={true}
-                    readOnly={effectiveReadOnly}
-                    className={`w-full max-w-none`}
-                    dropdownMinWidth={240}
-                    addNewLabel="+ Add New Currency"
-                    childComponent={CurrencyMaster}
-                    addNewModalWidth="w-[40%] h-[66%]"
-                  />
-                </div>
-              )}
-              <div className="w-[105px]">
-                <DateInputNew
-                  name="Valid To"
-                  value={validityTo}
-                  setValue={setValidityTo}
-                  disabled={effectiveReadOnly}
-                  required={true}
-                  type="date"
-                  min={docDate}
+              <div className="md:col-span-1">
+                <DropdownWithModal
+                  name="Currency"
+                  options={dropDownListObject(
+                    id
+                      ? currencyList?.data
+                      : currencyList?.data?.filter((item) => item?.active),
+                    "name",
+                    "id",
+                  )}
+                  value={currencyId}
+                  setValue={setCurrencyId}
+                  required={isCustomerExport}
+                  readOnly={effectiveReadOnly || !isCustomerExport}
+                  className={`w-full max-w-none`}
+                  dropdownMinWidth={240}
+                  addNewLabel="+ Add New Currency"
+                  childComponent={CurrencyMaster}
+                  addNewModalWidth="w-[40%] h-[66%]"
                 />
               </div>
             </div>
@@ -1088,7 +907,7 @@ const ProformaInvoiceForm = ({
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const filteredItems = items.filter((i) => i.styleItemId);
+    const filteredItems = fabricItems.filter((i) => i.fabricId);
     if (!filteredItems.length)
       return {
         items: [],
@@ -1106,9 +925,8 @@ const ProformaInvoiceForm = ({
       isSupplierOutside,
       discountType,
       discountValue,
-      conversionType === "DOZEN" ? true : false,
     );
-  }, [items, isSupplierOutside, discountType, discountValue, conversionType]);
+  }, [fabricItems, isSupplierOutside, discountType, discountValue]);
 
   const versionDropdown = (
     <div className="flex items-center gap-2 ml-2">
@@ -1172,12 +990,11 @@ const ProformaInvoiceForm = ({
         setTerms={setTermsAndCondition}
         readOnly={effectiveReadOnly}
         showTermSelect={true}
-        hasSummaryTitle={
-          <span className="block text-center w-full">Summary</span>
-        }
+        rightSummaryTitle="Summary"
+        twoColumnRightSummary={true}
         termsRef={termsRef}
-        sectionColClass="md:col-span-4"
-        summaryColClass="md:col-span-4"
+        sectionColClass="md:col-span-3"
+        summaryColClass="md:col-span-6"
         termValue={termsId}
         onTermChange={(value) => setTermsId(value)}
         termOptions={
@@ -1189,191 +1006,102 @@ const ProformaInvoiceForm = ({
         }
         totalsRows={[
           {
-            key: "summary_grid",
-            label: "",
-            valueContainerClassName: "w-full",
-            renderValue: () => {
-              const taxTotals = !isCustomerExport
-                ? (enrichedData.slabBreakup || []).reduce((acc, curr) => {
-                    const type = curr?.tax?.split(" ")[0];
-                    acc[type] = (acc[type] || 0) + curr.amount;
-                    return acc;
-                  }, {})
-                : {};
-
-              return (
-                <div className="grid grid-cols-2 w-full gap-x-4 gap-y-1">
-                  {/* Left Column */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Total Discount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.itemDiscount +
-                            enrichedData.overallDiscount >
-                            0
-                            ? enrichedData.itemDiscount +
-                                enrichedData.overallDiscount
-                            : 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Taxable Amount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.taxable || 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    {taxTotals.CGST !== undefined &&
-                    taxTotals.SGST !== undefined ? (
-                      <div className="flex items-center justify-between w-full max-w-[210px]">
-                        <div className="flex items-center gap-1">
-                          <span className="text-slate-800 w-[32px]">CGST</span>
-                          <span className="text-slate-800">:</span>
-                          <span className="font-medium text-slate-800">
-                            {formatCurrencyAmount(
-                              taxTotals.CGST,
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-slate-800 w-[32px]">SGST</span>
-                          <span className="text-slate-800">:</span>
-                          <span className="font-medium text-slate-800 text-right">
-                            {formatCurrencyAmount(
-                              taxTotals.SGST,
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      Object.keys(taxTotals).map((type) => (
-                        <div
-                          key={type}
-                          className="flex items-center justify-between w-full max-w-[210px]"
-                        >
-                          <div className="flex justify-between w-[130px] text-slate-800">
-                            <span>{type}</span>
-                            <span>:</span>
-                          </div>
-                          <span className="font-medium text-slate-800 text-right w-[65px]">
-                            {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                            {formatCurrencyAmount(
-                              taxTotals[type],
-                              currencyCode || isCurrencySymbol,
-                            )}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Round Off</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          enrichedData.roundOff || 0,
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                        <span>Net Amount</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-bold text-indigo-700 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          !isCustomerExport
-                            ? enrichedData.net
-                            : (enrichedData.items?.reduce(
-                                (sum, item) =>
-                                  sum + (parseFloat(item.amount) || 0),
-                                0,
-                              ) || 0) -
-                                (enrichedData.itemDiscount +
-                                  enrichedData.overallDiscount >
-                                0
-                                  ? enrichedData.itemDiscount +
-                                    enrichedData.overallDiscount
-                                  : 0),
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800">
-                        <span>Carriage Charges</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-medium text-slate-800 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {!isNaN(parseFloat(carriageFinalAmt)) &&
-                        carriageFinalAmt !== ""
-                          ? formatCurrencyAmount(
-                              carriageFinalAmt,
-                              currencyCode || isCurrencySymbol,
-                            )
-                          : "0.00"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between w-full max-w-[210px]">
-                      <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                        <span>Grand Total</span>
-                        <span>:</span>
-                      </div>
-                      <span className="font-bold text-indigo-700 text-right w-[65px]">
-                        {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                        {formatCurrencyAmount(
-                          (!isCustomerExport
-                            ? enrichedData.net
-                            : (enrichedData.items?.reduce(
-                                (sum, item) =>
-                                  sum + (parseFloat(item.amount) || 0),
-                                0,
-                              ) || 0) -
-                              (enrichedData.itemDiscount +
-                                enrichedData.overallDiscount >
-                              0
-                                ? enrichedData.itemDiscount +
-                                  enrichedData.overallDiscount
-                                : 0)) + (parseFloat(carriageFinalAmt) || 0),
-                          currencyCode || isCurrencySymbol,
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            },
-            summaryColumn: "left",
-            emphasized: false,
+            key: "totalDiscount",
+            label: "Total Discount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                : 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          {
+            key: "taxableAmount",
+            label: "Taxable Amount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.taxable || 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          ...(!isCustomerExport
+            ? Object.entries(
+                (enrichedData.slabBreakup || []).reduce((acc, curr) => {
+                  const type = curr?.tax?.split(" ")[0];
+                  acc[type] = (acc[type] || 0) + curr.amount;
+                  return acc;
+                }, {}),
+              ).map(([type, amount]) => ({
+                key: `tax-${type}`,
+                label: type,
+                value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                  amount,
+                  currencyCode || isCurrencySymbol,
+                )}`,
+                summaryColumn: "right",
+              }))
+            : []),
+          {
+            key: "roundOff",
+            label: "Round Off",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              enrichedData.roundOff || 0,
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+          },
+          {
+            key: "netAmount",
+            label: "Total Amount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              !isCustomerExport
+                ? enrichedData.net
+                : (enrichedData.items?.reduce(
+                    (sum, item) => sum + (parseFloat(item.amount) || 0),
+                    0,
+                  ) || 0) -
+                    (enrichedData.itemDiscount + enrichedData.overallDiscount >
+                    0
+                      ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                      : 0),
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+            emphasized: true,
+            valueClassName: "text-indigo-700",
+          },
+          {
+            key: "carriageCharges",
+            label: "Carriage Charges",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
+              !isNaN(parseFloat(carriageFinalAmt)) && carriageFinalAmt !== ""
+                ? formatCurrencyAmount(
+                    carriageFinalAmt,
+                    currencyCode || isCurrencySymbol,
+                  )
+                : "0.00"
+            }`,
+            summaryColumn: "right",
+          },
+          {
+            key: "grandTotal",
+            label: "Net Amount",
+            value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+              (!isCustomerExport
+                ? enrichedData.net
+                : (enrichedData.items?.reduce(
+                    (sum, item) => sum + (parseFloat(item.amount) || 0),
+                    0,
+                  ) || 0) -
+                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                    : 0)) + (parseFloat(carriageFinalAmt) || 0),
+              currencyCode || isCurrencySymbol,
+            )}`,
+            summaryColumn: "right",
+            emphasized: true,
+            valueClassName: "text-indigo-700",
           },
         ]}
       />
@@ -1464,7 +1192,7 @@ const ProformaInvoiceForm = ({
               Edit
             </button>
           )}
-          {id && (
+          {/* {id && (
             <button
               onClick={() => setPrintModalOpen(true)}
               className="bg-slate-600 text-white px-4 py-1 rounded hover:bg-slate-700 flex items-center text-xs"
@@ -1472,19 +1200,17 @@ const ProformaInvoiceForm = ({
               <FiPrinter className="w-4 h-4 mr-2" />
               Print
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </>
   );
 
-  console.log(items, "ITEMS");
-
   return (
     <>
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
-          poItems={items}
+          poItems={fabricItems}
           totals={enrichedData}
           readOnly={effectiveReadOnly}
           discountType={discountType}
@@ -1502,10 +1228,10 @@ const ProformaInvoiceForm = ({
         widthClass={"w-[90%] h-[90%]"}
       >
         <PDFViewer style={tw("w-full h-full")}>
-          <ProformaInvoicePrintFormat
+          <ProformaInvoiceFabricPrintFormat
             data={{
               ...singleData?.data,
-              items: items.filter(
+              items: fabricItems.filter(
                 (i) =>
                   i.styleItemId ||
                   (i.styleBreakup && i.styleBreakup.length > 0) ||
@@ -1522,14 +1248,12 @@ const ProformaInvoiceForm = ({
             currencyList={currencyList}
             payTermList={payTermList}
             carriageFinalAmt={carriageFinalAmt}
-            styleItemList={styleList}
-            sizeList={sizeList}
           />
         </PDFViewer>
       </Modal>
 
       <TransactionLayout
-        title="Proforma Invoice"
+        title="Fabric Proforma Invoice"
         badge={<ModeChip id={id} readOnly={readOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-7 h-7" />}
         onClose={onClose}
@@ -1538,23 +1262,23 @@ const ProformaInvoiceForm = ({
         detailsLayout="default"
         detailsLayouts={["default"]}
         gridItems={
-          <ProformaInvoiceItems
-            items={items}
-            enrichedItems={enrichedData}
-            setItems={setItems}
-            readOnly={effectiveReadOnly}
-            taxTemplateId={taxTemplateId}
-            id={id}
-            isCurrencySymbol={isCurrencySymbol}
-            currencyCode={currencyCode}
-            termsRef={termsRef}
-            isCustomerExport={isCustomerExport}
-            conversionType={conversionType}
-            isSupplierOutside={isSupplierOutside}
-            itemGroupList={itemGroupList}
-            itemSubGroupList={itemSubGroupList}
-            styleList={styleList}
-          />
+          <div className="flex flex-col h-full w-full border border-gray-300 rounded bg-white mt-1">
+            <div className="flex-1 overflow-hidden">
+              <ProformaInvoiceFabricItems
+                fabricItems={fabricItems}
+                enrichedItems={enrichedData}
+                setFabricItems={setFabricItems}
+                readOnly={effectiveReadOnly}
+                taxTemplateId={taxTemplateId}
+                id={id}
+                isCurrencySymbol={isCurrencySymbol}
+                currencyCode={currencyCode}
+                termsRef={termsRef}
+                isCustomerExport={isCustomerExport}
+                isSupplierOutside={isSupplierOutside}
+              />
+            </div>
+          </div>
         }
         footer={footerContent}
         versionDropdown={id ? versionDropdown : null}
@@ -1563,4 +1287,4 @@ const ProformaInvoiceForm = ({
   );
 };
 
-export default ProformaInvoiceForm;
+export default ProformaInvoiceFabricForm;

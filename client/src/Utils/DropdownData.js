@@ -217,3 +217,22 @@ export const roleGroup = [
   { show: "ADMIN", value: "ADMIN" },
   { show: "SUPERVISOR", value: "SUPERVISOR" },
 ];
+
+export const measurementType = [
+  {
+    show: "Cms",
+    value: "cms",
+  },
+  {
+    show: "Inches",
+    value: "inches",
+  },
+  {
+    show: "Open Width",
+    value: "openWidth",
+  },
+  {
+    show: "Tubular",
+    value: "tubular",
+  },
+];

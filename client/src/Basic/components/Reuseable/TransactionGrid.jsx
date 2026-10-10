@@ -25,15 +25,23 @@ const TransactionGrid = ({
         </div>
       ) : null}
 
-      <div className={`w-full flex-1 min-h-0 overflow-auto my-1 ${className}`}>
+      <div
+        className={`w-full flex-1 min-h-0 overflow-auto my-1 ${className}`}
+        onScroll={(e) => {
+          if (
+            document.activeElement &&
+            (document.activeElement.closest(".grid-editable-cell") ||
+              document.activeElement.closest("td"))
+          ) {
+            document.activeElement.blur();
+          }
+        }}
+      >
         <table className={tableClassName}>
           <thead className={headClassName}>
             <tr>
               {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={column.className}
-                >
+                <th key={column.key} className={column.className}>
                   {column.label}
                 </th>
               ))}
@@ -49,7 +57,9 @@ const TransactionGrid = ({
               visibleRows.map((row, index) => (
                 <tr
                   key={getRowKey ? getRowKey(row, index) : index}
-                  className={getRowClassName ? getRowClassName(row, index) : undefined}
+                  className={
+                    getRowClassName ? getRowClassName(row, index) : undefined
+                  }
                 >
                   {renderRow(row, index)}
                 </tr>
@@ -57,7 +67,9 @@ const TransactionGrid = ({
             )}
           </tbody>
 
-          {footer ? <tfoot className="sticky bottom-0 z-10 bg-gray-50">{footer}</tfoot> : null}
+          {footer ? (
+            <tfoot className="sticky bottom-0 z-10 bg-gray-50">{footer}</tfoot>
+          ) : null}
         </table>
       </div>
     </div>

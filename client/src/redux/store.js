@@ -55,6 +55,10 @@ import {
   YarnBlendMasterApi,
   YarnMasterApi,
   FabricMasterApi,
+  LoopLengthMasterApi,
+  GaugeMasterApi,
+  DesignMasterApi,
+  DiaMasterApi,
 } from "./services";
 import paymentApi from "./services/PaymentService";
 import StyleMasterApi from "./services/StyleMasterService";
@@ -167,6 +171,10 @@ const commonReducers = {
   [YarnBlendMasterApi.reducerPath]: YarnBlendMasterApi.reducer,
   [YarnMasterApi.reducerPath]: YarnMasterApi.reducer,
   [FabricMasterApi.reducerPath]: FabricMasterApi.reducer,
+  [LoopLengthMasterApi.reducerPath]: LoopLengthMasterApi.reducer,
+  [GaugeMasterApi.reducerPath]: GaugeMasterApi.reducer,
+  [DesignMasterApi.reducerPath]: DesignMasterApi.reducer,
+  [DiaMasterApi.reducerPath]: DiaMasterApi.reducer,
 };
 const commonMiddleware = [
   countryMasterApi.middleware,
@@ -249,6 +257,10 @@ const commonMiddleware = [
   YarnBlendMasterApi.middleware,
   YarnMasterApi.middleware,
   FabricMasterApi.middleware,
+  LoopLengthMasterApi.middleware,
+  GaugeMasterApi.middleware,
+  DesignMasterApi.middleware,
+  DiaMasterApi.middleware,
 ];
 
 const store = configureStore({

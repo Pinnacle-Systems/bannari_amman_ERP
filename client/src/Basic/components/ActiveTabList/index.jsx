@@ -31,6 +31,10 @@ import {
   YarnBlendMaster,
   YarnMaster,
   FabricMaster,
+  LoopLengthMaster,
+  GaugeMaster,
+  DiaMaster,
+  DesignMaster,
 } from "..";
 
 import { CLOSE_ICON, DOUBLE_NEXT_ICON } from "../../../icons";
@@ -89,7 +93,7 @@ import {
   PlateMaster,
   DieMaster,
   BoardMaster,
-  ProformaInvoice,
+  ProfomaInvoicefabric,
   ProductionAllocation,
   MachineMaster,
   ProductionOutward,
@@ -182,7 +186,7 @@ const ActiveTabList = () => {
     "PLATE MASTER": <PlateMaster />,
     "DIE MASTER": <DieMaster />,
     "BOARD MASTER": <BoardMaster />,
-    "PROFORMA INVOICE": <ProformaInvoice />,
+    "FABRIC  PROFORMA INVOICE": <ProfomaInvoicefabric />,
     "CURRENCY MASTER": <CurrencyMaster />,
     "BANK MASTER": <BankMaster />,
     "PRODUCTION ALLOCATION": <ProductionAllocation />,
@@ -204,6 +208,10 @@ const ActiveTabList = () => {
     "YARN BLEND MASTER": <YarnBlendMaster />,
     "YARN MASTER": <YarnMaster />,
     "FABRIC MASTER": <FabricMaster />,
+    "LOOP LENGTH MASTER": <LoopLengthMaster />,
+    "GAUGE MASTER": <GaugeMaster />,
+    "DIA MASTER": <DiaMaster />,
+    "DESIGN MASTER": <DesignMaster />,
   };
   const innerWidth = window.innerWidth;
   const itemsToShow = innerWidth / 130;

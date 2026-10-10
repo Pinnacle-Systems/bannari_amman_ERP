@@ -21,12 +21,12 @@ async function getNextDocId(branchId, shortCode, startTime, endTime) {
   });
 
   const branchObj = await getTableRecordWithId(branchId, "branch");
-  let newDocId = `${branchObj.branchCode}/${shortCode}/PI/1`;
+  let newDocId = `${branchObj.branchCode}/${shortCode}/PI/FAB/1`;
   if (lastObject) {
     const parts = lastObject.docId.split("/");
     const lastNum = parseInt(parts.at(-1));
     if (!isNaN(lastNum)) {
-      newDocId = `${branchObj.branchCode}/${shortCode}/PI/${lastNum + 1}`;
+      newDocId = `${branchObj.branchCode}/${shortCode}/PI/FAB/${lastNum + 1}`;
     }
   }
   return newDocId;
@@ -55,9 +55,9 @@ async function get(req) {
       branchId: branchId ? parseInt(branchId) : undefined,
       AND: finYearDate
         ? [
-          { createdAt: { gte: finYearDate.startTime } },
-          { createdAt: { lte: finYearDate.endTime } },
-        ]
+            { createdAt: { gte: finYearDate.startTime } },
+            { createdAt: { lte: finYearDate.endTime } },
+          ]
         : undefined,
       docId: serachDocNo ? { contains: serachDocNo } : undefined,
       customer: searchCustomer
@@ -66,19 +66,13 @@ async function get(req) {
     },
     include: {
       customer: { select: { id: true, name: true } },
-      items: true,
-      orderEntries: {
-        select: {
-          id: true,
-          productionType: true,
-        },
-      },
+      fabricItems: true,
+
       _count: {
         select: {
           orderEntries: true,
         },
       },
-      // OrderEntry: { select: { id: true, docId: true } },
     },
     orderBy: { id: "desc" },
   });
@@ -161,26 +155,7 @@ async function getOne(id) {
   const data = await prisma.proformaInvoice.findUnique({
     where: { id: parseInt(id) },
     include: {
-      items: {
-        include: {
-          ItemGroup: true,
-          ItemSubGroup: true,
-          StyleItem: true,
-          Size: true,
-          Uom: true,
-          Gsm: true,
-          Hsn: true,
-          PIStyleBreakup: {
-            include: {
-              PISizeBreakup: {
-                include: {
-                  Size: true,
-                },
-              },
-            },
-          },
-        },
-      },
+      fabricItems: true,
       attachments: true,
       Branch: {
         include: {
@@ -215,40 +190,36 @@ async function create(body) {
     userId,
     branchId,
     companyId,
+    finYearId,
     docDate,
     userDate,
     customerId,
-    deliveryDate,
-    remarks,
-    finYearId,
-    items,
-    attachments,
-    termsAndCondition,
-    termsId,
-    // orderEntryId,
+    customerPoNo,
     taxTemplateId,
-    discountType,
-    discountValue,
     payTermId,
-    validityTo,
     currencyId,
-    weightInKg,
+    validityTo,
     loadingId,
     deliveryId,
+    deliveryDate,
     carriageCharge,
-    bankId,
-    conversionType,
     carriageTax,
+    bankId,
+    filteredItems,
+    termsAndCondition,
+    termsId,
+    remarks,
+    discountType,
+    discountValue,
+    attachments,
   } = body;
-
-  console.log(conversionType, "conversionType");
 
   let finYearDate = await getFinYearStartTimeEndTime(finYearId);
   const shortCode = finYearDate
     ? getYearShortCodeForFinYear(
-      finYearDate?.startDateStartTime,
-      finYearDate?.endDateEndTime,
-    )
+        finYearDate?.startDateStartTime,
+        finYearDate?.endDateEndTime,
+      )
     : "";
 
   let newDocId = await getNextDocId(
@@ -269,7 +240,6 @@ async function create(body) {
       companyId: parseInt(companyId),
       customerId: customerId ? parseInt(customerId) : null,
       finYearId: parseInt(finYearId),
-      // orderEntryId: orderEntryId ? parseInt(orderEntryId) : null,
       taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
       remarks,
       termsAndCondition,
@@ -278,63 +248,56 @@ async function create(body) {
       discountValue: parseFloat(discountValue || 0),
       validityTo: validityTo ? new Date(validityTo) : null,
       currencyId: currencyId ? parseInt(currencyId) : null,
-      weightInKg: weightInKg ? parseFloat(weightInKg) : null,
       loadingId: loadingId ? parseInt(loadingId) : null,
       deliveryId: deliveryId ? parseInt(deliveryId) : null,
       carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
       bankId: bankId ? parseInt(bankId) : null,
-      conversionType: conversionType || null,
       carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-      items: {
-        create: JSON.parse(items || "[]").map((item) => ({
-          itemGroupId: item?.itemGroupId ? parseInt(item.itemGroupId) : null,
-          itemSubGroupId: item?.itemSubGroupId
-            ? parseInt(item?.itemSubGroupId)
-            : null,
-          styleItemId: item.styleItemId ? parseInt(item.styleItemId) : null,
-          sizeId: item.sizeId ? parseInt(item.sizeId) : null,
-          uomId: item.uomId ? parseInt(item.uomId) : null,
-          gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+      customerPoNo: customerPoNo,
+      payTermId: payTermId ? parseInt(payTermId) : null,
+
+      fabricItems: {
+        create: filteredItems?.map((item) => ({
+          fabricId: item.fabricId ? parseInt(item.fabricId) : null,
           hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+          colorId: item.colorId ? parseInt(item.colorId) : null,
+          designId: item.designId ? parseInt(item.designId) : null,
+          gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+          loopLengthId: item.loopLengthId ? parseInt(item.loopLengthId) : null,
+          gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+          kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+          fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+          uomId: item.uomId ? parseInt(item.uomId) : null,
+          width: item.width || null,
+          numberOfRolls: item.numberOfRolls
+            ? parseFloat(item.numberOfRolls)
+            : null,
+          weightPerRoll: item.weightPerRoll
+            ? parseFloat(item.weightPerRoll)
+            : null,
+          totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+          pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+          totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
           qty: parseFloat(item.qty || 0),
-          labelWidth: item?.labelWidth ?? "",
-          dozen: parseFloat(item.dozen || 0),
           price: parseFloat(item.price || 0),
+          amount: item.amount ? parseFloat(item.amount) : null,
           taxPercent: parseFloat(item.taxPercent || 0),
           discountType: item.discountType,
           discountValue: parseFloat(item.discountValue || 0),
-          amount: parseFloat(item.amount || 0),
-          PIStyleBreakup:
-            item?.styleBreakup?.length > 0
-              ? {
-                create: item.styleBreakup.map((st) => ({
-                  styleId: st.styleId ? parseInt(st.styleId) : null,
-                  PISizeBreakup: st?.sizeBreakup?.length > 0
-                    ? {
-                      create: st.sizeBreakup.map((s) => ({
-                        sizeId: s.sizeId ? parseInt(s.sizeId) : null,
-                        qty: s.qty ? parseInt(s.qty) : null,
-                      }))
-                    }
-                    : undefined
-                })),
-              }
-              : undefined,
         })),
       },
       attachments:
         attachments && JSON.parse(attachments)?.length > 0
           ? {
-            createMany: {
-              data: JSON.parse(attachments).map((sub) => ({
-                date: sub?.date ? new Date(sub?.date) : undefined,
-                filePath: sub?.filePath ? sub?.filePath : undefined,
-                name: sub?.name ? sub?.name : undefined,
-              })),
-            },
-          }
+              createMany: {
+                data: JSON.parse(attachments).map((sub) => ({
+                  date: sub?.date ? new Date(sub?.date) : undefined,
+                  filePath: sub?.filePath ? sub?.filePath : undefined,
+                  name: sub?.name ? sub?.name : undefined,
+                })),
+              },
+            }
           : undefined,
-      payTermId: payTermId ? parseInt(payTermId) : null,
     },
   });
 
@@ -350,11 +313,10 @@ async function update(id, body, files) {
     customerId,
     deliveryDate,
     remarks,
-    items,
+    filteredItems,
     attachments,
     termsId,
     termsAndCondition,
-    // orderEntryId,
     taxTemplateId,
     isApproved,
     discountType,
@@ -362,16 +324,14 @@ async function update(id, body, files) {
     payTermId,
     validityTo,
     currencyId,
-    weightInKg,
     loadingId,
     deliveryId,
     carriageCharge,
     bankId,
-    conversionType,
     carriageTax,
+    customerPoNo,
   } = body;
 
-  const parseItems = JSON.parse(items || "[]");
   const parseAttachments = JSON.parse(attachments || "[]");
   const incomingAttachmentIds = parseAttachments
     ?.filter((i) => i.id)
@@ -381,16 +341,7 @@ async function update(id, body, files) {
     where: { id: parseInt(id) },
     include: {
       attachments: true,
-      items: {
-        include:
-        {
-          PIStyleBreakup: {
-            include: {
-              PISizeBreakup: true
-            }
-          }
-        }
-      },
+      fabricItems: true,
     },
   });
 
@@ -406,7 +357,7 @@ async function update(id, body, files) {
     !docDate &&
     !customerId &&
     !userId &&
-    !items;
+    !filteredItems;
 
   if (isApprovalOnlyUpdate) {
     // Derive both fields from approvalStatus if provided, else from isApproved
@@ -441,63 +392,51 @@ async function update(id, body, files) {
   });
 
   const currentQuoteVersion = dataFound.quoteVersion || 1;
-  const latestItems = dataFound.items.filter(
+  const latestItems = dataFound.fabricItems.filter(
     (i) => i.quoteVersion === currentQuoteVersion,
   );
 
   let isTableChanged = false;
-  if (parseItems.length !== latestItems.length) {
+  if (filteredItems.length !== latestItems.length) {
     isTableChanged = true;
   } else {
-    isTableChanged = parseItems.some((newItem, index) => {
+    isTableChanged = filteredItems.some((newItem, index) => {
       // Assuming ordered arrays from the client match the order of latestItems, or we just compare element by element.
       // Since ProformaInvoiceForm sets/gets the entire array in order, index matching works fine.
       const oldItem = latestItems[index];
       if (!oldItem) return true;
-      const newStyles = newItem.styleBreakup || [];
-      const oldStyles = oldItem.PIStyleBreakup || [];
-
-      let isSizesChanged = newStyles.length !== oldStyles.length;
-      if (!isSizesChanged) {
-        isSizesChanged = newStyles.some((nst, stIndex) => {
-          const ost = oldStyles[stIndex];
-          if (!ost) return true;
-          if (parseInt(nst.styleId || 0) !== parseInt(ost.styleId || 0)) return true;
-          const newSizes = nst.sizeBreakup || [];
-          const oldSizes = ost.PISizeBreakup || [];
-          if (newSizes.length !== oldSizes.length) return true;
-          return newSizes.some((ns, sIndex) => {
-            const os = oldSizes[sIndex];
-            if (!os) return true;
-            return (
-              parseInt(ns.sizeId || 0) !== parseInt(os.sizeId || 0) ||
-              parseFloat(ns.qty || 0) !== parseFloat(os.qty || 0)
-            );
-          });
-        });
-      }
 
       return (
-        parseInt(newItem.styleItemId || 0) !==
-        parseInt(oldItem.styleItemId || 0) ||
-        parseInt(newItem.itemGroupId || 0) !==
-        parseInt(oldItem.itemGroupId || 0) ||
-        parseInt(newItem.itemSubGroupId || 0) !==
-        parseInt(oldItem.itemSubGroupId || 0) ||
+        parseInt(newItem.fabricId || 0) !== parseInt(oldItem.fabricId || 0) ||
+        parseInt(newItem.hsnId || 0) !== parseInt(oldItem.hsnId || 0) ||
+        parseInt(newItem.colorId || 0) !== parseInt(oldItem.colorId || 0) ||
+        parseInt(newItem.designId || 0) !== parseInt(oldItem.designId || 0) ||
+        parseInt(newItem.gaugeId || 0) !== parseInt(oldItem.gaugeId || 0) ||
+        parseInt(newItem.loopLengthId || 0) !==
+          parseInt(oldItem.loopLengthId || 0) ||
+        parseInt(newItem.gsmId || 0) !== parseInt(oldItem.gsmId || 0) ||
+        parseInt(newItem.kDiaId || 0) !== parseInt(oldItem.kDiaId || 0) ||
+        parseInt(newItem.fDiaId || 0) !== parseInt(oldItem.fDiaId || 0) ||
+        parseInt(newItem.uomId || 0) !== parseInt(oldItem.uomId || 0) ||
+        String(newItem.width || "") !== String(oldItem.width || "") ||
+        parseFloat(newItem.numberOfRolls || 0) !==
+          parseFloat(oldItem.numberOfRolls || 0) ||
+        parseFloat(newItem.weightPerRoll || 0) !==
+          parseFloat(oldItem.weightPerRoll || 0) ||
+        parseFloat(newItem.pricePerKg || 0) !==
+          parseFloat(oldItem.pricePerKg || 0) ||
+        parseFloat(newItem.totalKgs || 0) !==
+          parseFloat(oldItem.totalKgs || 0) ||
+        parseFloat(newItem.totalPrice || 0) !==
+          parseFloat(oldItem.totalPrice || 0) ||
         parseFloat(newItem.qty || 0) !== parseFloat(oldItem.qty || 0) ||
         parseFloat(newItem.price || 0) !== parseFloat(oldItem.price || 0) ||
+        parseFloat(newItem.amount || 0) !== parseFloat(oldItem.amount || 0) ||
         parseFloat(newItem.taxPercent || 0) !==
-        parseFloat(oldItem.taxPercent || 0) ||
+          parseFloat(oldItem.taxPercent || 0) ||
         (newItem.discountType || null) !== (oldItem.discountType || null) ||
         parseFloat(newItem.discountValue || 0) !==
-        parseFloat(oldItem.discountValue || 0) ||
-        parseInt(newItem.sizeId || 0) !== parseInt(oldItem.sizeId || 0) ||
-        parseInt(newItem.uomId || 0) !== parseInt(oldItem.uomId || 0) ||
-        parseInt(newItem.gsmId || 0) !== parseInt(oldItem.gsmId || 0) ||
-        parseInt(newItem.hsnId || 0) !== parseInt(oldItem.hsnId || 0) ||
-        parseFloat(newItem.dozen || 0) !== parseFloat(oldItem.dozen || 0) ||
-        String(newItem?.labelWidth ?? "") !== (oldItem?.labelWidth ?? "") ||
-        isSizesChanged
+          parseFloat(oldItem.discountValue || 0)
       );
     });
   }
@@ -518,14 +457,13 @@ async function update(id, body, files) {
       remarks,
       termsAndCondition,
       termsId: termsId ? parseInt(termsId) : null,
-      // orderEntryId: orderEntryId ? parseInt(orderEntryId) : null,
+      customerPoNo,
       discountType,
       discountValue: parseFloat(discountValue || 0),
       taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
       validityTo: validityTo ? new Date(validityTo) : null,
       currencyId: currencyId ? parseInt(currencyId) : null,
       payTermId: payTermId ? parseInt(payTermId) : null,
-      weightInKg: weightInKg ? parseFloat(weightInKg) : null,
       loadingId: loadingId ? parseInt(loadingId) : null,
       deliveryId: deliveryId ? parseInt(deliveryId) : null,
       carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
@@ -534,53 +472,45 @@ async function update(id, body, files) {
       ...(isApproved !== undefined && {
         isApproved: isApproved === "true" || isApproved === true,
       }),
-      conversionType: conversionType || null,
       carriageTax: carriageTax ? parseFloat(carriageTax) : null,
+      payTermId: payTermId ? parseInt(payTermId) : null,
 
-      items: isTableChanged
+      fabricItems: isTableChanged
         ? {
-          create: parseItems.map((item) => ({
-            styleItemId: item?.styleItemId
-              ? parseInt(item.styleItemId)
-              : null,
-            itemGroupId: item?.itemGroupId
-              ? parseInt(item.itemGroupId)
-              : null,
-            itemSubGroupId: item?.itemSubGroupId
-              ? parseInt(item?.itemSubGroupId)
-              : null,
-            sizeId: item.sizeId ? parseInt(item.sizeId) : null,
-            uomId: item.uomId ? parseInt(item.uomId) : null,
-            gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-            hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-            qty: parseFloat(item.qty || 0),
-            labelWidth: item?.labelWidth ?? "",
-            price: parseFloat(item.price || 0),
-            taxPercent: parseFloat(item.taxPercent || 0),
-            discountType: item.discountType,
-            discountValue: parseFloat(item.discountValue || 0),
-            amount: parseFloat(item.amount || 0),
-            quoteVersion: nextQuoteVersion,
-            dozen: parseFloat(item.dozen || 0),
-            PIStyleBreakup:
-              item?.styleBreakup?.length > 0
-                ? {
-                  create: item.styleBreakup.map((st) => ({
-                    styleId: st.styleId ? parseInt(st.styleId) : null,
-                    PISizeBreakup: st?.sizeBreakup?.length > 0
-                      ? {
-                        create: st.sizeBreakup.map((s) => ({
-                          sizeId: s.sizeId ? parseInt(s.sizeId) : null,
-                          qty: s.qty ? parseInt(s.qty) : null,
-                        }))
-                      }
-                      : undefined
-                  })),
-                }
-                : undefined,
-          })),
-        }
+            create: filteredItems.map((item) => ({
+              fabricId: item.fabricId ? parseInt(item.fabricId) : null,
+              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+              colorId: item.colorId ? parseInt(item.colorId) : null,
+              designId: item.designId ? parseInt(item.designId) : null,
+              gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+              loopLengthId: item.loopLengthId
+                ? parseInt(item.loopLengthId)
+                : null,
+              gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+              kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+              fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+              uomId: item.uomId ? parseInt(item.uomId) : null,
+              width: item.width || null,
+              numberOfRolls: item.numberOfRolls
+                ? parseFloat(item.numberOfRolls)
+                : null,
+              weightPerRoll: item.weightPerRoll
+                ? parseFloat(item.weightPerRoll)
+                : null,
+              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+              pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
+              qty: parseFloat(item.qty || 0),
+              price: parseFloat(item.price || 0),
+              amount: item.amount ? parseFloat(item.amount) : null,
+              taxPercent: parseFloat(item.taxPercent || 0),
+              discountType: item.discountType,
+              discountValue: parseFloat(item.discountValue || 0),
+              quoteVersion: nextQuoteVersion,
+            })),
+          }
         : undefined,
+
       attachments: {
         deleteMany: {
           ...(incomingAttachmentIds.length > 0 && {
@@ -615,7 +545,6 @@ async function update(id, body, files) {
             name: sub?.name ? sub?.name : undefined,
           })),
       },
-      payTermId: payTermId ? parseInt(payTermId) : null,
     },
   });
 

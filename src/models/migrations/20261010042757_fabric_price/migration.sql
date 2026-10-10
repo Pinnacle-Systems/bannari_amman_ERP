@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "FabricItems" ADD COLUMN     "amount" DOUBLE PRECISION,
+ADD COLUMN     "totalKgs" DOUBLE PRECISION,
+ADD COLUMN     "totalPrice" DOUBLE PRECISION;

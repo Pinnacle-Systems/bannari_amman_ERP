@@ -1,57 +1,50 @@
 import { prisma } from "../lib/prisma.js";
-
 import { NoRecordFound } from "../configs/Responses.js";
 
 async function get(req) {
   const { companyId, active } = req.query;
-  let data;
-  data = await prisma.hsn.findMany({
+  const data = await prisma.gauge.findMany({
     where: {
+      companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
-    include: {
-      _count: {
-        select: {
-          styleItems: true,
-          YarnMaster: true,
-          fabricMasters: true,
-        },
-      },
-    },
+    // include: {
+    //   _count: {
+    //     select: {
+    //       YarnMaster: true,
+    //     },
+    //   },
+    // },
+    orderBy: { id: "asc" },
   });
   return {
     statusCode: 0,
-    data: (data = data.map((color) => ({
-      ...color,
-      childRecord:
-        color?._count.styleItems +
-        color?._count.YarnMaster +
-        color?._count.fabricMasters,
-    }))),
+    data: data.map((content) => ({
+      ...content,
+      //   childRecord: content._count.YarnMaster > 0,
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.styleItem.count({
-    where: { hsnId: parseInt(id) },
-  });
-  const childRecordYarn = await prisma.YarnMaster.count({
-    where: { hsnId: parseInt(id) },
-  });
-  const childRecordFabric = await prisma.fabricMasters.count({
-    where: { hsnId: parseInt(id) },
-  });
-  const data = await prisma.hsn.findUnique({
+  const data = await prisma.gauge.findUnique({
     where: {
       id: parseInt(id),
     },
+    // include: {
+    //   _count: {
+    //     select: {
+    //       YarnMaster: true,
+    //     },
+    //   },
+    // },
   });
-  if (!data) return NoRecordFound("hsn");
+  if (!data) return NoRecordFound("Gauge Master");
   return {
     statusCode: 0,
     data: {
       ...data,
-      ...{ childRecord: childRecord + childRecordYarn + childRecordFabric },
+      //   childRecord: data._count.YarnMaster > 0,
     },
   };
 }
@@ -59,18 +52,13 @@ async function getOne(id) {
 async function getSearch(req) {
   const { searchKey } = req.params;
   const { companyId, active } = req.query;
-  const data = await prisma.hsn.findMany({
+  const data = await prisma.gauge.findMany({
     where: {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
       OR: [
         {
           name: {
-            contains: searchKey,
-          },
-        },
-        {
-          code: {
             contains: searchKey,
           },
         },
@@ -81,27 +69,27 @@ async function getSearch(req) {
 }
 
 async function create(body) {
-  const { name, code, companyId, active, tax } = await body;
-  const data = await prisma.hsn.create({
+  const { name, code, companyId, active } = await body;
+  const data = await prisma.gauge.create({
     data: {
       name,
       code,
+      companyId: parseInt(companyId),
       active,
-      tax,
     },
   });
   return { statusCode: 0, data };
 }
 
 async function update(id, body) {
-  const { name, code, active, tax } = await body;
-  const dataFound = await prisma.hsn.findUnique({
+  const { name, code, active } = await body;
+  const dataFound = await prisma.gauge.findUnique({
     where: {
       id: parseInt(id),
     },
   });
-  if (!dataFound) return NoRecordFound("hsn");
-  const data = await prisma.hsn.update({
+  if (!dataFound) return NoRecordFound("Gauge Master");
+  const data = await prisma.gauge.update({
     where: {
       id: parseInt(id),
     },
@@ -109,14 +97,13 @@ async function update(id, body) {
       name,
       code,
       active,
-      tax,
     },
   });
   return { statusCode: 0, data };
 }
 
 async function remove(id) {
-  const data = await prisma.hsn.delete({
+  const data = await prisma.gauge.delete({
     where: {
       id: parseInt(id),
     },
