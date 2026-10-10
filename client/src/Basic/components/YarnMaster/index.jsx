@@ -136,6 +136,29 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
     }
   }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
 
+  useEffect(() => {
+    if (!yarnMasterDetail || !yarnBlendData?.data) return;
+
+    const validRows = yarnMasterDetail.filter(
+      (item) => item.yarnBlendId && item.percentage,
+    );
+
+    if (validRows.length > 0) {
+      const generatedName = validRows
+        .map((row) => {
+          const blend = yarnBlendData.data.find(
+            (b) => b.id === parseInt(row.yarnBlendId),
+          );
+          const blendName = blend ? blend.name : "";
+          return `${blendName} ${Number(row.percentage).toFixed(2)}`;
+        })
+        .join(" ");
+      setName(generatedName.trim());
+    } else if (!id) {
+      setName(defaultName || "");
+    }
+  }, [yarnMasterDetail, yarnBlendData, id, defaultName]);
+
   const data = {
     id,
     countsId: countsId ? parseInt(countsId) : null,
@@ -506,7 +529,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
                 <div className="flex gap-x-4 my-2">
-                  <div className="w-[25%]">
+                  {/* <div className="w-[25%]">
                     <DropdownWithModal
                       name="Counts Name"
                       options={dropDownListObject(
@@ -548,10 +571,10 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       childComponent={ContentMaster}
                       addNewModalWidth="w-[40%] h-[45%]"
                     />
-                  </div>
+                  </div> */}
                   <div className="w-[50%]">
                     <TextInputNew
-                      name="Yarn Name"
+                      name="Yarn Name*"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -570,19 +593,9 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       disabled={childRecord.current > 0}
                     />
                   </div>
-                  <ToggleButton
-                    name="Status"
-                    options={statusDropdown}
-                    value={active}
-                    setActive={setActive}
-                    required={true}
-                    readOnly={readOnly}
-                    ref={toggleButtonRef}
-                    onKeyDown={handlers.handleToggleKeyDown}
-                  />
                 </div>
-                <div className="flex gap-x-4">
-                  <div className="w-[15%] mb-3">
+                <div className="flex gap-x-8">
+                  <div className="w-[17%] mb-3">
                     <DropdownWithModal
                       name="Hsn"
                       options={dropDownListObject(
@@ -613,6 +626,16 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       disabled={true}
                     />
                   </div>
+                  <ToggleButton
+                    name="Status"
+                    options={statusDropdown}
+                    value={active}
+                    setActive={setActive}
+                    required={true}
+                    readOnly={readOnly}
+                    ref={toggleButtonRef}
+                    onKeyDown={handlers.handleToggleKeyDown}
+                  />
                 </div>
                 <div className="h-full flex flex-col -ml-4 -mt-3">
                   <div className="flex-1 overflow-auto p-2">

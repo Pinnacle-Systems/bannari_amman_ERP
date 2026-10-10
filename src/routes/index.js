@@ -93,3 +93,4 @@ export { default as gaugeMaster } from "./gaugeMaster.route.js";
 export { default as designMaster } from "./designMaster.route.js";
 export { default as loopLengthMaster } from "./looplengthMaster.route.js";
 export { default as diaMaster } from "./diaMaster.route.js";
+export { default as proformaInvoiceYarn } from "./profromaInvoiceYarn.route.js";

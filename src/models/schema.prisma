@@ -36,52 +36,53 @@ model Company {
   active        Boolean   @default(true)
   logo          String?
 
-  Department          Department[]
-  Role                Role[]
-  Subscription        Subscription[]
-  finYear             FinYear[]
-  PartyCategory       PartyCategory[]
-  Party               Party[]
-  ProductBrand        ProductBrand[]
-  ProductCategory     ProductCategory[]
-  Product             Product[]
-  PurchaseBill        PurchaseBill[]
-  SalesBill           SalesBill[]
-  PurchaseReturn      PurchaseReturn[]
-  SalesReturn         SalesReturn[]
-  Uom                 Uom[]
-  OpeningStock        OpeningStock[]
-  TaxTerm             TaxTerm[]
-  TaxTemplate         TaxTemplate[]
-  PartyBranch         PartyBranch[]
-  openingBalances     OpeningBalance[]
-  payTerms            PayTerm[]
-  termsAndConditions  TermsAndConditions[]
-  locations           Location[]
-  purchaseBillEntries PurchaseBillEntry[]
-  sizes               Size[]
-  gsms                Gsm[]
-  itemGroups          ItemGroup[]
-  sizeTemplates       SizeTemplate[]
-  processes           Process[]
-  processGroups       ProcessGroup[]
-  boards              Board[]
-  plates              Plate[]
-  dies                Die[]
-  proformaInvoices    ProformaInvoice[]
-  currencies          Currency[]
-  bank                Bank[]
-  machines            Machine[]
-  ItemSubGroup        ItemSubGroup[]
-  ContentMaster       ContentMaster[]
-  CountsMaster        CountsMaster[]
-  YarnBlendMaster     YarnBlendMaster[]
-  YarnMaster          YarnMaster[]
-  FabricMaster        FabricMaster[]
-  gauges              Gauge[]
-  loopLengths         LoopLength[]
-  designMasters       DesignMaster[]
-  diaMasters          DiaMaster[]
+  Department           Department[]
+  Role                 Role[]
+  Subscription         Subscription[]
+  finYear              FinYear[]
+  PartyCategory        PartyCategory[]
+  Party                Party[]
+  ProductBrand         ProductBrand[]
+  ProductCategory      ProductCategory[]
+  Product              Product[]
+  PurchaseBill         PurchaseBill[]
+  SalesBill            SalesBill[]
+  PurchaseReturn       PurchaseReturn[]
+  SalesReturn          SalesReturn[]
+  Uom                  Uom[]
+  OpeningStock         OpeningStock[]
+  TaxTerm              TaxTerm[]
+  TaxTemplate          TaxTemplate[]
+  PartyBranch          PartyBranch[]
+  openingBalances      OpeningBalance[]
+  payTerms             PayTerm[]
+  termsAndConditions   TermsAndConditions[]
+  locations            Location[]
+  purchaseBillEntries  PurchaseBillEntry[]
+  sizes                Size[]
+  gsms                 Gsm[]
+  itemGroups           ItemGroup[]
+  sizeTemplates        SizeTemplate[]
+  processes            Process[]
+  processGroups        ProcessGroup[]
+  boards               Board[]
+  plates               Plate[]
+  dies                 Die[]
+  proformaInvoices     ProformaInvoice[]
+  currencies           Currency[]
+  bank                 Bank[]
+  machines             Machine[]
+  ItemSubGroup         ItemSubGroup[]
+  ContentMaster        ContentMaster[]
+  CountsMaster         CountsMaster[]
+  YarnBlendMaster      YarnBlendMaster[]
+  YarnMaster           YarnMaster[]
+  FabricMaster         FabricMaster[]
+  gauges               Gauge[]
+  loopLengths          LoopLength[]
+  designMasters        DesignMaster[]
+  diaMasters           DiaMaster[]
+  proformaInvoiceYarns ProformaInvoiceYarn[]
 }
 
 model Subscription {
@@ -145,6 +146,7 @@ model Branch {
   Packing               Packing[]
   PackingControlPanel   PackingControlPanel[]
   SalesBillEntry        SalesBillEntry[]
+  proformaInvoiceYarns  ProformaInvoiceYarn[]
 }
 
 model UserOnBranch {
@@ -245,22 +247,24 @@ model User {
   processBillsUpdatedBy          ProcessBill[]          @relation(name: "updatedBy")
   MobileNotification             MobileNotification[]
 
-  pushLogs                 pushLogs[]
-  productionemplog         productionempPunch[]
-  salesDeliveriesCreatedBy SalesDelivery[]      @relation(name: "createdBy")
-  salesDeliveriesUpdatedBy SalesDelivery[]      @relation(name: "updatedBy")
-  ItemSubGroupCreatedBy    ItemSubGroup[]       @relation(name: "createdBy")
-  ItemSubGroupUpdatedBy    ItemSubGroup[]       @relation(name: "updatedBy")
-  reworkLogs               ReworkLog[]
-  reworkBatchTrackers      ReworkBatchTracker[]
-  SalesOrderCreatedBy      SalesOrder[]         @relation(name: "createdBy")
-  SalesOrderUpdatedBy      SalesOrder[]         @relation(name: "updatedBy")
-  PackingCreatedBy         Packing[]            @relation(name: "createdBy")
-  PackingUpdatedBy         Packing[]            @relation(name: "updatedBy")
-  SalesReturnCreatedBy     SalesReturn[]        @relation(name: "createdBy")
-  SalesReturnUpdatedBy     SalesReturn[]        @relation(name: "updatedBy")
-  SalesBillEntryCreatedBy  SalesBillEntry[]     @relation(name: "createdBy")
-  SalesBillEntryUpdatedBy  SalesBillEntry[]     @relation(name: "updatedBy")
+  pushLogs                     pushLogs[]
+  productionemplog             productionempPunch[]
+  salesDeliveriesCreatedBy     SalesDelivery[]       @relation(name: "createdBy")
+  salesDeliveriesUpdatedBy     SalesDelivery[]       @relation(name: "updatedBy")
+  ItemSubGroupCreatedBy        ItemSubGroup[]        @relation(name: "createdBy")
+  ItemSubGroupUpdatedBy        ItemSubGroup[]        @relation(name: "updatedBy")
+  reworkLogs                   ReworkLog[]
+  reworkBatchTrackers          ReworkBatchTracker[]
+  SalesOrderCreatedBy          SalesOrder[]          @relation(name: "createdBy")
+  SalesOrderUpdatedBy          SalesOrder[]          @relation(name: "updatedBy")
+  PackingCreatedBy             Packing[]             @relation(name: "createdBy")
+  PackingUpdatedBy             Packing[]             @relation(name: "updatedBy")
+  SalesReturnCreatedBy         SalesReturn[]         @relation(name: "createdBy")
+  SalesReturnUpdatedBy         SalesReturn[]         @relation(name: "updatedBy")
+  SalesBillEntryCreatedBy      SalesBillEntry[]      @relation(name: "createdBy")
+  SalesBillEntryUpdatedBy      SalesBillEntry[]      @relation(name: "updatedBy")
+  ProformaInvoiceYarnCreatedBy ProformaInvoiceYarn[] @relation("proformaYarnCreatedBy")
+  ProformaInvoiceYarnUpdatedBy ProformaInvoiceYarn[] @relation("proformaYarnUpdatedBy")
 }
 
 model Employee {
@@ -335,6 +339,7 @@ model FinYear {
   purchaseInwards       PurchaseInward[]
   purchaseInwardReturns PurchaseInwardReturn[]
   purchaseCancels       PurchaseCancel[]
+  proformaInvoiceYarns  ProformaInvoiceYarn[]
 }
 
 model EmployeeCategory {
@@ -370,27 +375,29 @@ model State {
 }
 
 model City {
-  id                      Int               @id @default(autoincrement())
-  name                    String
-  code                    String
-  state                   State             @relation(fields: [stateId], references: [id])
-  stateId                 Int
-  active                  Boolean           @default(true)
-  doctorLocalCity         Employee[]        @relation(name: "localCity")
-  doctorPermCity          Employee[]        @relation(name: "permCity")
-  Party                   Party[]
-  PartyBranch             PartyBranch[]
-  bank                    Bank[]
-  proformaInvoiceDelivery ProformaInvoice[] @relation(name: "delivery")
-  proformaInvoiceLoading  ProformaInvoice[] @relation(name: "loading")
-  orderEntryDelivery      OrderEntry[]      @relation(name: "delivery")
-  orderEntryLoading       OrderEntry[]      @relation(name: "loading")
-  SalesOrderDelivery      SalesOrder[]      @relation(name: "delivery")
-  SalesOrderLoading       SalesOrder[]      @relation(name: "loading")
-  SalesDeliveryDelivery   SalesDelivery[]   @relation(name: "delivery")
-  SalesDeliveryLoading    SalesDelivery[]   @relation(name: "loading")
-  SalesBillEntryLoading   SalesBillEntry[]  @relation(name: "loading")
-  SalesBillEntryDelivery  SalesBillEntry[]  @relation(name: "delivery")
+  id                          Int                   @id @default(autoincrement())
+  name                        String
+  code                        String
+  state                       State                 @relation(fields: [stateId], references: [id])
+  stateId                     Int
+  active                      Boolean               @default(true)
+  doctorLocalCity             Employee[]            @relation(name: "localCity")
+  doctorPermCity              Employee[]            @relation(name: "permCity")
+  Party                       Party[]
+  PartyBranch                 PartyBranch[]
+  bank                        Bank[]
+  proformaInvoiceDelivery     ProformaInvoice[]     @relation(name: "delivery")
+  proformaInvoiceLoading      ProformaInvoice[]     @relation(name: "loading")
+  orderEntryDelivery          OrderEntry[]          @relation(name: "delivery")
+  orderEntryLoading           OrderEntry[]          @relation(name: "loading")
+  SalesOrderDelivery          SalesOrder[]          @relation(name: "delivery")
+  SalesOrderLoading           SalesOrder[]          @relation(name: "loading")
+  SalesDeliveryDelivery       SalesDelivery[]       @relation(name: "delivery")
+  SalesDeliveryLoading        SalesDelivery[]       @relation(name: "loading")
+  SalesBillEntryLoading       SalesBillEntry[]      @relation(name: "loading")
+  SalesBillEntryDelivery      SalesBillEntry[]      @relation(name: "delivery")
+  ProformaInvoiceYarnDelivery ProformaInvoiceYarn[] @relation(name: "delivery")
+  ProformaInvoiceYarnLoading  ProformaInvoiceYarn[] @relation(name: "loading")
 }
 
 model Department {
@@ -552,6 +559,7 @@ model Party {
   SalesDelivery            SalesDelivery[]           @relation(name: "deliveryTo")
   SalesOrderDeliveryTo     SalesOrder[]              @relation(name: "deliveryTo")
   SalesBillDeliveryTo      SalesBillEntry[]          @relation(name: "deliveryTo")
+  proformaInvoiceYarns     ProformaInvoiceYarn[]
 }
 
 model PartyBranch {
@@ -689,6 +697,7 @@ model Uom {
   SalesBillEntryItems    SalesBillEntryItems[]
   PackingBreakup         PackingBreakup[]
   fabricItems            FabricItems[]
+  yarnItems              YarnItems[]
 }
 
 model ProductUomPriceDetails {
@@ -1189,6 +1198,7 @@ model Color {
   stocks                 Stock[]
   JobCards               JobCard[]
   fabricItems            FabricItems[]
+  yarnItems              YarnItems[]
 }
 
 model DeliveryInvoice {
@@ -1308,23 +1318,24 @@ model TaxTerm {
 }
 
 model TaxTemplate {
-  id                  Int                  @id @default(autoincrement())
-  name                String
-  Company             Company              @relation(fields: [companyId], references: [id])
-  companyId           Int
-  active              Boolean              @default(true)
-  TaxTemplateDetails  TaxTemplateDetails[]
-  pos                 Po[]
-  purchaseBillEntries PurchaseBillEntry[]
-  purchaseInwards     PurchaseInward[]
-  productionInwards   ProductionInward[]
-  proformaInvoices    ProformaInvoice[]
-  processBills        ProcessBill[]
-  salesDeliveries     SalesDelivery[]
-  orderEntries        OrderEntry[]
-  SalesOrder          SalesOrder[]
-  SalesReturn         SalesReturn[]
-  SalesBillEntry      SalesBillEntry[]
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  Company              Company               @relation(fields: [companyId], references: [id])
+  companyId            Int
+  active               Boolean               @default(true)
+  TaxTemplateDetails   TaxTemplateDetails[]
+  pos                  Po[]
+  purchaseBillEntries  PurchaseBillEntry[]
+  purchaseInwards      PurchaseInward[]
+  productionInwards    ProductionInward[]
+  proformaInvoices     ProformaInvoice[]
+  processBills         ProcessBill[]
+  salesDeliveries      SalesDelivery[]
+  orderEntries         OrderEntry[]
+  SalesOrder           SalesOrder[]
+  SalesReturn          SalesReturn[]
+  SalesBillEntry       SalesBillEntry[]
+  proformaInvoiceYarns ProformaInvoiceYarn[]
 }
 
 model TaxTemplateDetails {
@@ -1362,6 +1373,7 @@ model Hsn {
   YarnMaster             YarnMaster[]
   fabricMasters          FabricMaster[]
   fabricItems            FabricItems[]
+  yarnItems              YarnItems[]
 }
 
 model BranchType {
@@ -1492,25 +1504,27 @@ model TermsAndConditions {
   salesDeliveries       SalesDelivery[]
   SalesOrder            SalesOrder[]
   SalesReturn           SalesReturn[]
+  proformaInvoiceYarns  ProformaInvoiceYarn[]
 }
 
 model PayTerm {
-  id               Int               @id @default(autoincrement())
-  name             String?
-  days             Int?
-  years            Int?
-  months           Int?
-  Company          Company?          @relation(fields: [companyId], references: [id])
-  companyId        Int?
-  active           Boolean           @default(true)
-  aliasName        String?
-  pos              Po[]
-  proformaInvoices ProformaInvoice[]
-  salesDeliveries  SalesDelivery[]
-  orderEntries     OrderEntry[]
-  SalesOrder       SalesOrder[]
-  SalesReturn      SalesReturn[]
-  SalesBillEntry   SalesBillEntry[]
+  id                   Int                   @id @default(autoincrement())
+  name                 String?
+  days                 Int?
+  years                Int?
+  months               Int?
+  Company              Company?              @relation(fields: [companyId], references: [id])
+  companyId            Int?
+  active               Boolean               @default(true)
+  aliasName            String?
+  pos                  Po[]
+  proformaInvoices     ProformaInvoice[]
+  salesDeliveries      SalesDelivery[]
+  orderEntries         OrderEntry[]
+  SalesOrder           SalesOrder[]
+  SalesReturn          SalesReturn[]
+  SalesBillEntry       SalesBillEntry[]
+  proformaInvoiceYarns ProformaInvoiceYarn[]
 }
 
 model PurchaseInward {
@@ -2643,33 +2657,35 @@ model FabricItems {
 }
 
 model ProformaInvoiceItem {
-  id                Int              @id @default(autoincrement())
-  ProformaInvoice   ProformaInvoice  @relation(fields: [proformaInvoiceId], references: [id], onDelete: Cascade)
-  proformaInvoiceId Int
-  itemGroupId       Int?
-  ItemGroup         ItemGroup?       @relation(fields: [itemGroupId], references: [id])
-  itemSubGroupId    Int?
-  ItemSubGroup      ItemSubGroup?    @relation(fields: [itemSubGroupId], references: [id])
-  styleItemId       Int?
-  StyleItem         StyleItem?       @relation(fields: [styleItemId], references: [id])
-  qty               Float?
-  price             Float?
-  taxPercent        Float?
-  discountType      String?
-  discountValue     Float?
-  amount            Float?
-  sizeId            Int?
-  Size              Size?            @relation(fields: [sizeId], references: [id])
-  uomId             Int?
-  Uom               Uom?             @relation(fields: [uomId], references: [id])
-  gsmId             Int?
-  Gsm               Gsm?             @relation(fields: [gsmId], references: [id])
-  hsnId             Int?
-  Hsn               Hsn?             @relation(fields: [hsnId], references: [id])
-  quoteVersion      Int              @default(1)
-  dozen             Float?
-  labelWidth        String?
-  PIStyleBreakup    PIStyleBreakup[]
+  id                    Int                  @id @default(autoincrement())
+  ProformaInvoice       ProformaInvoice      @relation(fields: [proformaInvoiceId], references: [id], onDelete: Cascade)
+  proformaInvoiceId     Int
+  itemGroupId           Int?
+  ItemGroup             ItemGroup?           @relation(fields: [itemGroupId], references: [id])
+  itemSubGroupId        Int?
+  ItemSubGroup          ItemSubGroup?        @relation(fields: [itemSubGroupId], references: [id])
+  styleItemId           Int?
+  StyleItem             StyleItem?           @relation(fields: [styleItemId], references: [id])
+  qty                   Float?
+  price                 Float?
+  taxPercent            Float?
+  discountType          String?
+  discountValue         Float?
+  amount                Float?
+  sizeId                Int?
+  Size                  Size?                @relation(fields: [sizeId], references: [id])
+  uomId                 Int?
+  Uom                   Uom?                 @relation(fields: [uomId], references: [id])
+  gsmId                 Int?
+  Gsm                   Gsm?                 @relation(fields: [gsmId], references: [id])
+  hsnId                 Int?
+  Hsn                   Hsn?                 @relation(fields: [hsnId], references: [id])
+  quoteVersion          Int                  @default(1)
+  dozen                 Float?
+  labelWidth            String?
+  PIStyleBreakup        PIStyleBreakup[]
+  proformaInvoiceYarn   ProformaInvoiceYarn? @relation(fields: [proformaInvoiceYarnId], references: [id])
+  proformaInvoiceYarnId Int?
 }
 
 model PIStyleBreakup {
@@ -2691,13 +2707,15 @@ model PISizeBreakup {
 }
 
 model ProformaAttachments {
-  id                Int              @id @default(autoincrement())
-  ProformaInvoice   ProformaInvoice? @relation(fields: [proformaInvoiceId], references: [id], onDelete: Cascade)
-  proformaInvoiceId Int?
-  date              DateTime?
-  name              String?
-  fileName          String?
-  filePath          String?
+  id                    Int                  @id @default(autoincrement())
+  ProformaInvoice       ProformaInvoice?     @relation(fields: [proformaInvoiceId], references: [id], onDelete: Cascade)
+  proformaInvoiceId     Int?
+  date                  DateTime?
+  name                  String?
+  fileName              String?
+  filePath              String?
+  proformaInvoiceYarn   ProformaInvoiceYarn? @relation(fields: [proformaInvoiceYarnId], references: [id])
+  proformaInvoiceYarnId Int?
 }
 
 model Currency {
@@ -2711,32 +2729,34 @@ model Currency {
   companyId      Int?
   active         Boolean  @default(true)
 
-  proformaInvoices ProformaInvoice[]
-  salesDeliveries  SalesDelivery[]
-  orderEntries     OrderEntry[]
-  SalesReturn      SalesReturn[]
-  SalesOrder       SalesOrder[]
-  SalesBillEntry   SalesBillEntry[]
-  Ledger           Ledger[]
+  proformaInvoices     ProformaInvoice[]
+  salesDeliveries      SalesDelivery[]
+  orderEntries         OrderEntry[]
+  SalesReturn          SalesReturn[]
+  SalesOrder           SalesOrder[]
+  SalesBillEntry       SalesBillEntry[]
+  Ledger               Ledger[]
+  proformaInvoiceYarns ProformaInvoiceYarn[]
 }
 
 model Bank {
-  id               Int               @id @default(autoincrement())
-  companyId        Int?
-  Company          Company?          @relation(fields: [companyId], references: [id])
-  name             String?
-  accNo            String?
-  ifsc             String?
-  swiftCode        String?
-  branchId         Int?
-  Branch           City?             @relation(fields: [branchId], references: [id])
-  active           Boolean           @default(true)
-  bankHolderName   String?
-  proformaInvoices ProformaInvoice[]
-  salesDeliveries  SalesDelivery[]
-  orderEntries     OrderEntry[]
-  SalesOrder       SalesOrder[]
-  SalesBillEntry   SalesBillEntry[]
+  id                   Int                   @id @default(autoincrement())
+  companyId            Int?
+  Company              Company?              @relation(fields: [companyId], references: [id])
+  name                 String?
+  accNo                String?
+  ifsc                 String?
+  swiftCode            String?
+  branchId             Int?
+  Branch               City?                 @relation(fields: [branchId], references: [id])
+  active               Boolean               @default(true)
+  bankHolderName       String?
+  proformaInvoices     ProformaInvoice[]
+  salesDeliveries      SalesDelivery[]
+  orderEntries         OrderEntry[]
+  SalesOrder           SalesOrder[]
+  SalesBillEntry       SalesBillEntry[]
+  proformaInvoiceYarns ProformaInvoiceYarn[]
 }
 
 model ProductionAllocation {
@@ -3524,6 +3544,7 @@ model ContentMaster {
   Company    Company      @relation(fields: [companyId], references: [id])
   companyId  Int
   YarnMaster YarnMaster[]
+  yarnItems  YarnItems[]
 }
 
 model CountsMaster {
@@ -3533,6 +3554,7 @@ model CountsMaster {
   Company    Company      @relation(fields: [companyId], references: [id])
   companyId  Int
   YarnMaster YarnMaster[]
+  yarnItems  YarnItems[]
 }
 
 model YarnBlendMaster {
@@ -3558,6 +3580,7 @@ model YarnMaster {
   hsnId            Int
   Hsn              Hsn                @relation(fields: [hsnId], references: [id])
   YarnMasterDetail YarnMasterDetail[]
+  yarnItems        YarnItems[]
 }
 
 model YarnMasterDetail {
@@ -3620,4 +3643,81 @@ model DiaMaster {
   FabricItemsfDia FabricItems[] @relation("fDia")
 
   @@unique([name, kDia, fDia])
+}
+
+model ProformaInvoiceYarn {
+  id                Int                   @id @default(autoincrement())
+  docId             String                @unique
+  docDate           DateTime?
+  userDate          DateTime?
+  deliveryDate      DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  createdBy         User?                 @relation("proformaYarnCreatedBy", fields: [createdById], references: [id])
+  createdById       Int?
+  updatedBy         User?                 @relation("proformaYarnUpdatedBy", fields: [updatedById], references: [id])
+  updatedById       Int?
+  Branch            Branch?               @relation(fields: [branchId], references: [id])
+  branchId          Int?
+  Company           Company?              @relation(fields: [companyId], references: [id])
+  companyId         Int?
+  customer          Party?                @relation(fields: [customerId], references: [id])
+  customerId        Int?
+  finYear           FinYear?              @relation(fields: [finYearId], references: [id])
+  finYearId         Int?
+  remarks           String?
+  termsAndCondition String?
+  Terms             TermsAndConditions?   @relation(fields: [termsId], references: [id])
+  termsId           Int?
+  items             ProformaInvoiceItem[]
+  attachments       ProformaAttachments[]
+  TaxTemplate       TaxTemplate?          @relation(fields: [taxTemplateId], references: [id])
+  taxTemplateId     Int?
+  quoteVersion      Int                   @default(1)
+  discountType      String?
+  discountValue     Float?
+  PayTerm           PayTerm?              @relation(fields: [payTermId], references: [id])
+  payTermId         Int?
+  isApproved        Boolean               @default(false)
+  approvalStatus    String                @default("PENDING")
+  validityTo        DateTime?
+  Currency          Currency?             @relation(fields: [currencyId], references: [id])
+  currencyId        Int?
+  weightInKg        Float?
+  Loading           City?                 @relation("loading", fields: [loadingId], references: [id])
+  loadingId         Int?
+  Delivery          City?                 @relation("delivery", fields: [deliveryId], references: [id])
+  deliveryId        Int?
+  carriageCharge    Float?
+  carriageTax       Float?
+  bankId            Int?
+  Bank              Bank?                 @relation(fields: [bankId], references: [id])
+  conversionType    String?
+  customerPoNo      String?
+  yarnItems         YarnItems[]
+}
+
+model YarnItems {
+  id                    Int                 @id @default(autoincrement())
+  ProformaInvoiceYarn   ProformaInvoiceYarn @relation(fields: [proformaInvoiceYarnId], references: [id], onDelete: Cascade)
+  proformaInvoiceYarnId Int
+  yarnId                Int?
+  yarn                  YarnMaster?         @relation(fields: [yarnId], references: [id])
+  hsnId                 Int?
+  hsn                   Hsn?                @relation(fields: [hsnId], references: [id])
+  contentId             Int?
+  content               ContentMaster?      @relation(fields: [contentId], references: [id])
+  countsId              Int?
+  counts                CountsMaster?       @relation(fields: [countsId], references: [id])
+  colorId               Int?
+  color                 Color?              @relation(fields: [colorId], references: [id])
+  uomId                 Int?
+  uom                   Uom?                @relation(fields: [uomId], references: [id])
+  qty                   Float?
+  price                 Float?
+  amount                Float?
+  taxPercent            Float?
+  discountType          String?
+  discountValue         Float?
+  quoteVersion          Int                 @default(1)
 }

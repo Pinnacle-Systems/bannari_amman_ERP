@@ -93,6 +93,7 @@ import {
   designMaster,
   loopLengthMaster,
   diaMaster,
+  proformaInvoiceYarn,
 } from "./src/routes/index.js";
 import { setIo } from "./src/utils/notificationHelper.js";
 import { socketMain } from "./src/sockets/socket.js";
@@ -233,6 +234,7 @@ app.use("/gaugeMaster", gaugeMaster);
 app.use("/designMaster", designMaster);
 app.use("/loopLengthMaster", loopLengthMaster);
 app.use("/diaMaster", diaMaster);
+app.use("/yarnProformaInvoice", proformaInvoiceYarn);
 
 app.get("/retreiveFile/:fileName", (req, res) => {
   const { fileName } = req.params;

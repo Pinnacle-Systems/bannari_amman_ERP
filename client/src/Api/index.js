@@ -88,3 +88,4 @@ export const LOOP_LENGTH_MASTER_API = "loopLengthMaster";
 export const DIA_MASTER_API = "diaMaster";
 export const GAUGE_MASTER_API = "gaugeMaster";
 export const DESIGN_MASTER_API = "designMaster";
+export const YARN_PROFORMA_INVOICE_API = "yarnProformaInvoice";
