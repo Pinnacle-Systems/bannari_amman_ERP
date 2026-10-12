@@ -416,7 +416,7 @@ const ProformaInvoiceFabricItems = ({
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300 sticky left-0 bg-gray-200 z-[2]",
+                "w-10 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-gray-200 z-[2]",
             },
             {
               key: "desc",
@@ -426,13 +426,13 @@ const ProformaInvoiceFabricItems = ({
                 </>
               ),
               className:
-                "w-72 px-2 py-2 text-center text-xs  border border-gray-300 sticky left-[40px] bg-gray-200 z-[2]",
+                "w-72 px-2 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-gray-200 z-[2]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300 sticky left-[328px] bg-gray-200 z-[2]",
+                "w-28 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[328px] bg-gray-200 z-[2]",
             },
 
             {
@@ -588,7 +588,7 @@ const ProformaInvoiceFabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
+                  className="text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-inherit z-[1]"
                 >
                   {index + 1}
                 </td>
@@ -596,7 +596,7 @@ const ProformaInvoiceFabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 sticky left-[40px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-inherit z-[1]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -617,7 +617,7 @@ const ProformaInvoiceFabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
