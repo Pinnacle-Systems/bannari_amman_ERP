@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs/index.js";
-import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService.js";
 import { useGetUomQuery } from "../../../redux/services/UomMasterService.js";
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
 import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService.js";
@@ -8,8 +7,6 @@ import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterServi
 //////
 
 import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService";
-import { useGetContentMasterQuery } from "../../../redux/services/contentMasterService";
-import { useGetCountsMasterQuery } from "../../../redux/services/CountsMaster.service";
 
 import {
   findFromList,
@@ -20,12 +17,8 @@ import { VIEW } from "../../../icons/index.js";
 import Modal from "../../../UiComponents/Modal/index.js";
 import TaxDetailsFullTemplate from "../TaxDetailsCompleteTemplate/index.js";
 import Swal from "sweetalert2";
-import { Gsm, UomMaster, ColorMaster } from "../index.js";
-import {
-  ContentMaster,
-  CountsMaster,
-  YarnMaster,
-} from "../../../Basic/components/index.js";
+import { UomMaster, ColorMaster } from "../index.js";
+import { YarnMaster } from "../../../Basic/components/index.js";
 import { TransactionGrid } from "../../../Basic/components/Reuseable/index.js";
 import { Plus } from "lucide-react";
 
@@ -45,26 +38,20 @@ const ProformaInvoiceYarnItems = ({
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
 
-  const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
   const { data: uomList } = useGetUomQuery({ params: { companyId } });
   const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
   const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
 
   const { data: yarnList } = useGetYarnMasterQuery({ params: { companyId } });
-  const { data: contentList } = useGetContentMasterQuery({
-    params: { companyId },
-  });
-  const { data: countsList } = useGetCountsMasterQuery({
-    params: { companyId },
-  });
 
   const EMPTY_ROW = {
     yarnId: "",
     hsnId: "",
-    contentId: "",
-    countsId: "",
+
     colorId: "",
     uomId: "",
+    noOfbags: "",
+    weightPerBag: "",
     qty: "",
     price: "",
     amount: "",

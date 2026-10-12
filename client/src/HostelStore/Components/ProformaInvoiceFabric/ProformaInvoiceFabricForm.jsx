@@ -314,13 +314,25 @@ const ProformaInvoiceFabricForm = ({
       if (!item.hsnId) {
         errors.push(`Row ${index + 1}: HSN is required`);
       }
+      if (!item.loopLengthId) {
+        errors.push(`Row ${index + 1}: Loop Length is required`);
+      }
+      if (!item.kDiaId) {
+        errors.push(`Row ${index + 1}: KDia is required`);
+      }
+      if (!item.fDiaId) {
+        errors.push(`Row ${index + 1}: FDia is required`);
+      }
       if (!item.uomId) {
         errors.push(`Row ${index + 1}: UOM is required`);
       }
       if (!item.qty || Number(item.qty) <= 0) {
         errors.push(`Row ${index + 1}: Qty is required`);
       }
-      const key = `${item.fabricId}_${item.designId}_${item.gsmId}_${item.colorId}`;
+      if (!item.price || Number(item.price) <= 0) {
+        errors.push(`Row ${index + 1}: Price is required`);
+      }
+      const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
       if (seen.has(key)) {
         errors.push(`Row ${index + 1}: Duplicate item found`);
       } else {

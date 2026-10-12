@@ -53,10 +53,11 @@ import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags
 const EMPTY_ROW = {
   yarnId: "",
   hsnId: "",
-  contentId: "",
-  countsId: "",
+
   colorId: "",
   uomId: "",
+  noOfbags: "",
+  weightPerBag: "",
   qty: "",
   price: "",
   amount: "",
@@ -302,10 +303,19 @@ const ProformaInvoiceYarnForm = ({
       if (!item.uomId) {
         errors.push(`Row ${index + 1}: UOM is required`);
       }
+      if (!item.noOfbags || Number(item.noOfbags) <= 0) {
+        errors.push(`Row ${index + 1}: Number of Bags is required`);
+      }
+      if (!item.weightPerBag || Number(item.weightPerBag) <= 0) {
+        errors.push(`Row ${index + 1}: Weight per Bag is required`);
+      }
       if (!item.qty || Number(item.qty) <= 0) {
         errors.push(`Row ${index + 1}: Qty is required`);
       }
-      const key = `${item.yarnId}_${item.designId}_${item.gsmId}_${item.colorId}`;
+      if (!item.price || Number(item.price) <= 0) {
+        errors.push(`Row ${index + 1}: Price is required`);
+      }
+      const key = `${item.yarnId}_${item.hsnId}_${item.colorId}_${item.noOfbags}_${item.weightPerBag}`;
       if (seen.has(key)) {
         errors.push(`Row ${index + 1}: Duplicate item found`);
       } else {
