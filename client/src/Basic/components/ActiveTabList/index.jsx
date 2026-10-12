@@ -35,6 +35,8 @@ import {
   GaugeMaster,
   DiaMaster,
   DesignMaster,
+  ItemGroupMaster,
+  ItemMaster,
 } from "..";
 
 import { CLOSE_ICON, DOUBLE_NEXT_ICON } from "../../../icons";
@@ -159,7 +161,7 @@ const ActiveTabList = () => {
     "PURCHASE LEDGER": <PurchaseLedger />,
     "DELIVERY CHALLAN": <DeliveryChallan />,
     "STYLE MASTER": <StyleMaster />,
-    "ITEM MASTER": <StyleItemMaster />,
+    "ITEM MASTER": <ItemMaster />,
     INVOICE: <DeliveryInvoice />,
     "COLOR MASTER": <ColorMaster />,
     "TAX TERM MASTER": <TaxTermMaster />,
@@ -170,7 +172,7 @@ const ActiveTabList = () => {
     "TERMS & CONDTIONS MASTER": <TermsAndCondition />,
     "PAY TERM MASTER": <PayTermMaster />,
     "LOCATION MASTER": <LocationMaster />,
-    "ITEM GROUP MASTER": <ItemGroup />,
+    "ITEM GROUP MASTER": <ItemGroupMaster />,
     "GSM MASTER": <Gsm />,
     "SIZE MASTER": <Size />,
     "SIZE TEMPLATE MASTER": <SizeTemplate />,
