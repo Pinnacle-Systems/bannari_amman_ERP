@@ -8,7 +8,6 @@ import {
 import {
   useAddProformaInvoiceMutation,
   useUpdateProformaInvoiceMutation,
-  useDeleteProformaInvoiceMutation,
   useGetProformaInvoiceByIdQuery,
   useGetProformaInvoiceQuery,
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
@@ -31,7 +30,6 @@ import tw from "../../../Utils/tailwind-react-pdf.js";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { FiEdit2, FiSave, FiPrinter, FiEye } from "react-icons/fi";
 import { HiOutlineRefresh } from "react-icons/hi";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import {
   CommonFormFooter,
   TransactionLayout,
@@ -49,6 +47,7 @@ import {
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
 
 const EMPTY_ROW = {
   fabricId: "",
@@ -529,7 +528,7 @@ const ProformaInvoiceFabricForm = ({
           },
         });
       }
-      dispatch(OrderEntryApi.util.invalidateTags(["orderEntry"]));
+      invalidateFabricModule();
       setReadOnly(true);
       dispatchInvalidate();
 

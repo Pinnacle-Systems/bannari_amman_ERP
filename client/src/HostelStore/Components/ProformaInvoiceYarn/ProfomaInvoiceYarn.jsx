@@ -16,6 +16,7 @@ import { useGetCityQuery } from "../../../redux/services/CityMasterService.js";
 import { useGetbankQuery } from "../../../redux/services/BankMasterService.js";
 import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 
 const ProfomaInvoiceYarn = () => {
   const [showForm, setShowForm] = useState(false);
@@ -70,7 +71,7 @@ const ProfomaInvoiceYarn = () => {
           icon: "success",
           timer: 1000,
         });
-        dispatch(OrderEntryApi.util.invalidateTags(["orderEntry"]));
+        invalidateYarnModule();
       } catch (error) {
         Swal.fire({
           icon: "error",

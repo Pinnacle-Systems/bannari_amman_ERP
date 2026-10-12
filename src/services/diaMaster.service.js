@@ -8,20 +8,22 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       YarnMaster: true,
-    //     },
-    //   },
-    // },
+    include: {
+      _count: {
+        select: {
+          FabricItemsfDia: true,
+          FabricItemskDia: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
   return {
     statusCode: 0,
-    data: data.map((content) => ({
-      ...content,
-      //   childRecord: content._count.YarnMaster > 0,
+    data: data.map((diaMaster) => ({
+      ...diaMaster,
+      childRecord:
+        diaMaster._count.FabricItemsfDia + diaMaster._count.FabricItemskDia,
     })),
   };
 }
@@ -31,20 +33,21 @@ async function getOne(id) {
     where: {
       id: parseInt(id),
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       YarnMaster: true,
-    //     },
-    //   },
-    // },
+    include: {
+      _count: {
+        select: {
+          FabricItemsfDia: true,
+          FabricItemskDia: true,
+        },
+      },
+    },
   });
   if (!data) return NoRecordFound("Dia Master");
   return {
     statusCode: 0,
     data: {
       ...data,
-      //   childRecord: data._count.YarnMaster > 0,
+      childRecord: data._count.FabricItemsfDia + data._count.FabricItemskDia,
     },
   };
 }

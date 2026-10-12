@@ -48,6 +48,7 @@ import {
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 
 const EMPTY_ROW = {
   yarnId: "",
@@ -512,7 +513,7 @@ const ProformaInvoiceYarnForm = ({
           },
         });
       }
-      dispatch(OrderEntryApi.util.invalidateTags(["orderEntry"]));
+      invalidateYarnModule();
       setReadOnly(true);
       dispatchInvalidate();
 

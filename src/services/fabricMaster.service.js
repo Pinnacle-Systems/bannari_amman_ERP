@@ -8,13 +8,30 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
+    include: {
+      _count: {
+        select: {
+          fabricItems: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
-  return { statusCode: 0, data };
+  return {
+    statusCode: 0,
+    data: data.map((fabricMaster) => ({
+      ...fabricMaster,
+      childRecord: fabricMaster?._count.fabricItems,
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = 0;
+  const childRecord = await prisma.fabricItems.count({
+    where: {
+      fabricId: parseInt(id),
+    },
+  });
   const data = await prisma.fabricMaster.findUnique({
     where: {
       id: parseInt(id),

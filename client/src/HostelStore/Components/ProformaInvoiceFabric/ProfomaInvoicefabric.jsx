@@ -14,8 +14,8 @@ import { useGetPaytermMasterQuery } from "../../../redux/services/payTermMasterS
 import { useGetCurrenciesQuery } from "../../../redux/services/CurrencyMasterService.js";
 import { useGetCityQuery } from "../../../redux/services/CityMasterService.js";
 import { useGetbankQuery } from "../../../redux/services/BankMasterService.js";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
 
 const ProformaInvoiceFabric = () => {
   const [showForm, setShowForm] = useState(false);
@@ -70,7 +70,7 @@ const ProformaInvoiceFabric = () => {
           icon: "success",
           timer: 1000,
         });
-        dispatch(OrderEntryApi.util.invalidateTags(["orderEntry"]));
+        invalidateFabricModule();
       } catch (error) {
         Swal.fire({
           icon: "error",

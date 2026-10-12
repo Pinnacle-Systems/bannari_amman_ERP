@@ -32,7 +32,7 @@ import CountsMaster from "../CountsMaster";
 import ContentMaster from "../ContentMaster";
 import { YarnBlendMaster } from "..";
 import { HsnMaster } from "../../../HostelStore/Components";
-
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
@@ -249,6 +249,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
         syncFormWithDb(undefined);
         setId("");
       }
+      invalidateYarnModule();
       Swal.fire({
         title: text + "  " + "Successfully",
         icon: "success",
@@ -259,6 +260,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
         //     Swal.showLoading();
         // }
       });
+      invalidateYarnModule();
       dispatchInvalidate();
     } catch (error) {
       console.log("handle");
@@ -320,6 +322,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       try {
         await removeData(id);
         setId("");
+        invalidateYarnModule();
         dispatchInvalidate();
 
         // toast.success("Deleted Successfully");
