@@ -32,7 +32,8 @@ export { default as CustomerWiseSalesReport } from "./CustomerWiseSalesReport";
 export { default as YearWiseSalesReport } from "./YearWiseSalesReport";
 export { default as QuarterWiseSalesReport } from "./QuarterWiseSalesReport";
 export { default as SalesReportHome } from "./SalesReportHome";
-
+export { default as ItemGroupMaster } from "./ItemGroupMaster";
+export { default as ItemMaster } from "./ItemMaster";
 //////////////////////////
 
 export { default as ContentMaster } from "./ContentMaster";

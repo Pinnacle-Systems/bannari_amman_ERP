@@ -63,11 +63,6 @@ model Company {
   gsms                 Gsm[]
   itemGroups           ItemGroup[]
   sizeTemplates        SizeTemplate[]
-  processes            Process[]
-  processGroups        ProcessGroup[]
-  boards               Board[]
-  plates               Plate[]
-  dies                 Die[]
   proformaInvoices     ProformaInvoice[]
   currencies           Currency[]
   bank                 Bank[]
@@ -135,7 +130,6 @@ model Branch {
   purchaseBillEntries   PurchaseBillEntry[]
   approvalConfigs       ApprovalConfig[]
   orderEntries          OrderEntry[]
-  jobCards              JobCard[]
   proformaInvoices      ProformaInvoice[]
   productionAllocations ProductionAllocation[]
   productionOutwards    ProductionOutward[]
@@ -158,17 +152,16 @@ model UserOnBranch {
 }
 
 model Role {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  company            Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId          Int
-  User               User[]
-  type               String?
-  RoleOnPage         RoleOnPage[]
-  active             Boolean              @default(true)
-  defaultRole        Boolean              @default(false)
-  approvalConfigs    ApprovalConfig[]
-  MobileNotification MobileNotification[]
+  id              Int              @id @default(autoincrement())
+  name            String
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId       Int
+  User            User[]
+  type            String?
+  RoleOnPage      RoleOnPage[]
+  active          Boolean          @default(true)
+  defaultRole     Boolean          @default(false)
+  approvalConfigs ApprovalConfig[]
 
   @@unique([companyId, name])
 }
@@ -233,8 +226,6 @@ model User {
   approvalLogsRaisedBy           ApprovalLog[]          @relation(name: "raisedBy")
   orderEntriesCreatedBy          OrderEntry[]           @relation(name: "createdBy")
   orderEntriesUpdatedBy          OrderEntry[]           @relation(name: "updatedBy")
-  jobCardsCreatedBy              JobCard[]              @relation(name: "createdBy")
-  jobCardsUpdatedBy              JobCard[]              @relation(name: "updatedBy")
   proformaInvoicesCreatedBy      ProformaInvoice[]      @relation(name: "proformaCreatedBy")
   proformaInvoicesUpdatedBy      ProformaInvoice[]      @relation(name: "proformaUpdatedBy")
   productionAllocationsCreatedBy ProductionAllocation[] @relation(name: "AllocationCreatedBy")
@@ -245,7 +236,6 @@ model User {
   productionInwardsUpdatedBy     ProductionInward[]     @relation("InwardUpdatedBy")
   processBillsCreatedBy          ProcessBill[]          @relation(name: "createdBy")
   processBillsUpdatedBy          ProcessBill[]          @relation(name: "updatedBy")
-  MobileNotification             MobileNotification[]
 
   pushLogs                     pushLogs[]
   productionemplog             productionempPunch[]
@@ -253,8 +243,6 @@ model User {
   salesDeliveriesUpdatedBy     SalesDelivery[]       @relation(name: "updatedBy")
   ItemSubGroupCreatedBy        ItemSubGroup[]        @relation(name: "createdBy")
   ItemSubGroupUpdatedBy        ItemSubGroup[]        @relation(name: "updatedBy")
-  reworkLogs                   ReworkLog[]
-  reworkBatchTrackers          ReworkBatchTracker[]
   SalesOrderCreatedBy          SalesOrder[]          @relation(name: "createdBy")
   SalesOrderUpdatedBy          SalesOrder[]          @relation(name: "updatedBy")
   PackingCreatedBy             Packing[]             @relation(name: "createdBy")
@@ -315,9 +303,7 @@ model Employee {
   updatedAt          DateTime?         @updatedAt
   employeeId         String?
 
-  User            User[]
-  JobCardFollowUp JobCard[] @relation("followup")
-  JobCardDesigner JobCard[] @relation("design")
+  User User[]
 }
 
 model FinYear {
@@ -411,7 +397,6 @@ model Department {
   isTaken            Boolean?
   productionempPunch productionempPunch[]
   machines           Machine[]
-  processes          Process[]
   takenMachines      takenmachines[]
 }
 
@@ -545,8 +530,6 @@ model Party {
   purchaseBillEntries   PurchaseBillEntry[]
   purchaseLedgers       PurchaseLedger[]
   orderEntries          OrderEntry[]
-  JobCard               JobCard[]
-  PlateSupplier         JobCard[]              @relation(name: "PlateSupplier")
   proformaInvoices      ProformaInvoice[]
   productionOutwards    ProductionOutward[]
 
@@ -687,7 +670,6 @@ model Uom {
   purchaseReturnItems    PurchaseReturnItems[]
   purchaseCancelItems    PurchaseCancelItems[]
   purchaseBillEntryItems PurchaseBillEntryItems[]
-  styles                 Style[]
   styleItems             StyleItem[]
   orderItems             OrderItems[]
   proformaInvoiceItems   ProformaInvoiceItem[]
@@ -695,7 +677,6 @@ model Uom {
   SalesOrderItems        SalesOrderItems[]
   PackingItems           PackingItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
-  PackingBreakup         PackingBreakup[]
   fabricItems            FabricItems[]
   yarnItems              YarnItems[]
 }
@@ -868,9 +849,7 @@ model Stock {
   colorId               Int?
   Gsm                   Gsm?                 @relation(fields: [gsmId], references: [id])
   gsmId                 Int?
-  JobCard               JobCard?             @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
   jobCardId             Int?
-  Style                 Style?               @relation(fields: [styleId], references: [id], onDelete: Cascade)
   styleId               Int?
   OrderEntry            OrderEntry?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId               Int?
@@ -966,54 +945,32 @@ model SalesReturn {
 }
 
 model SalesReturnItems {
-  id                      Int                       @id @default(autoincrement())
-  SalesReturn             SalesReturn?              @relation(fields: [salesReturnId], references: [id], onDelete: Cascade)
-  salesReturnId           Int?
-  styleItemId             Int?
-  StyleItem               StyleItem?                @relation(fields: [styleItemId], references: [id])
-  itemGroupId             Int?
-  ItemGroup               ItemGroup?                @relation(fields: [itemGroupId], references: [id])
-  itemSubGroupId          Int?
-  ItemSubGroup            ItemSubGroup?             @relation(fields: [itemSubGroupId], references: [id])
-  deliveryQty             Float?
-  price                   Float?
-  amount                  Float?
-  discountType            String?
-  discountValue           Float?
-  taxPercent              Float?
-  Uom                     Uom?                      @relation(fields: [uomId], references: [id], onDelete: Restrict)
-  uomId                   Int?
-  Gsm                     Gsm?                      @relation(fields: [gsmId], references: [id])
-  gsmId                   Int?
-  Hsn                     Hsn?                      @relation(fields: [hsnId], references: [id])
-  hsnId                   Int?
-  trackingType            String?
-  labelWidth              String?
-  dozen                   Float?
-  orderQty                String?
-  Stock                   Stock?
-  SalesReturnStyleBreakup SalesReturnStyleBreakup[]
-}
-
-model SalesReturnStyleBreakup {
-  id                     Int                      @id @default(autoincrement())
-  salesReturnItemsId     Int
-  SalesReturnItems       SalesReturnItems?        @relation(fields: [salesReturnItemsId], references: [id], onDelete: Cascade)
-  styleId                Int?
-  Style                  Style?                   @relation(fields: [styleId], references: [id])
-  SalesReturnSizeBreakup SalesReturnSizeBreakup[]
-}
-
-model SalesReturnSizeBreakup {
-  id                        Int                      @id @default(autoincrement())
-  salesReturnStyleBreakupId Int?
-  SalesReturnStyleBreakup   SalesReturnStyleBreakup? @relation(fields: [salesReturnStyleBreakupId], references: [id], onDelete: Cascade)
-  Size                      Size?                    @relation(fields: [sizeId], references: [id])
-  sizeId                    Int?
-  qty                       String?
-  returnQty                 String?
-  SalesSizeBreakup          SalesSizeBreakup?        @relation(fields: [salesSizeBreakupId], references: [id], onDelete: Cascade)
-  salesSizeBreakupId        Int?
+  id             Int           @id @default(autoincrement())
+  SalesReturn    SalesReturn?  @relation(fields: [salesReturnId], references: [id], onDelete: Cascade)
+  salesReturnId  Int?
+  styleItemId    Int?
+  StyleItem      StyleItem?    @relation(fields: [styleItemId], references: [id])
+  itemGroupId    Int?
+  ItemGroup      ItemGroup?    @relation(fields: [itemGroupId], references: [id])
+  itemSubGroupId Int?
+  ItemSubGroup   ItemSubGroup? @relation(fields: [itemSubGroupId], references: [id])
+  deliveryQty    Float?
+  price          Float?
+  amount         Float?
+  discountType   String?
+  discountValue  Float?
+  taxPercent     Float?
+  Uom            Uom?          @relation(fields: [uomId], references: [id], onDelete: Restrict)
+  uomId          Int?
+  Gsm            Gsm?          @relation(fields: [gsmId], references: [id])
+  gsmId          Int?
+  Hsn            Hsn?          @relation(fields: [hsnId], references: [id])
+  hsnId          Int?
+  trackingType   String?
+  labelWidth     String?
+  dozen          Float?
+  orderQty       String?
+  Stock          Stock?
 }
 
 model OpeningStock {
@@ -1070,32 +1027,6 @@ model Payment {
   Leder           Ledger[]
 }
 
-model Style {
-  id                        Int                         @id @default(autoincrement())
-  name                      String?
-  aliasName                 String?
-  code                      String?
-  active                    Boolean?                    @default(false)
-  SizeTemplate              SizeTemplate?               @relation(fields: [sizeTemplateId], references: [id])
-  sizeTemplateId            Int?
-  ItemGroup                 ItemGroup?                  @relation(fields: [itemGroupId], references: [id])
-  itemGroupId               Int?
-  Uom                       Uom?                        @relation(fields: [uomId], references: [id])
-  uomId                     Int?
-  Gsm                       Gsm?                        @relation(fields: [gsmId], references: [id])
-  gsmId                     Int?
-  DeliveryChallanItems      DeliveryChallanItems[]
-  DeliveryInvoiceItems      DeliveryInvoiceItems[]
-  PIStyleBreakup            PIStyleBreakup[]
-  PackingStyleBreakup       PackingStyleBreakup[]
-  OrderStyleBreakup         OrderStyleBreakup[]
-  Stock                     Stock[]
-  SaleOrderStyleBreakup     SaleOrderStyleBreakup[]
-  SalesStyleBreakup         SalesStyleBreakup[]
-  SalesReturnStyleBreakup   SalesReturnStyleBreakup[]
-  SaleBillEntryStyleBreakup SaleBillEntryStyleBreakup[]
-}
-
 model StyleItem {
   id                     Int                      @id @default(autoincrement())
   name                   String?
@@ -1124,10 +1055,8 @@ model StyleItem {
   purchaseBillEntryItems PurchaseBillEntryItems[]
   orderItems             OrderItems[]
   proformaInvoiceItems   ProformaInvoiceItem[]
-  JobCardsOrderItem      JobCard[]                @relation("OrderItem")
   productionAllocations  ProductionAllocation[]
   salesDeliveryItems     SalesDeliveryItems[]
-  JobCardsLabel          JobCard[]                @relation("label")
   SalesOrderItems        SalesOrderItems[]
   PackingItems           PackingItems[]
   SalesReturnItems       SalesReturnItems[]
@@ -1167,7 +1096,6 @@ model DeliveryChallanItems {
   id                   Int                    @id @default(autoincrement())
   DeliveryChallan      DeliveryChallan?       @relation(fields: [deliveryChallanId], references: [id], onDelete: Cascade)
   deliveryChallanId    Int?
-  Style                Style?                 @relation(fields: [styleId], references: [id], onDelete: Restrict)
   styleId              Int?
   StyleItem            StyleItem?             @relation(fields: [styleItemId], references: [id], onDelete: Restrict)
   styleItemId          Int?
@@ -1196,7 +1124,6 @@ model Color {
   purchaseReturnItems    PurchaseReturnItems[]
   inwardItems            InwardItems[]
   stocks                 Stock[]
-  JobCards               JobCard[]
   fabricItems            FabricItems[]
   yarnItems              YarnItems[]
 }
@@ -1236,7 +1163,6 @@ model DeliveryInvoiceItems {
   id                     Int                   @id @default(autoincrement())
   deliveryInvoice        DeliveryInvoice?      @relation(fields: [deliveryInvoiceId], references: [id], onDelete: Cascade)
   deliveryInvoiceId      Int?
-  Style                  Style?                @relation(fields: [styleId], references: [id], onDelete: Restrict)
   styleId                Int?
   StyleItem              StyleItem?            @relation(fields: [styleItemId], references: [id], onDelete: Restrict)
   styleItemId            Int?
@@ -1618,7 +1544,6 @@ model Location {
   stocks                Stock[]
   purchaseInwardReturns PurchaseInwardReturn[]
   purchaseCancels       PurchaseCancel[]
-  jobCards              JobCard[]
 }
 
 model PurchaseInwardReturn {
@@ -1833,22 +1758,10 @@ model Size {
   stocks                 Stock[]
   orderItems             OrderItems[]
   proformaInvoiceItems   ProformaInvoiceItem[]
-  orderSizeBreakups      OrderSizeBreakup[]
-  jobCardFullBoardSize   JobCard[]                @relation("fullBoardSize")
-  jobCardCuttingSize     JobCard[]                @relation("cuttingSizeDtl")
   jobCardSizeDetails     JobCardSizeBreakup[]
   Machine                Machine[]
-  jobCardLabelSize       JobCard[]                @relation("labelSize")
-  boardQualities         BoardQuality[]
-
-  salesSizeBreakups        SalesSizeBreakup[]
-  pisizeBreakups           PISizeBreakup[]
-  SalesOrderItems          SalesOrderItems[]
-  SaleOrderSizeBreakup     SaleOrderSizeBreakup[]
-  PackingSizeBreakup       PackingSizeBreakup[]
-  SalesReturnSizeBreakup   SalesReturnSizeBreakup[]
-  SalesBillEntryItems      SalesBillEntryItems[]
-  SaleBillEntrySizeBreakup SaleBillEntrySizeBreakup[]
+  SalesOrderItems        SalesOrderItems[]
+  SalesBillEntryItems    SalesBillEntryItems[]
 }
 
 model Gsm {
@@ -1857,7 +1770,6 @@ model Gsm {
   active                 Boolean                  @default(true)
   Company                Company?                 @relation(fields: [companyId], references: [id])
   companyId              Int?
-  styles                 Style[]
   styleItems             StyleItem[]
   poItems                PoItems[]
   inwardItems            InwardItems[]
@@ -1867,10 +1779,8 @@ model Gsm {
   stocks                 Stock[]
   orderItems             OrderItems[]
   proformaInvoiceItems   ProformaInvoiceItem[]
-  boardQualities         BoardQuality[]
   SalesOrderItems        SalesOrderItems[]
   PackingItems           PackingItems[]
-  jobCards               JobCard[]
   SalesDeliveryItems     SalesDeliveryItems[]
   SalesReturnItems       SalesReturnItems[]
   SalesBillEntryItems    SalesBillEntryItems[]
@@ -1883,7 +1793,6 @@ model ItemGroup {
   active                 Boolean                  @default(true)
   Company                Company?                 @relation(fields: [companyId], references: [id])
   companyId              Int?
-  styles                 Style[]
   styleItems             StyleItem[]
   poItems                PoItems[]
   purchaseCancelItems    PurchaseCancelItems[]
@@ -1892,7 +1801,6 @@ model ItemGroup {
   inwardItems            InwardItems[]
   stocks                 Stock[]
   orderItems             OrderItems[]
-  jobCards               JobCard[]
   ItemSubGroup           ItemSubGroup[]
   proformaInvoiceItems   ProformaInvoiceItem[]
   SalesOrderItems        SalesOrderItems[]
@@ -1909,7 +1817,6 @@ model SizeTemplate {
   companyId        Int?
   active           Boolean?           @default(true)
   SizeTemplateList SizeTemplateList[]
-  styles           Style[]
   styleItems       StyleItem[]
   orderItems       OrderItems[]
 }
@@ -2087,7 +1994,6 @@ model OrderEntry {
   validDays         Int?
   validTo           DateTime?
   attachments       attachments[]
-  JobCard           JobCard[]
   salesDeliveries   SalesDelivery[]
   TaxTemplate       TaxTemplate?        @relation(fields: [taxTemplateId], references: [id])
   taxTemplateId     Int?
@@ -2117,293 +2023,6 @@ model OrderEntry {
   inwardItems       InwardItems[]
 }
 
-model Process {
-  id               Int                @id @default(autoincrement())
-  name             String?
-  active           Boolean?           @default(true)
-  Company          Company?           @relation(fields: [companyId], references: [id])
-  companyId        Int?
-  isOutsideJob     Boolean?           @default(false)
-  Department       Department?        @relation(fields: [departmentId], references: [id])
-  departmentId     Int?
-  processGroupList ProcessGroupList[]
-
-  laminationDetails                LaminationDetails[]
-  varnishDetails                   VarnishDetails[]
-  machineDetails                   MachineDetails[]
-  processDetails                   ProcessDetails[]
-  processRoute                     ProcessRoute[]
-  ProductionAllocationDtl          ProductionAllocationDtl[]
-  finishingProcess                 FinishingProcess[]
-  printingDetails                  PrintingDetails[]
-  productionOutwardDtlsProcess     ProductionOutwardDtl[]    @relation("process")
-  productionOutwardDtlsPrevProcess ProductionOutwardDtl[]    @relation("prevProcess")
-  productionInwardDtls             ProductionInwardDtl[]
-  inwardProcessDtls                InwardProcessDtl[]
-  billingProcesses                 BillingProcess[]
-  jobCards                         JobCard[]
-  boardQualitys                    BoardQuality[]
-  labelPrintingDetails             LabelPrintingDetails[]
-}
-
-model ProcessGroup {
-  id               Int                @id @default(autoincrement())
-  name             String?
-  Company          Company?           @relation(fields: [companyId], references: [id])
-  companyId        Int?
-  active           Boolean?           @default(true)
-  processGroupList ProcessGroupList[]
-}
-
-model ProcessGroupList {
-  id             Int           @id @default(autoincrement())
-  processGroup   ProcessGroup? @relation(fields: [processGroupId], references: [id], onDelete: Cascade)
-  processGroupId Int?
-  Process        Process?      @relation(fields: [processId], references: [id])
-  processId      Int?
-}
-
-model Board {
-  id        Int      @id @default(autoincrement())
-  name      String?
-  active    Boolean? @default(true)
-  Company   Company? @relation(fields: [companyId], references: [id])
-  companyId Int?
-
-  boardQualities BoardQuality[]
-  JobCards       JobCard[]
-}
-
-model Plate {
-  id           Int            @id @default(autoincrement())
-  name         String?
-  active       Boolean?       @default(true)
-  Company      Company?       @relation(fields: [companyId], references: [id])
-  companyId    Int?
-  JobCard      JobCard[]
-  PlateDetails PlateDetails[]
-}
-
-model Die {
-  id        Int       @id @default(autoincrement())
-  name      String?
-  active    Boolean?  @default(true)
-  Company   Company?  @relation(fields: [companyId], references: [id])
-  companyId Int?
-  JobCard   JobCard[]
-}
-
-model JobCard {
-  id                    Int                    @id @default(autoincrement())
-  docId                 String
-  docDate               DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  createdBy             User?                  @relation("createdBy", fields: [createdById], references: [id])
-  createdById           Int?
-  updatedBy             User?                  @relation("updatedBy", fields: [updatedById], references: [id])
-  updatedById           Int?
-  Branch                Branch?                @relation(fields: [branchId], references: [id])
-  branchId              Int?
-  OrderEntry            OrderEntry?            @relation(fields: [orderEntryId], references: [id])
-  orderEntryId          Int?
-  orderType             String?
-  orderQty              Int?
-  customerId            Int?
-  customer              Party?                 @relation(fields: [customerId], references: [id])
-  gsmId                 Int?
-  gsm                   Gsm?                   @relation(fields: [gsmId], references: [id])
-  Board                 Board?                 @relation(fields: [boardId], references: [id])
-  boardId               Int?
-  otherBoardId          Int?
-  OtherBoard            Process?               @relation(fields: [otherBoardId], references: [id])
-  fullBoard             Int?
-  noOfPockets           Int?
-  cuttingSize           String?
-  runningQty            Int?
-  isFourColor           Boolean?               @default(false)
-  isCutColor            Boolean?               @default(false)
-  isFront               Boolean?               @default(false)
-  isFrontAndBack        Boolean?               @default(false)
-  isCMYK                Boolean?               @default(false)
-  isCutColMachine       Boolean?               @default(false)
-  isFrontMachine        Boolean?               @default(false)
-  isFrontBackMachine    Boolean?               @default(false)
-  plateId               Int?
-  Plate                 Plate?                 @relation(fields: [plateId], references: [id])
-  dieId                 Int?
-  Die                   Die?                   @relation(fields: [dieId], references: [id])
-  totalPlateSet         Int?
-  dieMethod             String?
-  dieDescription        String?
-  remarks               String?
-  designerId            Int?
-  Designer              Employee?              @relation("design", fields: [designerId], references: [id])
-  followUpId            Int?
-  FollowUp              Employee?              @relation("followup", fields: [followUpId], references: [id])
-  tagCardUps            String?
-  totalPlatesets        String?
-  jobRunTime            String?
-  productionType        String?
-  fullBoardId           Int?
-  FullBoardSize         Size?                  @relation("fullBoardSize", fields: [fullBoardId], references: [id])
-  cuttingSizeId         Int?
-  CuttingSizeDtl        Size?                  @relation("cuttingSizeDtl", fields: [cuttingSizeId], references: [id])
-  labelSizeId           Int?
-  LabelSize             Size?                  @relation("labelSize", fields: [labelSizeId], references: [id])
-  itemGroupId           Int?
-  ItemGroup             ItemGroup?             @relation(fields: [itemGroupId], references: [id])
-  itemType              String?
-  styleItemId           Int?
-  StyleItem             StyleItem?             @relation("OrderItem", fields: [styleItemId], references: [id])
-  trackingType          String?
-  labelQty              Int?
-  rollQty               Float?
-  cutAndSeal            String?
-  labelQuality          String?
-  LabelItem             StyleItem?             @relation("label", fields: [labelItemId], references: [id])
-  labelItemId           Int?
-  block                 String?
-  orderItemId           Int?
-  totalMeter            Int?
-  OrderItems            OrderItems?            @relation(fields: [orderItemId], references: [id])
-  blockDate             DateTime?
-  isRepeatedJobCard     Boolean?               @default(false)
-  refJobCardId          Int?
-  RefJobCard            JobCard?               @relation("RepeatedJobCard", fields: [refJobCardId], references: [id])
-  Store                 Location?              @relation(fields: [storeId], references: [id])
-  storeId               Int?
-  splitType             String?
-  colorId               Int?
-  Color                 Color?                 @relation(fields: [colorId], references: [id])
-  plateSupplierId       Int?
-  PlateSupplier         Party?                 @relation("PlateSupplier", fields: [plateSupplierId], references: [id])
-  isHold                Boolean?               @default(false)
-  isCancelled           Boolean?               @default(false)
-  lenght                Int?
-  width                 Int?
-  meter                 Int?
-  isPackingComplted     String?
-  boardQualities        BoardQuality[]
-  processDetails        ProcessDetails[]
-  laminationDetails     LaminationDetails[]
-  varnishDetails        VarnishDetails[]
-  machineDetails        MachineDetails[]
-  processRoute          ProcessRoute[]
-  jobCardSizeDetails    JobCardSizeBreakup[]
-  productionAllocations ProductionAllocation[]
-  printingDetails       PrintingDetails[]
-  plateDetails          PlateDetails[]
-  finishingProcesses    FinishingProcess[]
-  JobCards              JobCard[]              @relation("RepeatedJobCard")
-  productionOutwards    ProductionOutward[]
-  productionInwards     ProductionInward[]
-  productionInwardDtls  ProductionInwardDtl[]
-  processBillDtls       ProcessBillDtl[]
-  productionempPunch    productionempPunch[]
-  stocks                Stock[]
-  labelPrintingDetails  LabelPrintingDetails[]
-  takenMachines         takenmachines[]
-  isOldPlate            Boolean?               @default(false)
-  isNewPlate            Boolean?               @default(false)
-  reworkLogs            ReworkLog[]
-  reworkBatchTrackers   ReworkBatchTracker[]
-  IncomingQty           IncomingQty[]
-  Packing               Packing[]
-}
-
-model BoardQuality {
-  id            Int      @id @default(autoincrement())
-  jobCardId     Int?
-  JobCard       JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  boardId       Int?
-  Board         Board?   @relation(fields: [boardId], references: [id])
-  processId     Int?
-  Process       Process? @relation(fields: [processId], references: [id])
-  gsmId         Int?
-  gsm           Gsm?     @relation(fields: [gsmId], references: [id])
-  fullBoardId   Int?
-  FullBoardSize Size?    @relation(fields: [fullBoardId], references: [id])
-  noOfSheets    Int?
-}
-
-model FinishingProcess {
-  id        Int      @id @default(autoincrement())
-  jobCardId Int?
-  JobCard   JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processId Int?
-  Process   Process? @relation(fields: [processId], references: [id])
-}
-
-model LabelPrintingDetails {
-  id        Int      @id @default(autoincrement())
-  jobCardId Int?
-  JobCard   JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processId Int?
-  Process   Process? @relation(fields: [processId], references: [id])
-}
-
-model PrintingDetails {
-  id             Int      @id @default(autoincrement())
-  jobCardId      Int?
-  JobCard        JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processId      Int?
-  Process        Process? @relation(fields: [processId], references: [id])
-  isFrontAndBack Boolean? @default(false)
-  isFront        Boolean? @default(false)
-}
-
-model PlateDetails {
-  id          Int      @id @default(autoincrement())
-  jobCardId   Int?
-  JobCard     JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  plateId     Int?
-  Plate       Plate?   @relation(fields: [plateId], references: [id])
-  machineId   Int?
-  Machine     Machine? @relation(fields: [machineId], references: [id])
-  plateName   String?
-  description String?
-  qty         Int?
-}
-
-model ProcessDetails {
-  id        Int      @id @default(autoincrement())
-  jobCardId Int?
-  JobCard   JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processId Int?
-  Process   Process? @relation(fields: [processId], references: [id])
-}
-
-model LaminationDetails {
-  id             Int      @id @default(autoincrement())
-  jobCardId      Int?
-  JobCard        JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  laminationId   Int?
-  Lamination     Process? @relation(fields: [laminationId], references: [id])
-  isFrontAndBack Boolean? @default(false)
-  isFront        Boolean? @default(false)
-}
-
-model VarnishDetails {
-  id             Int      @id @default(autoincrement())
-  jobCardId      Int?
-  JobCard        JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  varnishId      Int?
-  Varnish        Process? @relation(fields: [varnishId], references: [id])
-  isFrontAndBack Boolean? @default(false)
-  isFront        Boolean? @default(false)
-}
-
-model MachineDetails {
-  id        Int      @id @default(autoincrement())
-  jobCardId Int?
-  JobCard   JobCard? @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  machineId Int?
-  Machine   Process? @relation(fields: [machineId], references: [id])
-  macId     Int?
-  Mac       Machine? @relation(fields: [macId], references: [id])
-}
-
 model OrderItems {
   id             Int           @id @default(autoincrement())
   orderEntryId   Int?
@@ -2424,45 +2043,21 @@ model OrderItems {
   sizeTemplateId Int?
   SizeTemplate   SizeTemplate? @relation(fields: [sizeTemplateId], references: [id])
 
-  trackingType      String?
-  jobCards          JobCard[]
-  itemSubGroupId    Int?
-  ItemSubGroup      ItemSubGroup?       @relation(fields: [itemSubGroupId], references: [id])
-  labelWidth        String?
-  price             Float?
-  amount            Float?
-  dozen             Float?
-  taxPercent        Float?
-  discountType      String?
-  discountValue     Float?
-  OrderStyleBreakup OrderStyleBreakup[]
-}
-
-model OrderStyleBreakup {
-  id               Int                @id @default(autoincrement())
-  OrderItem        OrderItems?        @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  orderItemId      Int?
-  styleId          Int?
-  Style            Style?             @relation(fields: [styleId], references: [id], onDelete: Cascade)
-  OrderSizeBreakup OrderSizeBreakup[]
-}
-
-model OrderSizeBreakup {
-  id                  Int                  @id @default(autoincrement())
-  orderStyleBreakupId Int?
-  OrderStyleBreakup   OrderStyleBreakup?   @relation(fields: [orderStyleBreakupId], references: [id], onDelete: Cascade)
-  sizeId              Int?
-  Size                Size?                @relation(fields: [sizeId], references: [id])
-  qty                 Int?
-  barcodeFrom         String?
-  barcodeTo           String?
-  PackingSizeBreakup  PackingSizeBreakup[]
+  trackingType   String?
+  itemSubGroupId Int?
+  ItemSubGroup   ItemSubGroup? @relation(fields: [itemSubGroupId], references: [id])
+  labelWidth     String?
+  price          Float?
+  amount         Float?
+  dozen          Float?
+  taxPercent     Float?
+  discountType   String?
+  discountValue  Float?
 }
 
 model JobCardSizeBreakup {
   id          Int          @id @default(autoincrement())
-  jobCardId   Int
-  JobCard     JobCard      @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  jobCardId   Int?
   sizeId      Int?
   Size        Size?        @relation(fields: [sizeId], references: [id])
   qty         Int?
@@ -2474,9 +2069,7 @@ model JobCardSizeBreakup {
 model ProcessRoute {
   id                       Int                       @id @default(autoincrement())
   jobCardId                Int?
-  JobCard                  JobCard?                  @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
   processId                Int?
-  Process                  Process?                  @relation(fields: [processId], references: [id])
   type                     String // "process" | "lamination" | "varnish"
   sequence                 Int
   isFront                  Boolean                   @default(false)
@@ -2491,16 +2084,11 @@ model ProcessRoute {
   takenMachines            takenmachines[]
   productionAllocationDtls ProductionAllocationDtl[]
   productionempPunch       productionempPunch[]
-  reworkLogs               ReworkLog[]
-  reworkBatchTrackers      ReworkBatchTracker[]
-  IncomingQty              IncomingQty[]
-  IncomingSendQty          IncomingQty[]             @relation("sendProcessRoute")
 }
 
 model productionempPunch {
   id             Int           @id @default(autoincrement())
   jobCardId      Int?
-  JobCard        JobCard?      @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
   processRouteId Int?
   ProcessRoute   ProcessRoute? @relation(fields: [processRouteId], references: [id])
   startDate      DateTime?
@@ -2536,7 +2124,6 @@ model takenmachines {
   Userid         Int
   User           User          @relation(fields: [Userid], references: [id])
   jobCardId      Int?
-  JobCard        JobCard?      @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
   processRouteId Int?
   ProcessRoute   ProcessRoute? @relation(fields: [processRouteId], references: [id])
   stDatetime     DateTime      @default(now())
@@ -2683,27 +2270,8 @@ model ProformaInvoiceItem {
   quoteVersion          Int                  @default(1)
   dozen                 Float?
   labelWidth            String?
-  PIStyleBreakup        PIStyleBreakup[]
   proformaInvoiceYarn   ProformaInvoiceYarn? @relation(fields: [proformaInvoiceYarnId], references: [id])
   proformaInvoiceYarnId Int?
-}
-
-model PIStyleBreakup {
-  id                    Int                 @id @default(autoincrement())
-  ProformaInvoiceItemId Int
-  ProformaInvoiceItem   ProformaInvoiceItem @relation(fields: [ProformaInvoiceItemId], references: [id], onDelete: Cascade)
-  styleId               Int?
-  Style                 Style?              @relation(fields: [styleId], references: [id])
-  PISizeBreakup         PISizeBreakup[]
-}
-
-model PISizeBreakup {
-  id               Int             @id @default(autoincrement())
-  PIStyleBreakupId Int?
-  PIStyleBreakup   PIStyleBreakup? @relation(fields: [PIStyleBreakupId], references: [id], onDelete: Cascade)
-  sizeId           Int?
-  Size             Size?           @relation(fields: [sizeId], references: [id])
-  qty              Int?
 }
 
 model ProformaAttachments {
@@ -2769,8 +2337,7 @@ model ProductionAllocation {
   createdBy   User?      @relation("AllocationCreatedBy", fields: [createdById], references: [id])
   updatedById Int?
   updatedBy   User?      @relation("AllocationUpdatedBy", fields: [updatedById], references: [id])
-  jobCardId   Int
-  JobCard     JobCard    @relation(fields: [jobCardId], references: [id])
+  jobCardId   Int?
   remarks     String?
   styleItemId Int?
   StyleItem   StyleItem? @relation(fields: [styleItemId], references: [id])
@@ -2790,7 +2357,6 @@ model ProductionAllocationDtl {
   isInHouse              Boolean                @default(false)
   isOutSide              Boolean                @default(false)
   processId              Int?
-  Process                Process?               @relation(fields: [processId], references: [id])
   type                   String?
   sequence               Int?
   Supplier               Party?                 @relation(fields: [supplierId], references: [id])
@@ -2814,11 +2380,8 @@ model Machine {
   departmentId Int?
   isDefault    Boolean?    @default(false)
 
-  machineDetails     MachineDetails[]
   productionempPunch productionempPunch[]
   takenMachines      takenmachines[]
-  PlateDetails       PlateDetails[]
-  MobileNotification MobileNotification[]
 }
 
 model Notification {
@@ -2848,8 +2411,7 @@ model ProductionOutward {
   createdBy              User?                 @relation("createdBy", fields: [createdById], references: [id])
   updatedById            Int?
   updatedBy              User?                 @relation("updatedBy", fields: [updatedById], references: [id])
-  jobCardId              Int
-  JobCard                JobCard               @relation(fields: [jobCardId], references: [id])
+  jobCardId              Int?
   productionAllocationId Int?
   ProductionAllocation   ProductionAllocation? @relation(fields: [productionAllocationId], references: [id])
   supplierId             Int?
@@ -2861,7 +2423,6 @@ model ProductionOutward {
   dcNo                     String?
   vehicleNo                String?
   productionOutwardDetails ProductionOutwardDtl[]
-  IncomingQty              IncomingQty[]
 
   productionInwards    ProductionInward[]
   productionInwardDtls ProductionInwardDtl[]
@@ -2872,11 +2433,9 @@ model ProductionOutwardDtl {
   productionOutwardId       Int
   ProductionOutward         ProductionOutward        @relation(fields: [productionOutwardId], references: [id], onDelete: Cascade)
   processId                 Int?
-  Process                   Process?                 @relation("process", fields: [processId], references: [id])
   sentQty                   Float?
   sequence                  Int?
   prevProcessId             Int?
-  prevProcess               Process?                 @relation("prevProcess", fields: [prevProcessId], references: [id])
   productionAllocationDtlId Int?
   ProductionAllocationDtl   ProductionAllocationDtl? @relation(fields: [productionAllocationDtlId], references: [id])
 
@@ -2901,7 +2460,6 @@ model ProductionInward {
   Branch              Branch?            @relation(fields: [branchId], references: [id])
   branchId            Int?
   jobCardId           Int?
-  JobCard             JobCard?           @relation(fields: [jobCardId], references: [id])
   inwardType          String?
   dcNo                String?
   dcDate              DateTime?
@@ -2928,13 +2486,11 @@ model ProductionInwardDtl {
   wastageQty           Float?
   acceptedQty          Float?
   processId            Int?
-  Process              Process?              @relation(fields: [processId], references: [id])
   price                Float?
   discountType         String?
   discountValue        Float?
   taxPercent           Float?
   jobCardId            Int?
-  JobCard              JobCard?              @relation(fields: [jobCardId], references: [id])
   productionOutwardId  Int?
   ProductionOutward    ProductionOutward?    @relation(fields: [productionOutwardId], references: [id])
 
@@ -2946,7 +2502,6 @@ model InwardProcessDtl {
   productionInwardDtlId Int
   ProductionInwardDtl   ProductionInwardDtl @relation(fields: [productionInwardDtlId], references: [id], onDelete: Cascade)
   processId             Int?
-  Process               Process?            @relation(fields: [processId], references: [id])
 }
 
 model ProcessBill {
@@ -2984,7 +2539,6 @@ model ProcessBillDtl {
   discountValue      Float?
   taxPercent         Float?
   jobCardId          Int?
-  JobCard            JobCard?          @relation(fields: [jobCardId], references: [id])
   productionInwardId Int?
   ProductionInward   ProductionInward? @relation(fields: [productionInwardId], references: [id])
 
@@ -2996,7 +2550,6 @@ model BillingProcess {
   processBillDtlId Int
   ProcessBillDtl   ProcessBillDtl @relation(fields: [processBillDtlId], references: [id], onDelete: Cascade)
   processId        Int?
-  Process          Process?       @relation(fields: [processId], references: [id])
 }
 
 model SalesDelivery {
@@ -3062,64 +2615,31 @@ model SalesDelivery {
 }
 
 model SalesDeliveryItems {
-  id                Int                 @id @default(autoincrement())
-  salesDeliveryId   Int
-  SalesDelivery     SalesDelivery       @relation(fields: [salesDeliveryId], references: [id], onDelete: Cascade)
-  styleItemId       Int?
-  StyleItem         StyleItem?          @relation(fields: [styleItemId], references: [id])
-  itemGroupId       Int?
-  ItemGroup         ItemGroup?          @relation(fields: [itemGroupId], references: [id])
-  itemSubGroupId    Int?
-  ItemSubGroup      ItemSubGroup?       @relation(fields: [itemSubGroupId], references: [id])
-  qty               Float?
-  price             Float?
-  amount            Float?
-  discountType      String?
-  discountValue     Float?
-  taxPercent        Float?
-  uomId             Int?
-  Uom               Uom?                @relation(fields: [uomId], references: [id])
-  hsnId             Int?
-  Gsm               Gsm?                @relation(fields: [gsmId], references: [id])
-  gsmId             Int?
-  Hsn               Hsn?                @relation(fields: [hsnId], references: [id])
-  trackingType      String?
-  labelWidth        String?
-  dozen             Float?
-  orderQty          String?
-  SalesStyleBreakup SalesStyleBreakup[]
-}
-
-model SalesStyleBreakup {
-  id                  Int                 @id @default(autoincrement())
-  salesDeliveryItemId Int
-  SalesDeliveryItem   SalesDeliveryItems? @relation(fields: [salesDeliveryItemId], references: [id], onDelete: Cascade)
-  styleId             Int?
-  Style               Style?              @relation(fields: [styleId], references: [id])
-  SalesSizeBreakup    SalesSizeBreakup[]
-}
-
-model SalesSizeBreakup {
-  id                       Int                        @id @default(autoincrement())
-  salesStyleBreakupId      Int?
-  SalesStyleBreakup        SalesStyleBreakup?         @relation(fields: [salesStyleBreakupId], references: [id], onDelete: Cascade)
-  salesOrderSizeBreakupId  Int?
-  SaleOrderSizeBreakup     SaleOrderSizeBreakup?      @relation(fields: [salesOrderSizeBreakupId], references: [id])
-  sizeId                   Int?
-  Size                     Size?                      @relation(fields: [sizeId], references: [id])
-  qty                      String?
-  deliveryQty              String?
-  SalesReturnSizeBreakup   SalesReturnSizeBreakup[]
-  SaleBillEntrySizeBreakup SaleBillEntrySizeBreakup[]
-  SalesDeliveryPacking     SalesDeliveryPacking[]
-}
-
-model SalesDeliveryPacking {
-  id                 Int              @id @default(autoincrement())
-  salesSizeBreakupId Int
-  SalesSizeBreakup   SalesSizeBreakup @relation(fields: [salesSizeBreakupId], references: [id], onDelete: Cascade)
-  qty                Int?
-  bundle             Int?
+  id              Int           @id @default(autoincrement())
+  salesDeliveryId Int
+  SalesDelivery   SalesDelivery @relation(fields: [salesDeliveryId], references: [id], onDelete: Cascade)
+  styleItemId     Int?
+  StyleItem       StyleItem?    @relation(fields: [styleItemId], references: [id])
+  itemGroupId     Int?
+  ItemGroup       ItemGroup?    @relation(fields: [itemGroupId], references: [id])
+  itemSubGroupId  Int?
+  ItemSubGroup    ItemSubGroup? @relation(fields: [itemSubGroupId], references: [id])
+  qty             Float?
+  price           Float?
+  amount          Float?
+  discountType    String?
+  discountValue   Float?
+  taxPercent      Float?
+  uomId           Int?
+  Uom             Uom?          @relation(fields: [uomId], references: [id])
+  hsnId           Int?
+  Gsm             Gsm?          @relation(fields: [gsmId], references: [id])
+  gsmId           Int?
+  Hsn             Hsn?          @relation(fields: [hsnId], references: [id])
+  trackingType    String?
+  labelWidth      String?
+  dozen           Float?
+  orderQty        String?
 }
 
 model ItemSubGroup {
@@ -3205,61 +2725,32 @@ model SalesOrder {
 }
 
 model SalesOrderItems {
-  id                    Int                     @id @default(autoincrement())
-  saleOrderId           Int?
-  SalesOrder            SalesOrder?             @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
-  styleItemId           Int?
-  StyleItem             StyleItem?              @relation(fields: [styleItemId], references: [id])
-  orderQty              Int?
-  sizeId                Int?
-  Size                  Size?                   @relation(fields: [sizeId], references: [id])
-  uomId                 Int?
-  Uom                   Uom?                    @relation(fields: [uomId], references: [id])
-  gsmId                 Int?
-  Gsm                   Gsm?                    @relation(fields: [gsmId], references: [id])
-  itemGroupId           Int?
-  ItemGroup             ItemGroup?              @relation(fields: [itemGroupId], references: [id])
-  hsnId                 Int?
-  Hsn                   Hsn?                    @relation(fields: [hsnId], references: [id])
-  trackingType          String?
-  itemSubGroupId        Int?
-  ItemSubGroup          ItemSubGroup?           @relation(fields: [itemSubGroupId], references: [id])
-  labelWidth            String?
-  price                 Float?
-  amount                Float?
-  dozen                 Float?
-  taxPercent            Float?
-  discountType          String?
-  discountValue         Float?
-  SaleOrderStyleBreakup SaleOrderStyleBreakup[]
-}
-
-model SaleOrderStyleBreakup {
-  id                   Int                    @id @default(autoincrement())
-  salesItemId          Int
-  SalesOrderItems      SalesOrderItems        @relation(fields: [salesItemId], references: [id], onDelete: Cascade)
-  styleId              Int?
-  Style                Style?                 @relation(fields: [styleId], references: [id])
-  SaleOrderSizeBreakup SaleOrderSizeBreakup[]
-}
-
-model SaleOrderSizeBreakup {
-  id                    Int                   @id @default(autoincrement())
-  saleStyleBreakupId    Int
-  SaleOrderStyleBreakup SaleOrderStyleBreakup @relation(fields: [saleStyleBreakupId], references: [id], onDelete: Cascade)
-  sizeId                Int?
-  Size                  Size?                 @relation(fields: [sizeId], references: [id])
-  qty                   Int?
-  SalesSizeBreakup      SalesSizeBreakup[]
-  SalesOrderPacking     SalesOrderPacking[]
-}
-
-model SalesOrderPacking {
-  id                     Int                  @id @default(autoincrement())
-  saleOrderSizeBreakupId Int
-  SaleOrderSizeBreakup   SaleOrderSizeBreakup @relation(fields: [saleOrderSizeBreakupId], references: [id], onDelete: Cascade)
-  qty                    Int?
-  bundle                 Int?
+  id             Int           @id @default(autoincrement())
+  saleOrderId    Int?
+  SalesOrder     SalesOrder?   @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
+  styleItemId    Int?
+  StyleItem      StyleItem?    @relation(fields: [styleItemId], references: [id])
+  orderQty       Int?
+  sizeId         Int?
+  Size           Size?         @relation(fields: [sizeId], references: [id])
+  uomId          Int?
+  Uom            Uom?          @relation(fields: [uomId], references: [id])
+  gsmId          Int?
+  Gsm            Gsm?          @relation(fields: [gsmId], references: [id])
+  itemGroupId    Int?
+  ItemGroup      ItemGroup?    @relation(fields: [itemGroupId], references: [id])
+  hsnId          Int?
+  Hsn            Hsn?          @relation(fields: [hsnId], references: [id])
+  trackingType   String?
+  itemSubGroupId Int?
+  ItemSubGroup   ItemSubGroup? @relation(fields: [itemSubGroupId], references: [id])
+  labelWidth     String?
+  price          Float?
+  amount         Float?
+  dozen          Float?
+  taxPercent     Float?
+  discountType   String?
+  discountValue  Float?
 }
 
 model Packing {
@@ -3278,7 +2769,6 @@ model Packing {
   OrderEntry       OrderEntry?    @relation(fields: [orderId], references: [id])
   orderId          Int?
   jobCardId        Int?
-  JobCard          JobCard?       @relation(fields: [jobCardId], references: [id])
   orderType        String?
   finYear          FinYear?       @relation(fields: [finYearId], references: [id])
   finYearId        Int?
@@ -3296,117 +2786,30 @@ model Packing {
 }
 
 model PackingItems {
-  id                  Int                   @id @default(autoincrement())
-  packingId           Int?
-  Packing             Packing?              @relation(fields: [packingId], references: [id], onDelete: Cascade)
-  styleItemId         Int?
-  StyleItem           StyleItem?            @relation(fields: [styleItemId], references: [id])
-  orderQty            Int?
-  uomId               Int?
-  Uom                 Uom?                  @relation(fields: [uomId], references: [id])
-  gsmId               Int?
-  Gsm                 Gsm?                  @relation(fields: [gsmId], references: [id])
-  itemGroupId         Int?
-  ItemGroup           ItemGroup?            @relation(fields: [itemGroupId], references: [id])
-  hsnId               Int?
-  Hsn                 Hsn?                  @relation(fields: [hsnId], references: [id])
-  trackingType        String?
-  itemSubGroupId      Int?
-  ItemSubGroup        ItemSubGroup?         @relation(fields: [itemSubGroupId], references: [id])
-  labelWidth          String?
-  price               Float?
-  amount              Float?
-  dozen               Float?
-  taxPercent          Float?
-  discountType        String?
-  discountValue       Float?
-  PackingStyleBreakup PackingStyleBreakup[]
-}
-
-model PackingStyleBreakup {
-  id                 Int                  @id @default(autoincrement())
-  PackingItemsId     Int
-  PackingItems       PackingItems         @relation(fields: [PackingItemsId], references: [id], onDelete: Cascade)
-  styleId            Int?
-  Style              Style?               @relation(fields: [styleId], references: [id])
-  PackingSizeBreakup PackingSizeBreakup[]
-}
-
-model PackingSizeBreakup {
-  id                    Int                 @id @default(autoincrement())
-  PackingStyleBreakupId Int
-  PackingStyleBreakup   PackingStyleBreakup @relation(fields: [PackingStyleBreakupId], references: [id], onDelete: Cascade)
-  OrderSizeBreakup      OrderSizeBreakup?   @relation(fields: [orderSizeBreakupId], references: [id], onDelete: Cascade)
-  orderSizeBreakupId    Int?
-  sizeId                Int?
-  Size                  Size?               @relation(fields: [sizeId], references: [id])
-  qty                   Int?
-  packingQty            Int?
-  netWeight             String?
-  grossWeight           String?
-  dimensions            String?
-  PackingBreakup        PackingBreakup[]
-}
-
-model PackingBreakup {
-  id                   Int                @id @default(autoincrement())
-  PackingSizeBreakupId Int
-  PackingSizeBreakup   PackingSizeBreakup @relation(fields: [PackingSizeBreakupId], references: [id], onDelete: Cascade)
-  packingUomId         Int?
-  Uom                  Uom?               @relation(fields: [packingUomId], references: [id])
-  qty                  String?
-  noOfunits            String?
-}
-
-model ReworkLog {
   id             Int           @id @default(autoincrement())
-  uniqueId       String        @default(uuid())
-  jobCardId      Int?
-  JobCard        JobCard?      @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processRouteId Int?
-  ProcessRoute   ProcessRoute? @relation(fields: [processRouteId], references: [id])
-  actualQty      Int?
-  completedQty   Int?
-  wastageQty     Int?
-  pendingQty     Int?
-  reason         String?
-  createdAt      DateTime      @default(now())
-  Userid         Int?
-  User           User?         @relation(fields: [Userid], references: [id])
-}
-
-model ReworkBatchTracker {
-  id             Int          @id @default(autoincrement())
-  uniqueId       String       @unique @default(uuid())
-  jobCardId      Int
-  JobCard        JobCard      @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processRouteId Int
-  ProcessRoute   ProcessRoute @relation(fields: [processRouteId], references: [id], onDelete: Cascade)
-  userId         Int?
-  User           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isExpired      Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-}
-
-model IncomingQty {
-  id                Int                @id @default(autoincrement())
-  uniqueId          String             @unique @default(uuid())
-  jobCardId         Int
-  JobCard           JobCard            @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
-  processRouteId    Int
-  ProcessRoute      ProcessRoute       @relation(fields: [processRouteId], references: [id], onDelete: Cascade)
-  isCompleted       Boolean            @default(false)
-  qty               Int
-  pendingQty        Int?
-  completedQty      Int?
-  wastageQty        Int?
-  sendRoute         Int
-  sendProcessRoute  ProcessRoute       @relation(name: "sendProcessRoute", fields: [sendRoute], references: [id], onDelete: Cascade)
-  outwardId         Int?
-  productionoutward ProductionOutward? @relation(fields: [outwardId], references: [id])
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  packingId      Int?
+  Packing        Packing?      @relation(fields: [packingId], references: [id], onDelete: Cascade)
+  styleItemId    Int?
+  StyleItem      StyleItem?    @relation(fields: [styleItemId], references: [id])
+  orderQty       Int?
+  uomId          Int?
+  Uom            Uom?          @relation(fields: [uomId], references: [id])
+  gsmId          Int?
+  Gsm            Gsm?          @relation(fields: [gsmId], references: [id])
+  itemGroupId    Int?
+  ItemGroup      ItemGroup?    @relation(fields: [itemGroupId], references: [id])
+  hsnId          Int?
+  Hsn            Hsn?          @relation(fields: [hsnId], references: [id])
+  trackingType   String?
+  itemSubGroupId Int?
+  ItemSubGroup   ItemSubGroup? @relation(fields: [itemSubGroupId], references: [id])
+  labelWidth     String?
+  price          Float?
+  amount         Float?
+  dozen          Float?
+  taxPercent     Float?
+  discountType   String?
+  discountValue  Float?
 }
 
 model PackingControlPanel {
@@ -3474,67 +2877,33 @@ model SalesBillEntry {
 }
 
 model SalesBillEntryItems {
-  id                        Int                         @id @default(autoincrement())
-  salesBillEntryId          Int?
-  SalesBillEntry            SalesBillEntry?             @relation(fields: [salesBillEntryId], references: [id], onDelete: Cascade)
-  styleItemId               Int?
-  StyleItem                 StyleItem?                  @relation(fields: [styleItemId], references: [id])
-  orderQty                  Int?
-  sizeId                    Int?
-  Size                      Size?                       @relation(fields: [sizeId], references: [id])
-  uomId                     Int?
-  Uom                       Uom?                        @relation(fields: [uomId], references: [id])
-  gsmId                     Int?
-  Gsm                       Gsm?                        @relation(fields: [gsmId], references: [id])
-  itemGroupId               Int?
-  ItemGroup                 ItemGroup?                  @relation(fields: [itemGroupId], references: [id])
-  hsnId                     Int?
-  Hsn                       Hsn?                        @relation(fields: [hsnId], references: [id])
-  trackingType              String?
-  itemSubGroupId            Int?
-  ItemSubGroup              ItemSubGroup?               @relation(fields: [itemSubGroupId], references: [id])
-  labelWidth                String?
-  price                     Float?
-  amount                    Float?
-  dozen                     Float?
-  taxPercent                Float?
-  discountType              String?
-  discountValue             Float?
-  deliveryQty               Int?
-  SaleBillEntryStyleBreakup SaleBillEntryStyleBreakup[]
-}
-
-model SaleBillEntryStyleBreakup {
-  id                       Int                        @id @default(autoincrement())
-  salesBillEntryItemsId    Int
-  SalesBillEntryItems      SalesBillEntryItems        @relation(fields: [salesBillEntryItemsId], references: [id], onDelete: Cascade)
-  styleId                  Int?
-  Style                    Style?                     @relation(fields: [styleId], references: [id])
-  SaleBillEntrySizeBreakup SaleBillEntrySizeBreakup[]
-}
-
-model SaleBillEntrySizeBreakup {
-  id                          Int                       @id @default(autoincrement())
-  saleBillEntryStyleBreakupId Int
-  SaleBillEntryStyleBreakup   SaleBillEntryStyleBreakup @relation(fields: [saleBillEntryStyleBreakupId], references: [id], onDelete: Cascade)
-  sizeId                      Int?
-  Size                        Size?                     @relation(fields: [sizeId], references: [id])
-  billQty                     Int?
-  deliveryQty                 Int?
-  SalesSizeBreakupId          Int?
-  SalesSizeBreakup            SalesSizeBreakup?         @relation(fields: [SalesSizeBreakupId], references: [id], onDelete: Cascade)
-}
-
-model MobileNotification {
-  id        Int       @id @default(autoincrement())
-  userId    Int?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId    Int?
-  role      Role?     @relation(fields: [roleId], references: [id])
-  createdAt DateTime?
-  isViewed  Boolean?
-  machineId Int?
-  machine   Machine?  @relation(fields: [machineId], references: [id])
+  id               Int             @id @default(autoincrement())
+  salesBillEntryId Int?
+  SalesBillEntry   SalesBillEntry? @relation(fields: [salesBillEntryId], references: [id], onDelete: Cascade)
+  styleItemId      Int?
+  StyleItem        StyleItem?      @relation(fields: [styleItemId], references: [id])
+  orderQty         Int?
+  sizeId           Int?
+  Size             Size?           @relation(fields: [sizeId], references: [id])
+  uomId            Int?
+  Uom              Uom?            @relation(fields: [uomId], references: [id])
+  gsmId            Int?
+  Gsm              Gsm?            @relation(fields: [gsmId], references: [id])
+  itemGroupId      Int?
+  ItemGroup        ItemGroup?      @relation(fields: [itemGroupId], references: [id])
+  hsnId            Int?
+  Hsn              Hsn?            @relation(fields: [hsnId], references: [id])
+  trackingType     String?
+  itemSubGroupId   Int?
+  ItemSubGroup     ItemSubGroup?   @relation(fields: [itemSubGroupId], references: [id])
+  labelWidth       String?
+  price            Float?
+  amount           Float?
+  dozen            Float?
+  taxPercent       Float?
+  discountType     String?
+  discountValue    Float?
+  deliveryQty      Int?
 }
 
 model ContentMaster {
