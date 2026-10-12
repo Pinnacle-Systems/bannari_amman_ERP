@@ -103,6 +103,7 @@ import {
   SaleOrder,
   Packing,
   OrderEntryReport,
+  ProformaInvoiceYarn,
 } from "../../../HostelStore/Components";
 
 const ActiveTabList = () => {
@@ -212,6 +213,7 @@ const ActiveTabList = () => {
     "GAUGE MASTER": <GaugeMaster />,
     "DIA MASTER": <DiaMaster />,
     "DESIGN MASTER": <DesignMaster />,
+    "YARN PROFROMA INVOICE": <ProformaInvoiceYarn />,
   };
   const innerWidth = window.innerWidth;
   const itemsToShow = innerWidth / 130;

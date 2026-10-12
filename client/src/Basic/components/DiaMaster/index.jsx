@@ -332,6 +332,7 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
                       }
                     }}
                     readOnly={readOnly}
+                    disabled={childRecord.current > 0}
                   />
                   <CheckBox
                     name="F Dia"
@@ -341,6 +342,7 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
                       if (val) setKDia(false);
                     }}
                     readOnly={readOnly}
+                    disabled={childRecord.current > 0}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4 my-2">
@@ -370,6 +372,7 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
                       value={measurement}
                       setValue={setMeasurement}
                       readOnly={readOnly}
+                      disabled={childRecord.current > 0}
                     />
                   </div>
                 </div>

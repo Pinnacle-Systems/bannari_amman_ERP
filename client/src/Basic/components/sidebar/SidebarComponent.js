@@ -24,7 +24,7 @@ import style from "./images/fabImage.jpg";
 import location from "./images/location.png";
 import sizetemplate from "./images/sizetemplate.png";
 import fabstyle from "./images/style.png";
-import fabric from "./images/fabric.png";
+import fabric from "./images/fabric.jpg";
 // import process from "./images/process.png";
 import portion from "./images/portion.png";
 import uom from "./images/uom.png";
@@ -59,6 +59,8 @@ import PurchaseCancel from "./images/purchasecancel.png";
 import PurchaseBill from "./images/purchasebillEntry.png";
 import GSM from "./images/gsm.png";
 import Approval from "./images/approve.png";
+import looplength from "./images/looplength.png";
+import design from "./images/design.jpg";
 const SidebarComponent = ({
   logo,
   groups,
@@ -307,6 +309,27 @@ const SidebarComponent = ({
       <img
         src={Approval}
         alt="country"
+        className="w-[23px]  flex justify-center items-center bg-white border-2 border-white rounded shadow"
+      />
+    ),
+    "FABRIC MASTER": (
+      <img
+        src={fabric}
+        alt="fabric"
+        className="w-[23px]  flex justify-center items-center bg-white border-2 border-white rounded shadow"
+      />
+    ),
+    "LOOP LENGTH MASTER": (
+      <img
+        src={looplength}
+        alt="looplength"
+        className="w-[23px]  flex justify-center items-center bg-white border-2 border-white rounded shadow"
+      />
+    ),
+    "DESIGN MASTER": (
+      <img
+        src={design}
+        alt="design"
         className="w-[23px]  flex justify-center items-center bg-white border-2 border-white rounded shadow"
       />
     ),

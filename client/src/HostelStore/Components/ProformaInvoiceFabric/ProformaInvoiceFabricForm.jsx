@@ -8,7 +8,6 @@ import {
 import {
   useAddProformaInvoiceMutation,
   useUpdateProformaInvoiceMutation,
-  useDeleteProformaInvoiceMutation,
   useGetProformaInvoiceByIdQuery,
   useGetProformaInvoiceQuery,
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
@@ -31,7 +30,6 @@ import tw from "../../../Utils/tailwind-react-pdf.js";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { FiEdit2, FiSave, FiPrinter, FiEye } from "react-icons/fi";
 import { HiOutlineRefresh } from "react-icons/hi";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import {
   CommonFormFooter,
   TransactionLayout,
@@ -49,6 +47,7 @@ import {
 } from "../../../Basic/components/index.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
 
 const EMPTY_ROW = {
   fabricId: "",
@@ -315,13 +314,25 @@ const ProformaInvoiceFabricForm = ({
       if (!item.hsnId) {
         errors.push(`Row ${index + 1}: HSN is required`);
       }
+      if (!item.loopLengthId) {
+        errors.push(`Row ${index + 1}: Loop Length is required`);
+      }
+      if (!item.kDiaId) {
+        errors.push(`Row ${index + 1}: KDia is required`);
+      }
+      if (!item.fDiaId) {
+        errors.push(`Row ${index + 1}: FDia is required`);
+      }
       if (!item.uomId) {
         errors.push(`Row ${index + 1}: UOM is required`);
       }
       if (!item.qty || Number(item.qty) <= 0) {
         errors.push(`Row ${index + 1}: Qty is required`);
       }
-      const key = `${item.fabricId}_${item.designId}_${item.gsmId}_${item.colorId}`;
+      if (!item.price || Number(item.price) <= 0) {
+        errors.push(`Row ${index + 1}: Price is required`);
+      }
+      const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
       if (seen.has(key)) {
         errors.push(`Row ${index + 1}: Duplicate item found`);
       } else {
@@ -336,7 +347,7 @@ const ProformaInvoiceFabricForm = ({
     if (userDate < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "User Date cannot be smaller than Doc Date",
+        text: "User Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
@@ -411,19 +422,19 @@ const ProformaInvoiceFabricForm = ({
       return;
     }
 
-    if (validityTo < docDate) {
+    if (validityTo && validityTo < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "Valid To Date cannot be smaller than Doc Date",
+        text: "Valid To Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
       return;
     }
-    if (deliveryDate < docDate) {
+    if (deliveryDate && deliveryDate < docDate) {
       Swal.fire({
         title: "Warning",
-        text: "Delivery Date cannot be smaller than Doc Date",
+        text: "Delivery Date cannot be smaller than PI Date",
         icon: "warning",
         confirmButtonColor: "#3085d6",
       });
@@ -529,7 +540,7 @@ const ProformaInvoiceFabricForm = ({
           },
         });
       }
-      dispatch(OrderEntryApi.util.invalidateTags(["orderEntry"]));
+      invalidateFabricModule();
       setReadOnly(true);
       dispatchInvalidate();
 

@@ -9,12 +9,11 @@ async function get(req) {
       active: active ? Boolean(active) : undefined,
     },
     include: {
-      //   _count: {
-      //     select: {
-
-      //       poItems: true,
-      //     },
-      //   },
+      _count: {
+        select: {
+          yarnItems: true,
+        },
+      },
       CountsMaster: true,
       ContentMaster: true,
       Hsn: true,
@@ -32,9 +31,8 @@ async function get(req) {
     statusCode: 0,
     data: data.map((yarnMaster) => ({
       ...yarnMaster,
-      //   childRecord:
-      //     yarnMaster?._count.ItemVariantMasterDetails +
-      //     yarnMaster?._count.InwardItems +
+      childRecord: yarnMaster?._count.yarnItems,
+      // yarnMaster?._count.InwardItems +
       //     yarnMaster?._count.Stock +
       //     yarnMaster?._count.poItems,
     })),
@@ -47,12 +45,11 @@ async function getOne(id) {
       id: parseInt(id),
     },
     include: {
-      //   _count: {
-      //     select: {
-
-      //       poItems: true,
-      //     },
-      //   },
+      _count: {
+        select: {
+          yarnItems: true,
+        },
+      },
       CountsMaster: true,
       ContentMaster: true,
       Hsn: true,
@@ -68,8 +65,7 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      //   childRecord:
-      //     data?._count.ItemVariantMasterDetails +
+      childRecord: data?._count.yarnItems,
       //     data?._count.InwardItems + data?._count.Stock + data?._count.poItems,
     },
   };
@@ -164,9 +160,9 @@ async function update(id, body) {
   const incomingItemIds = (yarnMasterDetail || [])
     .filter((i) => i.id)
     .map((i) => parseInt(i.id));
-  const removedItemIds = dataFound.YarnMasterDetail
-    .filter((item) => !incomingItemIds.includes(item.id))
-    .map((item) => item.id);
+  const removedItemIds = dataFound.YarnMasterDetail.filter(
+    (item) => !incomingItemIds.includes(item.id),
+  ).map((item) => item.id);
 
   await prisma.$transaction(async (tx) => {
     data = await tx.yarnMaster.update({

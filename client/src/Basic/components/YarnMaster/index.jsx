@@ -32,7 +32,7 @@ import CountsMaster from "../CountsMaster";
 import ContentMaster from "../ContentMaster";
 import { YarnBlendMaster } from "..";
 import { HsnMaster } from "../../../HostelStore/Components";
-
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
   const [form, setForm] = useState(false);
 
@@ -53,6 +53,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
 
   const [searchValue, setSearchValue] = useState("");
   const childRecord = useRef(0);
+  const lastSyncedIds = useRef({ countsId: null, contentId: null });
 
   const params = {
     companyId: secureLocalStorage.getItem(
@@ -105,6 +106,10 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
 
   const syncFormWithDb = useCallback(
     (data) => {
+      lastSyncedIds.current = {
+        countsId: data?.countsId || "",
+        contentId: data?.contentId || "",
+      };
       setCountsId(data?.countsId || "");
       setContentId(data?.contentId || "");
       setName(data?.name || defaultName || "");
@@ -135,6 +140,29 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       syncFormWithDb(singleData.data);
     }
   }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
+
+  useEffect(() => {
+    if (!countsId || !contentId || !countsData?.data || !contentData?.data) {
+      return;
+    }
+
+    if (
+      lastSyncedIds.current.countsId === countsId &&
+      lastSyncedIds.current.contentId === contentId
+    ) {
+      return;
+    }
+
+    const countObj = countsData?.data?.find((c) => c.id === parseInt(countsId));
+    const contentObj = contentData?.data?.find(
+      (c) => c.id === parseInt(contentId),
+    );
+
+    if (countObj && contentObj) {
+      const generatedName = `${countObj.name} ${contentObj.name}`;
+      setName(generatedName.trim());
+    }
+  }, [countsId, contentId, countsData, contentData]);
 
   const data = {
     id,
@@ -221,6 +249,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
         syncFormWithDb(undefined);
         setId("");
       }
+      invalidateYarnModule();
       Swal.fire({
         title: text + "  " + "Successfully",
         icon: "success",
@@ -231,6 +260,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
         //     Swal.showLoading();
         // }
       });
+      invalidateYarnModule();
       dispatchInvalidate();
     } catch (error) {
       console.log("handle");
@@ -292,6 +322,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       try {
         await removeData(id);
         setId("");
+        invalidateYarnModule();
         dispatchInvalidate();
 
         // toast.success("Deleted Successfully");
@@ -482,13 +513,11 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
     setId(id);
     setForm(true);
     setReadOnly(true);
-    console.log("view");
   };
   const handleEdit = (id) => {
     setId(id);
     setForm(true);
     setReadOnly(false);
-    console.log("Edit");
   };
 
   const {
@@ -551,7 +580,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                   </div>
                   <div className="w-[50%]">
                     <TextInputNew
-                      name="Yarn Name"
+                      name="Yarn Name*"
                       type="text"
                       value={name}
                       setValue={setName}
@@ -560,29 +589,18 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       disabled={childRecord.current > 0}
                     />
                   </div>
-                  <div className="w-[50%]">
+                  {/* <div className="w-[50%]">
                     <TextInputNew
                       name="Yarn Alias Name"
                       type="text"
                       value={aliasName}
                       setValue={setAliasName}
                       readOnly={readOnly}
-                      disabled={childRecord.current > 0}
                     />
-                  </div>
-                  <ToggleButton
-                    name="Status"
-                    options={statusDropdown}
-                    value={active}
-                    setActive={setActive}
-                    required={true}
-                    readOnly={readOnly}
-                    ref={toggleButtonRef}
-                    onKeyDown={handlers.handleToggleKeyDown}
-                  />
+                  </div> */}
                 </div>
-                <div className="flex gap-x-4">
-                  <div className="w-[15%] mb-3">
+                <div className="flex gap-x-8">
+                  <div className="w-[17%] mb-3">
                     <DropdownWithModal
                       name="Hsn"
                       options={dropDownListObject(
@@ -613,8 +631,18 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       disabled={true}
                     />
                   </div>
+                  <ToggleButton
+                    name="Status"
+                    options={statusDropdown}
+                    value={active}
+                    setActive={setActive}
+                    required={true}
+                    readOnly={readOnly}
+                    ref={toggleButtonRef}
+                    onKeyDown={handlers.handleToggleKeyDown}
+                  />
                 </div>
-                <div className="h-full flex flex-col -ml-4 -mt-3">
+                {/* <div className="h-full flex flex-col -ml-4 -mt-3">
                   <div className="flex-1 overflow-auto p-2">
                     <div className="grid grid-cols-1 gap-1 h-full">
                       <div className="space-y-3">
@@ -778,7 +806,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </fieldset>
             </div>
           </div>
@@ -850,7 +878,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[75vw] h-[70vh]"}
+            widthClass={"w-[65vw] h-[60vh]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

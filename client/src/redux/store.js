@@ -85,6 +85,7 @@ import {
   PackingApi,
   PackingControlApi,
   SalesBillEntryApi,
+  YarnProformaInvoiceApi,
 } from "./uniformService";
 import OrderEntryApi from "./uniformService/OrderEntryService";
 import BoardMasterApi from "./services/boardService";
@@ -175,6 +176,7 @@ const commonReducers = {
   [GaugeMasterApi.reducerPath]: GaugeMasterApi.reducer,
   [DesignMasterApi.reducerPath]: DesignMasterApi.reducer,
   [DiaMasterApi.reducerPath]: DiaMasterApi.reducer,
+  [YarnProformaInvoiceApi.reducerPath]: YarnProformaInvoiceApi.reducer,
 };
 const commonMiddleware = [
   countryMasterApi.middleware,
@@ -261,6 +263,7 @@ const commonMiddleware = [
   GaugeMasterApi.middleware,
   DesignMasterApi.middleware,
   DiaMasterApi.middleware,
+  YarnProformaInvoiceApi.middleware,
 ];
 
 const store = configureStore({

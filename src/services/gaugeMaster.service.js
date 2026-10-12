@@ -8,45 +8,37 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       YarnMaster: true,
-    //     },
-    //   },
-    // },
+    include: {
+      _count: {
+        select: {
+          fabricItems: true,
+        },
+      },
+    },
     orderBy: { id: "asc" },
   });
   return {
     statusCode: 0,
-    data: data.map((content) => ({
-      ...content,
-      //   childRecord: content._count.YarnMaster > 0,
+    data: data.map((gaugeMaster) => ({
+      ...gaugeMaster,
+      childRecord: gaugeMaster?._count.fabricItems,
     })),
   };
 }
 
 async function getOne(id) {
+  const childRecord = await prisma.fabricItems.count({
+    where: {
+      gaugeId: parseInt(id),
+    },
+  });
   const data = await prisma.gauge.findUnique({
     where: {
       id: parseInt(id),
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       YarnMaster: true,
-    //     },
-    //   },
-    // },
   });
   if (!data) return NoRecordFound("Gauge Master");
-  return {
-    statusCode: 0,
-    data: {
-      ...data,
-      //   childRecord: data._count.YarnMaster > 0,
-    },
-  };
+  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
 }
 
 async function getSearch(req) {
