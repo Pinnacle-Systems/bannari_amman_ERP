@@ -17,17 +17,46 @@ import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardN
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
 
-export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
+export default function yarnBlendMaster({
+  onSuccess,
+  onClose,
+  editId,
+  editLabel = "",
+  hasChildRecord = false,
+  deleteId,
+  deleteLabel = "",
+  defaultName = "",
+} = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
-  const [id, setId] = useState("");
-  const [name, setName] = useState(defaultName || "");
+  const [id, setId] = useState(editId || deleteId || "");
+  const [name, setName] = useState(editLabel || defaultName || "");
   const [active, setActive] = useState(true);
+  const [hasChildRecordState, setHasChildRecordState] = useState(
+    Boolean(hasChildRecord),
+  );
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
+  useEffect(() => {
+    if (editId || deleteId) {
+      setId(editId || deleteId);
+    }
+    if (editLabel) {
+      setName(editLabel);
+    }
+    if (hasChildRecord) {
+      setHasChildRecordState(true);
+    }
+  }, [editId, deleteId, editLabel, hasChildRecord]);
+
+  useEffect(() => {
+    if (defaultName && !id) {
+      setName(defaultName);
+    }
+  }, [defaultName, id]);
+
   const [searchValue, setSearchValue] = useState("");
-  const childRecord = useRef(0);
 
   const params = {
     companyId: secureLocalStorage.getItem(
@@ -62,9 +91,13 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
     (data) => {
       setName(data?.name || defaultName || "");
       setActive(id ? (data?.active ? data.active : false) : true);
-      childRecord.current = data?.childRecord ? data?.childRecord : 0;
+      const isChild = Boolean(
+        data?.childRecord ||
+          (data?._count && Object.values(data._count).some((v) => Number(v) > 0)),
+      );
+      setHasChildRecordState(isChild);
     },
-    [id],
+    [id, defaultName],
   );
 
   useEffect(() => {
@@ -97,7 +130,7 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
           title: text + "  " + "Successfully",
           icon: "success",
         });
-        onSuccess(returnData.data.id);
+        onSuccess(returnData?.data?.id || (id ? id : returnData?.data));
         return;
       }
 
@@ -177,7 +210,7 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
   };
 
   const deleteData = async (id, childRecord) => {
-    if (childRecord) {
+    if (childRecord || hasChildRecordState) {
       Swal.fire({
         icon: "error",
         title: "Child record Exists",
@@ -290,10 +323,15 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
                       value={name}
                       setValue={setName}
                       required={true}
-                      readOnly={readOnly}
-                      disabled={childRecord.current > 0}
+                      readOnly={readOnly || hasChildRecordState}
+                      disabled={hasChildRecordState}
                       ref={countryNameRef}
                     />
+                    {hasChildRecordState && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">
+                        * Name cannot be modified because linked records exist.
+                      </p>
+                    )}
                   </div>
                   {/* <CheckBox name="Po wise" readOnly={readOnly} value={isPoWise} setValue={setIsPowise} /> */}
                 </div>
@@ -321,7 +359,81 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
     }
   }, [form, onSuccess]);
 
-  if (onSuccess) {
+  if (deleteId) {
+    const childCount =
+      singleData?.data?.childRecord || hasChildRecordState ? 1 : 0;
+    const isLoadingRecord = isSingleFetching || isSingleLoading;
+
+    const handleConfirmDelete = async () => {
+      try {
+        await removeData(deleteId).unwrap();
+        dispatchInvalidate();
+        await Swal.fire({
+          title: "Deleted Successfully",
+          icon: "success",
+        });
+        onSuccess?.();
+      } catch (err) {
+        Swal.fire({
+          title: err?.data?.message || "Failed to delete",
+          icon: "error",
+        });
+      }
+    };
+
+    return (
+      <div className="min-h-[200px] flex flex-col bg-gray-200">
+        <div className="border-b py-2 px-4 mx-3 mt-4 bg-white">
+          <h2 className="text-lg font-semibold text-gray-800">Delete Yarn Blend Master</h2>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 bg-white mx-3 mt-3 rounded mb-3">
+          {isLoadingRecord ? (
+            <p className="text-xs text-gray-500">Checking...</p>
+          ) : childCount > 0 ? (
+            <>
+              <p className="text-red-600 font-semibold text-sm">Cannot Delete</p>
+              <p className="text-xs text-gray-700">
+                "{deleteLabel}" has {childCount} linked records.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-1.5 text-xs border border-gray-400 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Close
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700 text-center">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">"{deleteLabel}"</span>?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-1.5 text-xs border border-gray-400 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-1.5 text-xs bg-red-600 text-white hover:bg-red-700 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (onSuccess || editId) {
     return (
       <div
         onKeyDown={handleKeyDown}
@@ -329,7 +441,7 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Yarn Blend Master
+            {editId ? "Edit Yarn Blend Master" : "Add New Yarn Blend Master"}
           </h2>
           <button
             type="button"
@@ -339,7 +451,7 @@ export default function yarnBlendMaster({ onSuccess, defaultName = "" } = {}) {
             className="px-3 py-1 hover:bg-blue-600 hover:text-white rounded text-blue-600 border border-blue-600 flex items-center gap-1 text-xs"
           >
             <Check size={14} />
-            {"Save"}
+            {editId ? "Update" : "Save"}
           </button>
         </div>
 

@@ -91,25 +91,29 @@ model Subscription {
 }
 
 model Branch {
-  id               Int                @id @default(autoincrement())
-  branchName       String
-  branchCode       String?
-  contactName      String?
-  contactMobile    BigInt
-  contactEmail     String?
-  address          String?            @default("")
-  company          Company            @relation(fields: [companyId], references: [id])
-  companyId        Int
-  active           Boolean            @default(true)
-  EmployeeCategory EmployeeCategory[]
-  UserOnBranch     UserOnBranch[]
-  Employee         Employee[]
-  idPrefix         String?
-  idSequence       String?
-  tempPrefix       String?
-  tempSequence     String?
-  logo             String?
-
+  id                    Int                    @id @default(autoincrement())
+  branchName            String
+  branchCode            String?
+  contactName           String?
+  contactMobile         BigInt
+  contactEmail          String?
+  address               String?                @default("")
+  company               Company                @relation(fields: [companyId], references: [id])
+  companyId             Int
+  active                Boolean                @default(true)
+  EmployeeCategory      EmployeeCategory[]
+  UserOnBranch          UserOnBranch[]
+  Employee              Employee[]
+  idPrefix              String?
+  idSequence            String?
+  tempPrefix            String?
+  tempSequence          String?
+  logo                  String?
+  telephone             String?
+  gstNo                 String?                @unique
+  panNo                 String?                @unique
+  udyam                 String?                @unique
+  msmeNo                String?                @unique
   prefixCategory        PrefixCategory?
   PurchaseBill          PurchaseBill[]
   PurchaseReturn        PurchaseReturn[]

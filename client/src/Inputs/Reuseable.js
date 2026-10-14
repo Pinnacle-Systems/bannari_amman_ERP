@@ -50,6 +50,7 @@ export const DropdownWithModal = forwardRef(
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
+    const [pendingSearch, setPendingSearch] = useState("");
     const [showAddNew, setShowAddNew] = useState(false);
     const [editingOption, setEditingOption] = useState(null);
     const [deletingOption, setDeletingOption] = useState(null);
@@ -73,6 +74,7 @@ export const DropdownWithModal = forwardRef(
       beforeChange();
       setValue(newValue);
       setShowAddNew(false);
+      setPendingSearch("");
       setIsOpen(false);
       setSearch("");
       if (onBlur) onBlur();
@@ -404,7 +406,7 @@ export const DropdownWithModal = forwardRef(
                 minWidth: dropdownPos.minWidth,
                 width: "max-content",
                 maxWidth: dropdownPos.maxWidth,
-                zIndex: 9999,
+                zIndex: 100000,
               }}
               className="bg-white border border-gray-300 rounded-lg shadow-lg"
             >
@@ -429,6 +431,12 @@ export const DropdownWithModal = forwardRef(
                       e.preventDefault();
                       if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
                         handleSelect(filtered[highlightedIndex].value, true);
+                      } else if (childComponent && !isDisabled && search.trim()) {
+                        const trimmed = search.trim();
+                        setPendingSearch(trimmed ? trimmed.toUpperCase() : "");
+                        setIsOpen(false);
+                        setSearch("");
+                        setShowAddNew(true);
                       }
                     } else if (e.key === "Escape") {
                       setIsOpen(false);
@@ -442,13 +450,17 @@ export const DropdownWithModal = forwardRef(
                 {childComponent && !isDisabled && (
                   <li
                     onClick={() => {
+                      const trimmed = search.trim();
+                      setPendingSearch(trimmed ? trimmed.toUpperCase() : "");
                       setIsOpen(false);
                       setSearch("");
                       setShowAddNew(true);
                     }}
                     className="px-3 py-1.5 text-xs text-blue-600 font-semibold hover:bg-blue-100 cursor-pointer border-b border-gray-100"
                   >
-                    {addNewLabel}
+                    {search.trim()
+                      ? `${addNewLabel} "${search.trim().toUpperCase()}"`
+                      : addNewLabel}
                   </li>
                 )}
                 {clear && (
@@ -498,10 +510,10 @@ export const DropdownWithModal = forwardRef(
                             <button
                               type="button"
                               onClick={(e) => {
-                                console.log(option, "option");
-                                if (childRecordCount(option?._count)) {
+                                if (option?.childRecord || childRecordCount(option?._count)) {
                                   Swal.fire({
                                     title: `Child Record Exists`,
+                                    text: `"${option.show}" cannot be deleted because it has linked records.`,
                                     icon: "warning",
                                   });
                                   return;
@@ -532,12 +544,20 @@ export const DropdownWithModal = forwardRef(
             return (
               <Modal
                 isOpen={showAddNew}
-                onClose={() => setShowAddNew(false)}
+                onClose={() => {
+                  setShowAddNew(false);
+                  setPendingSearch("");
+                }}
                 widthClass={addNewModalWidth}
               >
                 <AddNew
                   onSuccess={handleAddNewSuccess}
-                  onClose={() => setShowAddNew(false)}
+                  onClose={() => {
+                    setShowAddNew(false);
+                    setPendingSearch("");
+                  }}
+                  defaultName={pendingSearch}
+                  embeddedMode={true}
                 />
               </Modal>
             );
@@ -554,7 +574,17 @@ export const DropdownWithModal = forwardRef(
               >
                 <EditComp
                   editId={editingOption.value}
-                  onSuccess={() => setEditingOption(null)}
+                  editLabel={editingOption.show}
+                  hasChildRecord={Boolean(
+                    editingOption.childRecord ||
+                      childRecordCount(editingOption?._count),
+                  )}
+                  onSuccess={(updatedId) => {
+                    setEditingOption(null);
+                    if (updatedId && String(editingOption.value) === String(value)) {
+                      setValue(updatedId);
+                    }
+                  }}
                   onClose={() => setEditingOption(null)}
                 />
               </Modal>
@@ -573,6 +603,10 @@ export const DropdownWithModal = forwardRef(
                 <DeleteComp
                   deleteId={deletingOption.value}
                   deleteLabel={deletingOption.show}
+                  hasChildRecord={Boolean(
+                    deletingOption.childRecord ||
+                      childRecordCount(deletingOption?._count),
+                  )}
                   onSuccess={handleDeleteSuccess}
                   onClose={() => setDeletingOption(null)}
                 />

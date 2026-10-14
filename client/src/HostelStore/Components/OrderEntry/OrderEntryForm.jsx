@@ -510,10 +510,7 @@ const OrderEntryForm = ({
         condition: data.orderType === "AGAINSTPI" && !data.proFormaId,
         title: "PI No is required!",
       },
-      {
-        condition: !data.productionType,
-        title: "Production Type is required!",
-      },
+      ,
       {
         condition:
           data.productionType === "BULK" &&
@@ -1462,127 +1459,16 @@ const OrderEntryForm = ({
                       }}
                     />
                   </div>
-                  <DropdownInput
-                    name="Production Type"
-                    options={productionTypes}
-                    value={productionType}
-                    setValue={(value) => setProductionType(value)}
-                    required={true}
-                    readOnly={readOnly}
-                    disabled={childRecord.current > 0 || readOnly}
-                    beforeChange={() => {
-                      setRefNo("");
-                    }}
-                  />
-                  {productionType === "SAMPLE" ? (
-                    <TextInput
-                      name="Ref No"
-                      value={refNo}
-                      setValue={setRefNo}
-                      disabled={
-                        productionType === "SAMPLE" ||
-                        childRecord.current > 0 ||
-                        readOnly
-                      }
-                      required={productionType === "BULK"}
-                    />
-                  ) : (
-                    <DropdownNew
-                      name="Ref No"
-                      dataList={refList?.data?.filter(
-                        (item) => item?.customerId === customerId,
-                      )}
-                      value={refNo}
-                      setValue={setRefNo}
-                      required={
-                        productionType === "BULK" && orderType === "AGAINSTPI"
-                      }
-                      disabled={childRecord.current > 0 || readOnly}
-                      otherField={"refNo"}
-                      otherValue={"refNo"}
-                    />
-                  )}
-                  <div className="w-24">
-                    <TextInput
-                      name="ValidDays"
-                      value={validDays}
-                      setValue={setValidDays}
-                      disabled={childRecord.current > 0 || readOnly}
-                      type="number"
-                      min="0"
-                      className="text-right"
-                      required={true}
-                      onBlur={(e) =>
-                        setValidDays(
-                          e.target.value ? Number(e.target.value) : "",
-                        )
-                      }
-                      onFocus={(e) => {
-                        e.target.select();
-                      }}
-                    />
-                  </div>
-                  {/* <div className="m-2 p-0 flex items-center">
-                  <CheckBoxNew
-                    name="Repeated PI"
-                    readOnly={readOnly}
-                    value={isRepeatedPI}
-                    setValue={setIsRepeatedPI}
-                    disabled={readOnly || childRecord.current > 0}
-                    className="text-[11px] font-medium"
-                  />
-                </div> */}
                 </div>
               </div>
             </div>
             {/* Other Details */}
-            {console.log(orderItems, "orderItemsorderItems")}
 
             <div className="border border-slate-200 p-1.5 bg-white rounded-md shadow-sm">
               <h2 className="text-[10px] font-bold text-gray-500 mb-1 uppercase border-b pb-0.5">
                 Other Details
               </h2>
               <div className="flex gap-2 gap-x-2">
-                {isCustomerExport && (
-                  <>
-                    <div className="w-52">
-                      <DropdownInput
-                        name="Loading Port"
-                        options={dropDownListObject(
-                          cityList?.data?.filter((item) => item.active),
-                          "name",
-                          "id",
-                        )}
-                        value={loadingId}
-                        setValue={setLoadingId}
-                        readOnly={
-                          childRecord.current > 0 ||
-                          readOnly ||
-                          orderType === "AGAINSTPI"
-                        }
-                        required={true}
-                      />
-                    </div>
-                    <div className="w-52">
-                      <DropdownInput
-                        name="Delivery Port"
-                        options={dropDownListObject(
-                          cityList?.data?.filter((item) => item.active),
-                          "name",
-                          "id",
-                        )}
-                        value={deliveryId}
-                        setValue={setDeliveryId}
-                        readOnly={
-                          childRecord.current > 0 ||
-                          readOnly ||
-                          orderType === "AGAINSTPI"
-                        }
-                        required={true}
-                      />
-                    </div>
-                  </>
-                )}
                 <div className="w-28">
                   <DropdownInput
                     name="Tax Type"
@@ -1627,6 +1513,78 @@ const OrderEntryForm = ({
                     }
                   />
                 </div>
+                {isCustomerExport && (
+                  <div className="w-24">
+                    <DropdownWithModal
+                      name="Currency"
+                      options={dropDownListObject(
+                        id
+                          ? currencyList?.data
+                          : currencyList?.data?.filter((item) => item?.active),
+                        "name",
+                        "id",
+                      )}
+                      value={currencyId}
+                      setValue={setCurrencyId}
+                      required={true}
+                      readOnly={
+                        childRecord.current > 0 ||
+                        readOnly ||
+                        orderType === "AGAINSTPI"
+                      }
+                      className={`w-full max-w-none`}
+                      dropdownMinWidth={240}
+                      addNewLabel="+ Add New Currency"
+                      childComponent={CurrencyMaster}
+                      addNewModalWidth="w-[40%] h-[66%]"
+                      disabled={
+                        childRecord.current > 0 ||
+                        readOnly ||
+                        orderType === "AGAINSTPI"
+                      }
+                    />
+                  </div>
+                )}
+                {isCustomerExport && (
+                  <>
+                    <div className="w-52">
+                      <DropdownInput
+                        name="Loading Port"
+                        options={dropDownListObject(
+                          cityList?.data?.filter((item) => item.active),
+                          "name",
+                          "id",
+                        )}
+                        value={loadingId}
+                        setValue={setLoadingId}
+                        readOnly={
+                          childRecord.current > 0 ||
+                          readOnly ||
+                          orderType === "AGAINSTPI"
+                        }
+                        required={true}
+                      />
+                    </div>
+                    <div className="w-52">
+                      <DropdownInput
+                        name="Delivery Port"
+                        options={dropDownListObject(
+                          cityList?.data?.filter((item) => item.active),
+                          "name",
+                          "id",
+                        )}
+                        value={deliveryId}
+                        setValue={setDeliveryId}
+                        readOnly={
+                          childRecord.current > 0 ||
+                          readOnly ||
+                          orderType === "AGAINSTPI"
+                        }
+                        required={true}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="w-[105px]">
                   <DateInputNew
                     name="Delivery Date"
@@ -1642,43 +1600,7 @@ const OrderEntryForm = ({
                     type={"date"}
                   />
                 </div>
-                <div className="w-28">
-                  <DropdownInput
-                    name="Conversion"
-                    options={conversionTypes}
-                    value={conversionType}
-                    setValue={handleConversionChange}
-                    required={false}
-                    readOnly={
-                      childRecord.current > 0 ||
-                      readOnly ||
-                      orderType === "AGAINSTPI"
-                    }
-                  />
-                </div>
-                <div className="w-28">
-                  <TextInput
-                    name="Weight In Kg(KG)"
-                    value={weightInKg}
-                    setValue={setWeightInKg}
-                    type="number"
-                    min="0"
-                    className="text-right"
-                    disabled={
-                      childRecord.current > 0 ||
-                      readOnly ||
-                      orderType === "AGAINSTPI"
-                    }
-                    onBlur={(e) =>
-                      setWeightInKg(
-                        e.target.value ? Number(e.target.value).toFixed(3) : "",
-                      )
-                    }
-                    onFocus={(e) => {
-                      e.target.select();
-                    }}
-                  />
-                </div>
+
                 <div className="w-40">
                   <TextInput
                     name={`Carriage and Air Freight ${currencyId ? `(${isCurrencySymbol})` : ""}`}
@@ -1765,38 +1687,6 @@ const OrderEntryForm = ({
                     }
                   />
                 </div>
-                {isCustomerExport && (
-                  <div className="w-24">
-                    <DropdownWithModal
-                      name="Currency"
-                      options={dropDownListObject(
-                        id
-                          ? currencyList?.data
-                          : currencyList?.data?.filter((item) => item?.active),
-                        "name",
-                        "id",
-                      )}
-                      value={currencyId}
-                      setValue={setCurrencyId}
-                      required={true}
-                      readOnly={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "AGAINSTPI"
-                      }
-                      className={`w-full max-w-none`}
-                      dropdownMinWidth={240}
-                      addNewLabel="+ Add New Currency"
-                      childComponent={CurrencyMaster}
-                      addNewModalWidth="w-[40%] h-[66%]"
-                      disabled={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "AGAINSTPI"
-                      }
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>

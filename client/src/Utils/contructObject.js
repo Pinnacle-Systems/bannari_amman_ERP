@@ -3,7 +3,16 @@ import { getYearShortCode } from "./helper";
 export const dropDownListObject = (data = [], showKey, valueKey) => {
   const outputData = [];
   for (let i of data) {
-    outputData.push({ show: i[showKey], value: i[valueKey] });
+    const hasChild = Boolean(
+      i?.childRecord ||
+        (i?._count && Object.values(i._count).some((v) => Number(v) > 0)),
+    );
+    outputData.push({
+      show: i[showKey],
+      value: i[valueKey],
+      childRecord: hasChild,
+      _count: i?._count,
+    });
   }
   return outputData;
 };

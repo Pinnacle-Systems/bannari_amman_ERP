@@ -30,6 +30,12 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
   const [contactEmailBranch, setContactEmailBranch] = useState("");
   const [searchValue, setSearchValue] = useState("");
 
+  const [telephoneBranch, setTelephoneBranch] = useState("");
+  const [gstNoBranch, setGstNoBranch] = useState("");
+  const [panNoBranch, setPanNoBranch] = useState("");
+  const [udyamBranch, setUdyamBranch] = useState("");
+  const [msmeNoBranch, setMsmeNoBranch] = useState("");
+
   const childRecord = useRef(0);
 
   const companyId = secureLocalStorage.getItem(
@@ -62,6 +68,11 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
       setContactEmailBranch(data?.contactEmail ? data.contactEmail : "");
       setContactMobileBranch(data?.contactMobile ? data.contactMobile : "");
       setAddress(data?.address ? data.address : "");
+      setTelephoneBranch(data?.telephone ? data.telephone : "");
+      setGstNoBranch(data?.gstNo ? data.gstNo : "");
+      setPanNoBranch(data?.panNo ? data.panNo : "");
+      setUdyamBranch(data?.udyam ? data.udyam : "");
+      setMsmeNoBranch(data?.msmeNo ? data.msmeNo : "");
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
     [id],
@@ -81,6 +92,11 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
     companyId,
     id,
     address,
+    telephone: telephoneBranch,
+    gstNo: gstNoBranch,
+    panNo: panNoBranch,
+    udyam: udyamBranch,
+    msmeNo: msmeNoBranch,
   };
 
   const validateData = (data) => {
@@ -190,8 +206,8 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
           setReadOnly={setReadOnly}
           deleteData={deleteData}
         />
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-x-2 overflow-clip">
-          <div className="col-span-3 grid md:grid-cols-2 border overflow-auto">
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-4 gap-x-2 overflow-hidden">
+          <div className="col-span-3 grid md:grid-cols-2 border overflow-y-auto max-h-[480px] p-1">
             <div className="mr-1 md:ml-2">
               <fieldset className="my-1 row-span-2 overflow-auto">
                 <legend className="sub-heading">Basic Info</legend>
@@ -263,6 +279,48 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
                   />
                 </div>
               </fieldset>
+              <fieldset className="my-1 row-span-2 overflow-auto">
+                <legend className="sub-heading">GST & Other Details</legend>
+                <div className="grid grid-cols-1 my-2">
+                  <TextInput
+                    name="Telephone No"
+                    type="text"
+                    value={telephoneBranch}
+                    setValue={setTelephoneBranch}
+                    readOnly={readOnly}
+                  />
+                  <TextInput
+                    name="GST No"
+                    type="text"
+                    value={gstNoBranch}
+                    setValue={setGstNoBranch}
+                    required={true}
+                    readOnly={readOnly}
+                  />
+                  <TextInput
+                    name="PAN No"
+                    type="text"
+                    value={panNoBranch}
+                    setValue={setPanNoBranch}
+                    required={true}
+                    readOnly={readOnly}
+                  />
+                  <TextInput
+                    name="Udyam"
+                    type="text"
+                    value={udyamBranch}
+                    setValue={setUdyamBranch}
+                    readOnly={readOnly}
+                  />
+                  <TextInput
+                    name="MSME No"
+                    type="text"
+                    value={msmeNoBranch}
+                    setValue={setMsmeNoBranch}
+                    readOnly={readOnly}
+                  />
+                </div>
+              </fieldset>
               <div className="flex justify-between text-sm">
                 <CheckBox
                   name="Active"
@@ -273,7 +331,7 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
               </div>
             </div>
           </div>
-          <div className="frame overflow-x-hidden">
+          <div className="frame overflow-x-hidden overflow-y-auto max-h-[480px]">
             <FormReport
               searchValue={searchValue}
               setSearchValue={setSearchValue}
