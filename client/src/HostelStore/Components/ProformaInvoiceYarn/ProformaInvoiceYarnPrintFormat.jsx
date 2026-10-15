@@ -404,7 +404,6 @@ const ProformaInvoiceFabricPrintFormat = ({
   currencyList,
   payTermList,
   carriageFinalAmt,
-  styleItemList,
   sizeList,
   uomList,
   hsnList,
@@ -439,7 +438,7 @@ const ProformaInvoiceFabricPrintFormat = ({
   console.log(data, "data?.items");
 
   // Filter only real items
-  const rawItems = data?.yarnItems || [];
+  const rawItems = data?.currentVersionItems || [];
   const allItems = rawItems.filter(
     (i) => parseFloat(i.qty) > 0 || parseFloat(i.noOfbags) > 0,
   );

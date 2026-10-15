@@ -1231,7 +1231,7 @@ const ProformaInvoiceYarnForm = ({
           <ProformaInvoiceYarnPrintFormat
             data={{
               ...singleData?.data,
-              items: yarnItems.filter(
+              currentVersionItems: yarnItems.filter(
                 (i) =>
                   i.yarnId ||
                   parseFloat(i.qty) > 0 ||

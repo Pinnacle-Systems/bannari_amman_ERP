@@ -42,6 +42,7 @@ export const DropdownWithModal = forwardRef(
       searchable = false,
       addNewLabel = "+ Add New",
       childComponent = null,
+      childComponentProps,
       addNewModalWidth = "w-[40%] h-[45%]",
       widthClass,
       dropdownMinWidth,
@@ -558,6 +559,7 @@ export const DropdownWithModal = forwardRef(
                   }}
                   defaultName={pendingSearch}
                   embeddedMode={true}
+                  {...childComponentProps}
                 />
               </Modal>
             );

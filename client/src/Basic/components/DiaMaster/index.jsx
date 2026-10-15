@@ -23,13 +23,18 @@ import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardN
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
 import { measurementType } from "../../../Utils/DropdownData";
-export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
+export default function DiaMaster({
+  onSuccess,
+  defaultName = "",
+  defaultKDia = false,
+  defaultFDia = false,
+} = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
-  const [kDia, setKDia] = useState(false);
-  const [fDia, setFDia] = useState(false);
+  const [kDia, setKDia] = useState(defaultKDia || false);
+  const [fDia, setFDia] = useState(defaultFDia || false);
   const [measurement, setMeasurement] = useState("");
   const [name, setName] = useState(defaultName || "");
   const [active, setActive] = useState(true);
@@ -70,14 +75,32 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name || defaultName || "");
-      setKDia(data?.kDia || false);
-      setFDia(data?.fDia || false);
+      setKDia(data?.kDia ?? defaultKDia ?? false);
+      setFDia(data?.fDia ?? defaultFDia ?? false);
       setMeasurement(data?.measurement || "");
       setActive(id ? (data?.active ? data.active : false) : true);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
-    [id],
+    [id, defaultName, defaultKDia, defaultFDia],
   );
+
+  useEffect(() => {
+    if (!id) {
+      if (defaultKDia) {
+        setKDia(true);
+        setFDia(false);
+      } else if (defaultFDia) {
+        setFDia(true);
+        setKDia(false);
+      }
+    }
+  }, [defaultKDia, defaultFDia, id]);
+
+  useEffect(() => {
+    if (!id && defaultName) {
+      setName(defaultName);
+    }
+  }, [defaultName, id]);
 
   useEffect(() => {
     if (id && singleData?.data) {
@@ -98,7 +121,7 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
   };
 
   const validateData = (data) => {
-    if (data.name) {
+    if (data.name && (data.kDia || data.fDia)) {
       return true;
     }
     return false;
@@ -146,7 +169,9 @@ export default function DiaMaster({ onSuccess, defaultName = "" } = {}) {
   const saveData = (nextProcess) => {
     if (!validateData(data)) {
       Swal.fire({
-        title: "Please fill all required fields...!",
+        title: !data.name
+          ? "Please fill all required fields...!"
+          : "Please select either K Dia or F Dia...!",
         icon: "error",
         didClose: () => {
           countryNameRef?.current?.focus();
