@@ -48,6 +48,15 @@ import {
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
 import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
+import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
+import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService";
+import { useGetUomQuery } from "../../../redux/services/UomMasterService";
+import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices";
+import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService";
+import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterService";
+import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
+import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
+import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
 
 const EMPTY_ROW = {
   fabricId: "",
@@ -151,7 +160,25 @@ const ProformaInvoiceFabricForm = ({
     phone: "",
   });
   const dispatch = useDispatch();
-
+  const { data: fabricList } = useGetFabricMasterQuery({
+    params: { companyId },
+  });
+  const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
+  const { data: uomList } = useGetUomQuery({ params: { companyId } });
+  const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
+  const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
+  const { data: designList } = useGetDesignMasterQuery({
+    params: { companyId },
+  });
+  const { data: loopLengthList } = useGetLoopLengthMasterQuery({
+    params: { companyId },
+  });
+  const { data: diaList } = useGetDiaMasterQuery({
+    params: { companyId },
+  });
+  const { data: gaugeList } = useGetGaugeMasterQuery({ params: { companyId } });
+  const kDiaList = diaList?.data?.filter((val) => val?.kDia);
+  const fDiaList = diaList?.data?.filter((val) => val?.fDia);
   const { data: allData } = useGetProformaInvoiceQuery({
     params: { branchId },
   });
@@ -242,7 +269,7 @@ const ProformaInvoiceFabricForm = ({
         ...item,
         weightPerRoll: item?.weightPerRoll?.toFixed(3),
         totalKgs: item?.totalKgs?.toFixed(3),
-        pricePerKg: item?.pricePerKg?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(2),
         totalPrice: item?.totalPrice?.toFixed(2),
         qty: item?.qty?.toFixed(3),
         price: item?.price?.toFixed(2),
@@ -282,7 +309,7 @@ const ProformaInvoiceFabricForm = ({
         ...item,
         weightPerRoll: item?.weightPerRoll?.toFixed(3),
         totalKgs: item?.totalKgs?.toFixed(3),
-        pricePerKg: item?.pricePerKg?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(2),
         totalPrice: item?.totalPrice?.toFixed(2),
         qty: item?.qty?.toFixed(3),
         price: item?.price?.toFixed(2),
@@ -1203,7 +1230,7 @@ const ProformaInvoiceFabricForm = ({
               Edit
             </button>
           )}
-          {/* {id && (
+          {id && (
             <button
               onClick={() => setPrintModalOpen(true)}
               className="bg-slate-600 text-white px-4 py-1 rounded hover:bg-slate-700 flex items-center text-xs"
@@ -1211,7 +1238,7 @@ const ProformaInvoiceFabricForm = ({
               <FiPrinter className="w-4 h-4 mr-2" />
               Print
             </button>
-          )} */}
+          )}
         </div>
       </div>
     </>
@@ -1242,12 +1269,7 @@ const ProformaInvoiceFabricForm = ({
           <ProformaInvoiceFabricPrintFormat
             data={{
               ...singleData?.data,
-              items: fabricItems.filter(
-                (i) =>
-                  i.styleItemId ||
-                  (i.styleBreakup && i.styleBreakup.length > 0) ||
-                  i.itemGroupId,
-              ),
+              currentVersionItems: fabricItems.filter((i) => i.fabricId),
               quoteVersion:
                 selectedQuoteVersion !== "Latest"
                   ? parseInt(selectedQuoteVersion.replace("V", ""))
@@ -1259,6 +1281,16 @@ const ProformaInvoiceFabricForm = ({
             currencyList={currencyList}
             payTermList={payTermList}
             carriageFinalAmt={carriageFinalAmt}
+            uomList={uomList}
+            hsnList={hsnList}
+            colorList={colorList}
+            gsmList={gsmList}
+            designList={designList}
+            kDiaList={kDiaList}
+            fDiaList={fDiaList}
+            loopLengthList={loopLengthList}
+            gaugeList={gaugeList}
+            fabricList={fabricList}
           />
         </PDFViewer>
       </Modal>
@@ -1287,6 +1319,16 @@ const ProformaInvoiceFabricForm = ({
                 termsRef={termsRef}
                 isCustomerExport={isCustomerExport}
                 isSupplierOutside={isSupplierOutside}
+                uomList={uomList}
+                hsnList={hsnList}
+                colorList={colorList}
+                gsmList={gsmList}
+                designList={designList}
+                kDiaList={kDiaList}
+                fDiaList={fDiaList}
+                loopLengthList={loopLengthList}
+                gaugeList={gaugeList}
+                fabricList={fabricList}
               />
             </div>
           </div>

@@ -24,6 +24,7 @@ export default function Form({ onSuccess, defaultName = "" } = {}) {
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
   const [name, setName] = useState(defaultName || "");
+
   const [isPoWise, setIsPowise] = useState(false);
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
@@ -293,7 +294,7 @@ export default function Form({ onSuccess, defaultName = "" } = {}) {
                   <div className="w-[50%">
                     <TextInputNew
                       name="Gsm"
-                      type="number"
+                      type="text"
                       value={name}
                       setValue={setName}
                       required={true}

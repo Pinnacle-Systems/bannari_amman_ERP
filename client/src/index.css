@@ -244,6 +244,10 @@ label {
 }
 
 /* ── SweetAlert2 Global Redesign ── */
+.swal2-container {
+  z-index: 999999 !important;
+}
+
 .swal2-popup {
   width: 360px !important;
   max-height: 70vh !important;

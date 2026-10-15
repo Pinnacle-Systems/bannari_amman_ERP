@@ -35,12 +35,14 @@ export default function Form({
   editId,
   deleteId,
   deleteLabel,
+  defaultName = "",
 } = {}) {
   const [form, setForm] = useState(false);
+  console.log(defaultName, "defaultName");
 
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState(editId || deleteId || "");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(defaultName || "");
   // const [code, setCode] = useState("");
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
@@ -82,7 +84,7 @@ export default function Form({
   const syncFormWithDb = useCallback(
     (data) => {
       // if (id) setReadOnly(true);
-      setName(data?.name ? data.name : "");
+      setName(data?.name || defaultName || "");
       // setCode(data?.code ? data.code : "");
       setActive(id ? (data?.active ? data.active : false) : true);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;

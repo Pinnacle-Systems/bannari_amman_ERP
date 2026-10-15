@@ -3733,6 +3733,7 @@ export const FxSelectWithAdd = forwardRef(function FxSelectWithAdd(
     inputId,
     addNew,
     childComponent,
+    childComponentProps,
     addNewModalWidth,
     nextRef,
     advanceOnEnter,
@@ -3933,6 +3934,7 @@ export const FxSelectWithAdd = forwardRef(function FxSelectWithAdd(
                 }}
                 defaultName={searchValue.toUpperCase()}
                 embeddedMode={true}
+                {...childComponentProps}
               />
             );
           })()}

@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs";
-import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
-import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService";
-import { useGetUomQuery } from "../../../redux/services/UomMasterService";
-import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices";
-import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService";
-import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterService";
-import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
-import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
-import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
+
 import {
   findFromList,
   getCommonParams,
@@ -24,6 +16,7 @@ import {
   DiaMaster,
   FabricMaster,
   GaugeMaster,
+  LoopLengthMaster,
 } from "../../../Basic/components";
 import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
@@ -40,28 +33,19 @@ const ProformaInvoiceFabricItems = ({
   isCustomerExport,
   termsRef,
   isSupplierOutside,
+  uomList,
+  hsnList,
+  colorList,
+  gsmList,
+  designList,
+  kDiaList,
+  fDiaList,
+  loopLengthList,
+  gaugeList,
+  fabricList,
 }) => {
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
-  const { data: fabricList } = useGetFabricMasterQuery({
-    params: { companyId },
-  });
-  const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
-  const { data: uomList } = useGetUomQuery({ params: { companyId } });
-  const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
-  const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
-  const { data: designList } = useGetDesignMasterQuery({
-    params: { companyId },
-  });
-  const { data: loopLengthList } = useGetLoopLengthMasterQuery({
-    params: { companyId },
-  });
-  const { data: diaList } = useGetDiaMasterQuery({
-    params: { companyId },
-  });
-  const { data: gaugeList } = useGetGaugeMasterQuery({ params: { companyId } });
-  const kDiaList = diaList?.data?.filter((val) => val?.kDia);
-  const fDiaList = diaList?.data?.filter((val) => val?.fDia);
 
   const EMPTY_ROW = {
     fabricId: "",
@@ -322,7 +306,7 @@ const ProformaInvoiceFabricItems = ({
                         const val =
                           fabricItems[currentWeightSelectedIndex].pricePerKg;
                         handleInputChange(
-                          val ? parseFloat(val).toFixed(3) : "",
+                          val ? parseFloat(val).toFixed(2) : "",
                           currentWeightSelectedIndex,
                           "pricePerKg",
                         );
@@ -705,7 +689,7 @@ const ProformaInvoiceFabricItems = ({
                     readOnly={readOnly}
                     addNew={true}
                     placeholder=""
-                    childComponent={ColorMaster}
+                    childComponent={LoopLengthMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
@@ -749,6 +733,7 @@ const ProformaInvoiceFabricItems = ({
                     addNew={true}
                     placeholder=""
                     childComponent={DiaMaster}
+                    childComponentProps={{ defaultKDia: true }}
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>
@@ -770,6 +755,7 @@ const ProformaInvoiceFabricItems = ({
                     addNew={true}
                     placeholder=""
                     childComponent={DiaMaster}
+                    childComponentProps={{ defaultFDia: true }}
                     addNewModalWidth="w-[50%] h-[57%]"
                   />
                 </td>

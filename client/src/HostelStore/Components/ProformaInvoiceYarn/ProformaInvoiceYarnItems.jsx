@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs/index.js";
-import { useGetUomQuery } from "../../../redux/services/UomMasterService.js";
-import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
-import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService.js";
-
-//////
-
-import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService";
 
 import {
   findFromList,
@@ -34,15 +27,13 @@ const ProformaInvoiceYarnItems = ({
   isCustomerExport,
   termsRef,
   isSupplierOutside,
+  uomList,
+  hsnList,
+  colorList,
+  yarnList,
 }) => {
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
-
-  const { data: uomList } = useGetUomQuery({ params: { companyId } });
-  const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
-  const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
-
-  const { data: yarnList } = useGetYarnMasterQuery({ params: { companyId } });
 
   const EMPTY_ROW = {
     yarnId: "",
@@ -399,7 +390,7 @@ const ProformaInvoiceYarnItems = ({
                     placeholder=""
                     addNew={true}
                     childComponent={YarnMaster}
-                    addNewModalWidth="w-[50%] h-[57%]"
+                    addNewModalWidth="w-[65vw] h-[60vh]"
                     ref={(el) => (styleItemRefs.current[originalIndex] = el)}
                     nextRef={termsRef}
                   />

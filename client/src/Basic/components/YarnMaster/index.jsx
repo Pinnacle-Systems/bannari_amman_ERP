@@ -33,26 +33,55 @@ import ContentMaster from "../ContentMaster";
 import { YarnBlendMaster } from "..";
 import { HsnMaster } from "../../../HostelStore/Components";
 import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
-export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
+export default function YarnMaster({
+  onSuccess,
+  onClose,
+  editId,
+  editLabel = "",
+  hasChildRecord = false,
+  deleteId,
+  deleteLabel = "",
+  defaultName = "",
+} = {}) {
   const [form, setForm] = useState(false);
 
   const [readOnly, setReadOnly] = useState(false);
-  const [id, setId] = useState("");
+  const [id, setId] = useState(editId || deleteId || "");
   const [countsId, setCountsId] = useState("");
   const [contentId, setContentId] = useState("");
-  const [name, setName] = useState(defaultName || "");
+  const [name, setName] = useState(editLabel || defaultName || "");
   const [aliasName, setAliasName] = useState("");
   const [hsnId, setHsnId] = useState("");
   const [taxPercentage, setTaxPercentage] = useState("");
   const [active, setActive] = useState(true);
+  const [hasChildRecordState, setHasChildRecordState] = useState(
+    Boolean(hasChildRecord),
+  );
   const [contextMenu, setContextMenu] = useState(null);
 
   const [yarnMasterDetail, setYarnMasterDetails] = useState([]);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
   const firstGridInputRef = useRef(null);
 
+  useEffect(() => {
+    if (editId || deleteId) {
+      setId(editId || deleteId);
+    }
+    if (editLabel) {
+      setName(editLabel);
+    }
+    if (hasChildRecord) {
+      setHasChildRecordState(true);
+    }
+  }, [editId, deleteId, editLabel, hasChildRecord]);
+
+  useEffect(() => {
+    if (defaultName && !id) {
+      setName(defaultName);
+    }
+  }, [defaultName, id]);
+
   const [searchValue, setSearchValue] = useState("");
-  const childRecord = useRef(0);
   const lastSyncedIds = useRef({ countsId: null, contentId: null });
 
   const params = {
@@ -116,7 +145,11 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       setHsnId(data?.hsnId || "");
       setAliasName(data?.aliasName || "");
       setActive(id ? (data?.active ? data.active : false) : true);
-      childRecord.current = data?.childRecord ? data?.childRecord : 0;
+      const isChild = Boolean(
+        data?.childRecord ||
+        (data?._count && Object.values(data._count).some((v) => Number(v) > 0)),
+      );
+      setHasChildRecordState(isChild);
       const existingDetails =
         data?.yarnMasterDetail || data?.YarnMasterDetail || [];
       const paddedDetails = [...existingDetails];
@@ -308,7 +341,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
   };
 
   const deleteData = async (id, childRecord) => {
-    if (childRecord) {
+    if (childRecord || hasChildRecordState) {
       Swal.fire({
         icon: "error",
         title: "Child record Exists",
@@ -550,7 +583,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       required={false}
                       readOnly={readOnly}
                       className={`w-[150px]`}
-                      disabled={childRecord.current > 0}
+                      disabled={hasChildRecordState}
                       addNewLabel="+ Add New Counts"
                       childComponent={CountsMaster}
                       addNewModalWidth="w-[40%] h-[45%]"
@@ -572,7 +605,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       required={false}
                       readOnly={readOnly}
                       className={`w-[150px]`}
-                      disabled={childRecord.current > 0}
+                      disabled={hasChildRecordState}
                       addNewLabel="+ Add New Content"
                       childComponent={ContentMaster}
                       addNewModalWidth="w-[40%] h-[45%]"
@@ -580,14 +613,19 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                   </div>
                   <div className="w-[50%]">
                     <TextInputNew
-                      name="Yarn Name*"
+                      name="Yarn Name"
                       type="text"
                       value={name}
                       setValue={setName}
                       required={true}
-                      readOnly={readOnly}
-                      disabled={childRecord.current > 0}
+                      readOnly={readOnly || hasChildRecordState}
+                      disabled={hasChildRecordState}
                     />
+                    {hasChildRecordState && (
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">
+                        * Name cannot be modified because linked records exist.
+                      </p>
+                    )}
                   </div>
                   {/* <div className="w-[50%]">
                     <TextInputNew
@@ -614,7 +652,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                       setValue={setHsnId}
                       readOnly={readOnly}
                       className={`w-[150px]`}
-                      disabled={childRecord.current > 0}
+                      disabled={hasChildRecordState}
                       addNewLabel="+ Add New Hsn"
                       childComponent={HsnMaster}
                       addNewModalWidth="w-[40%] h-[50%]"
@@ -712,7 +750,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                                               value: i.id,
                                             }))}
                                           readOnly={
-                                            readOnly || childRecord?.current > 0
+                                            readOnly || hasChildRecordState
                                           }
                                           placeholder=""
                                           addNew={true}
@@ -771,7 +809,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
                                           }}
                                           spellCheck={false}
                                           className={`w-full bg-transparent uppercase  pr-2 text-right focus:outline-none focus:border-transparent   ${
-                                            readOnly || childRecord.current > 0
+                                            readOnly || hasChildRecordState
                                               ? "text-gray-600"
                                               : "text-black"
                                           }`}
@@ -821,6 +859,85 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
     }
   }, [form, onSuccess]);
 
+  if (deleteId) {
+    const childCount =
+      singleData?.data?.childRecord || hasChildRecordState ? 1 : 0;
+    const isLoadingRecord = isSingleFetching || isSingleLoading;
+
+    const handleConfirmDelete = async () => {
+      try {
+        await removeData(deleteId).unwrap();
+        invalidateYarnModule();
+        dispatchInvalidate();
+        await Swal.fire({
+          title: "Deleted Successfully",
+          icon: "success",
+        });
+        onSuccess?.();
+      } catch (err) {
+        Swal.fire({
+          title: err?.data?.message || "Failed to delete",
+          icon: "error",
+        });
+      }
+    };
+
+    return (
+      <div className="min-h-[200px] flex flex-col bg-gray-200">
+        <div className="border-b py-2 px-4 mx-3 mt-4 bg-white">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Delete Yarn Master
+          </h2>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 bg-white mx-3 mt-3 rounded mb-3">
+          {isLoadingRecord ? (
+            <p className="text-xs text-gray-500">Checking...</p>
+          ) : childCount > 0 ? (
+            <>
+              <p className="text-red-600 font-semibold text-sm">
+                Cannot Delete
+              </p>
+              <p className="text-xs text-gray-700">
+                "{deleteLabel}" has {childCount} linked records.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-1.5 text-xs border border-gray-400 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Close
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700 text-center">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">"{deleteLabel}"</span>?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-1.5 text-xs border border-gray-400 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (onSuccess) {
     return (
       <div
@@ -829,7 +946,7 @@ export default function YarnMaster({ onSuccess, defaultName = "" } = {}) {
       >
         <div className="border-b py-2 px-4 mx-3 flex mt-4 justify-between items-center sticky top-0 z-10 bg-white">
           <h2 className="text-lg px-2 py-0.5 font-semibold text-gray-800">
-            Add New Yarn Master
+            {editId ? "Edit Yarn Master" : "Add New Yarn Master"}
           </h2>
           <button
             type="button"

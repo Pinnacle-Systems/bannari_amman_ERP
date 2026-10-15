@@ -30,7 +30,6 @@ import tw from "../../../Utils/tailwind-react-pdf.js";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { FiEdit2, FiSave, FiPrinter, FiEye } from "react-icons/fi";
 import { HiOutlineRefresh } from "react-icons/hi";
-import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import {
   CommonFormFooter,
   TransactionLayout,
@@ -49,7 +48,10 @@ import {
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { useDispatch } from "react-redux";
 import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
-
+import { useGetUomQuery } from "../../../redux/services/UomMasterService.js";
+import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
+import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService.js";
+import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService";
 const EMPTY_ROW = {
   yarnId: "",
   hsnId: "",
@@ -143,7 +145,11 @@ const ProformaInvoiceYarnForm = ({
     phone: "",
   });
   const dispatch = useDispatch();
+  const { data: uomList } = useGetUomQuery({ params: { companyId } });
+  const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
+  const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
 
+  const { data: yarnList } = useGetYarnMasterQuery({ params: { companyId } });
   const { data: allData } = useGetYarnProformaInvoiceQuery({
     params: { branchId },
   });
@@ -1186,7 +1192,7 @@ const ProformaInvoiceYarnForm = ({
               Edit
             </button>
           )}
-          {/* {id && (
+          {id && (
             <button
               onClick={() => setPrintModalOpen(true)}
               className="bg-slate-600 text-white px-4 py-1 rounded hover:bg-slate-700 flex items-center text-xs"
@@ -1194,7 +1200,7 @@ const ProformaInvoiceYarnForm = ({
               <FiPrinter className="w-4 h-4 mr-2" />
               Print
             </button>
-          )} */}
+          )}
         </div>
       </div>
     </>
@@ -1225,11 +1231,11 @@ const ProformaInvoiceYarnForm = ({
           <ProformaInvoiceYarnPrintFormat
             data={{
               ...singleData?.data,
-              items: yarnItems.filter(
+              currentVersionItems: yarnItems.filter(
                 (i) =>
-                  i.styleItemId ||
-                  (i.styleBreakup && i.styleBreakup.length > 0) ||
-                  i.itemGroupId,
+                  i.yarnId ||
+                  parseFloat(i.qty) > 0 ||
+                  parseFloat(i.noOfbags) > 0,
               ),
               quoteVersion:
                 selectedQuoteVersion !== "Latest"
@@ -1242,6 +1248,10 @@ const ProformaInvoiceYarnForm = ({
             currencyList={currencyList}
             payTermList={payTermList}
             carriageFinalAmt={carriageFinalAmt}
+            uomList={uomList}
+            hsnList={hsnList}
+            colorList={colorList}
+            yarnList={yarnList}
           />
         </PDFViewer>
       </Modal>
@@ -1270,6 +1280,10 @@ const ProformaInvoiceYarnForm = ({
                 termsRef={termsRef}
                 isCustomerExport={isCustomerExport}
                 isSupplierOutside={isSupplierOutside}
+                uomList={uomList}
+                hsnList={hsnList}
+                colorList={colorList}
+                yarnList={yarnList}
               />
             </div>
           </div>

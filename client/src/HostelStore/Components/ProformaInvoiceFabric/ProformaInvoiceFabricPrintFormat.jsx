@@ -6,7 +6,7 @@ import {
   Image,
   StyleSheet,
 } from "@react-pdf/renderer";
-import Logo from "../../../assets/mplogo.png";
+import Logo from "../../../assets/bannarispintexlogo.jpeg";
 import moment from "moment";
 import { findFromList, formatCurrencyAmount } from "../../../Utils/helper";
 import { numberToWords } from "number-to-words";
@@ -329,39 +329,36 @@ const styles = StyleSheet.create({
 // For export: no Tax% or Net Amount columns
 // For domestic: include Tax% and Net Amount
 const getColumns = (isExport) => [
-  { label: "S.No", flex: 0.4 },
-  { label: "Description of Goods", flex: 3.8 },
-  { label: "Item Sub Group", flex: 1.6 },
-  { label: "Item Group", flex: 1.6 },
-  { label: "HSN", flex: 1.2 },
-  // { label: "UOM", flex: 0.8 },
-  { label: "Qty", flex: 0.8 },
-  // { label: "Dozen", flex: 0.8 },
-  { label: "Price", flex: 1 },
-  ...(!isExport ? [{ label: "Tax %", flex: 0.7 }] : []),
-  { label: "Gross Amount", flex: 1.2 },
-  // Tax% and Net Amount only for domestic
+  { label: "S.No", flex: 0.5, align: "center" },
+  { label: "Description of Goods", flex: 3.5, align: "center" },
+  { label: "HSN", flex: 1.1, align: "center" },
+  { label: "K Dia", flex: 1.0, align: "center" },
+  { label: "F Dia", flex: 1.0, align: "center" },
+  { label: "Rolls", flex: 1.0, align: "center" },
+  { label: "Weight", flex: 1.2, align: "center" },
+  { label: "Rate per KG", flex: 1.4, align: "center" },
+  { label: "Gross Amount", flex: 1.7, align: "center" },
 ];
 
 const TableHeader = ({ isExport, currencySymbol }) => {
   const cols = getColumns(isExport);
   return (
     <View style={styles.tableHeader}>
-      {cols.map(({ label, flex }, i) => (
+      {cols.map(({ label, flex, align }, i) => (
         <Text
           key={label}
           style={[
             styles.th,
             { flex },
+            align && { textAlign: align },
             i === cols.length - 1 && { borderRight: "none" },
           ]}
         >
-          {label === "Price" && currencySymbol
-            ? `Price (${currencySymbol})`
-            : label}
-          {label === "Gross Amount" && currencySymbol
-            ? `\n(${currencySymbol})`
-            : ""}
+          {label === "Rate per KG" && currencySymbol
+            ? `Rate per KG\n(${currencySymbol})`
+            : label === "Gross Amount" && currencySymbol
+              ? `Gross Amount\n(${currencySymbol})`
+              : label}
         </Text>
       ))}
     </View>
@@ -405,8 +402,17 @@ const ProformaInvoiceFabricPrintFormat = ({
   currencyList,
   payTermList,
   carriageFinalAmt,
-  styleItemList,
   sizeList,
+  uomList,
+  hsnList,
+  colorList,
+  gsmList,
+  designList,
+  kDiaList,
+  fDiaList,
+  loopLengthList,
+  gaugeList,
+  fabricList,
 }) => {
   if (!data) return null;
   console.log(data, "data");
@@ -433,94 +439,20 @@ const ProformaInvoiceFabricPrintFormat = ({
   const branch = data?.Branch || {};
   const customer = data?.customer || {};
   const bank = data?.Bank || {};
+  console.log(data, "data?.items");
 
   // Filter only real items
-  const allItems = (data?.items || []).filter(
-    (i) =>
-      i.styleItemId ||
-      (i.pistyleBreakups && i.pistyleBreakups.length > 0) ||
-      i.itemGroupId,
+  const rawItems = data?.currentVersionItems || [];
+  const allItems = rawItems.filter(
+    (i) => parseFloat(i.qty) > 0 || parseFloat(i.price) > 0,
   );
   console.log(allItems, "allItems");
 
-  const renderStyleBreakups = (row) => {
-    // Merge DB state and form state
-    const styleBreakups = row?.pistyleBreakups || row?.styleBreakup || [];
-
-    // Multiple styles format
-    if (styleBreakups && styleBreakups.length > 0) {
-      return styleBreakups.map((st, idx) => {
-        // Resolve style name
-        let styleName = st?.StyleItem?.name;
-        if (!styleName && st?.styleId) {
-          const foundStyle = styleItemList?.data?.find(
-            (s) => s.id === st.styleId,
-          );
-          if (foundStyle) styleName = foundStyle.name;
-        }
-
-        const sizeBreakup = st?.pisizeBreakups || st?.sizeBreakup || [];
-        const validSizes = sizeBreakup.filter(
-          (sb) => (Number(sb.qty) || 0) > 0,
-        );
-
-        const sizesText =
-          validSizes && validSizes.length > 0
-            ? validSizes
-                .map((sb) => {
-                  let sName = sb?.Size?.name || "All";
-                  if (!sb?.Size?.name && sb?.sizeId) {
-                    const foundSize = sizeList?.data?.find(
-                      (s) => s.id === sb.sizeId,
-                    );
-                    if (foundSize) sName = foundSize.name;
-                  }
-                  return `${sName}: ${Number(sb.qty)}`;
-                })
-                .join("  |  ")
-            : "";
-
-        return (
-          <View key={idx} style={{ marginBottom: 4 }}>
-            {styleName ? (
-              <Text style={{ textAlign: "left" }}>{styleName}</Text>
-            ) : null}
-            {sizesText ? (
-              <Text style={{ fontSize: 6.5, color: "#555", marginTop: 2 }}>
-                {sizesText}
-              </Text>
-            ) : null}
-          </View>
-        );
-      });
-    }
-
-    // Old single style format
-    const breakup = (row?.pisizeBreakups || row?.sizeBreakup || [])?.filter(
-      (sb) => (Number(sb.qty) || 0) > 0,
-    );
-    const sizesText =
-      breakup && breakup.length > 0
-        ? breakup
-            .map((sb) => {
-              const sName =
-                sb?.Size?.name || sb?.sizeName || sb?.sizeId || "All";
-              return `${sName}: ${Number(sb.qty)}`;
-            })
-            .join("  |  ")
-        : "";
-
-    return (
-      <View style={{ marginBottom: 4 }}>
-        {sizesText ? (
-          <Text style={{ fontSize: 6.5, color: "#555", marginTop: 2 }}>
-            {sizesText}
-          </Text>
-        ) : null}
-      </View>
-    );
-  };
   // Totals
+  const totalRolls = allItems?.reduce(
+    (s, i) => s + (parseFloat(i?.numberOfRolls) || 0),
+    0,
+  );
   const totalQty = allItems?.reduce((s, i) => s + (parseFloat(i?.qty) || 0), 0);
   const totalDozen = allItems?.reduce(
     (s, i) => s + (parseFloat(i?.dozen) || 0),
@@ -661,9 +593,6 @@ const ProformaInvoiceFabricPrintFormat = ({
         return (
           <Page key={pageIndex} size="A4" style={styles.borderBox}>
             <View style={styles.page}>
-              {/* TOP ACCENT BAR */}
-              {/* <View style={styles.topBar} /> */}
-
               {isFirstPage ? (
                 <>
                   {/* ── HEADER ── */}
@@ -678,6 +607,17 @@ const ProformaInvoiceFabricPrintFormat = ({
                       <Text style={styles.companyAddress}>
                         {branch?.address || ""}
                       </Text>
+                      <View style={{ flexDirection: "row", gap: 10 }}>
+                        <Text style={styles.companyAddress}>
+                          GSTIN : {branch?.gstNo || ""}
+                        </Text>
+                        <Text style={styles.companyAddress}>
+                          PAN : {branch?.panNo || ""}
+                        </Text>
+                        <Text style={styles.companyAddress}>
+                          {branch?.udyam || ""}
+                        </Text>
+                      </View>
                       {branch?.contactEmail ? (
                         <Text
                           style={{ fontSize: 7.5, color: "#555", marginTop: 1 }}
@@ -686,9 +626,11 @@ const ProformaInvoiceFabricPrintFormat = ({
                           {branch?.contactMobile
                             ? `  |  ${branch.contactMobile}`
                             : ""}
+                          {branch?.telephone ? `  |  ${branch.telephone}` : ""}
                         </Text>
                       ) : null}
                     </View>
+
                     <View style={{ width: 60 }} />
                   </View>
 
@@ -799,18 +741,28 @@ const ProformaInvoiceFabricPrintFormat = ({
                         { borderRight: `1 solid ${BORDER_LIGHT}` },
                       ]}
                     >
-                      <Text style={styles.sectionHeader}>FROM</Text>
+                      <Text style={styles.sectionHeader}>Bill TO</Text>
                       <View style={styles.sectionBody}>
                         <Text style={styles.partyName}>
-                          {branch?.branchName || "BANNARI AMMAN"}
+                          {customer?.name || "N/A"}
                         </Text>
                         <Text style={styles.partyAddr}>
-                          {branch?.address || ""}
+                          {customer?.address || ""}
                         </Text>
                         {[
-                          { label: "Mobile No", value: branch?.contactMobile },
-                          { label: "GST No", value: branch?.company?.gstNo },
-                          { label: "Email", value: branch?.contactEmail },
+                          {
+                            label: "Contact Person",
+                            value: customer?.contactPersonName,
+                          },
+                          {
+                            label: "Mobile No",
+                            value: customer?.contactNumber,
+                          },
+                          { label: "GST No", value: customer?.gstNo },
+                          {
+                            label: "Email",
+                            value: customer?.contactPersonEmail,
+                          },
                         ].map(({ label, value }) =>
                           value ? (
                             <View key={label} style={styles.partyRow}>
@@ -822,7 +774,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </View>
                     </View>
                     <View style={styles.colHalf}>
-                      <Text style={styles.sectionHeader}>CUSTOMER DETAILS</Text>
+                      <Text style={styles.sectionHeader}>Ship To</Text>
                       <View style={styles.sectionBody}>
                         <Text style={styles.partyName}>
                           {customer?.name || "N/A"}
@@ -890,7 +842,9 @@ const ProformaInvoiceFabricPrintFormat = ({
                             :{" "}
                             {data?.weightInKg
                               ? parseFloat(data.weightInKg).toFixed(3)
-                              : "—"}
+                              : totalQty > 0
+                                ? totalQty.toFixed(3)
+                                : "—"}
                           </Text>
                         </View>
                       </View>
@@ -917,18 +871,24 @@ const ProformaInvoiceFabricPrintFormat = ({
                     index % 2 === 0 ? styles.trOdd : styles.trEven;
                   const gross = parseFloat(row.amount) || 0;
                   const taxPct = parseFloat(row.taxPercent) || 0;
-                  const netAmt = gross + (gross * taxPct) / 100;
+                  const colorName = findFromList(
+                    row?.colorId,
+                    colorList?.data,
+                    "name",
+                  );
 
                   return (
                     <View key={globalOffset + index} style={rowStyle}>
-                      <Text style={[styles.td, { flex: 0.4 }]}>
+                      <Text
+                        style={[styles.td, { flex: 0.5, textAlign: "center" }]}
+                      >
                         {globalOffset + index + 1}
                       </Text>
                       <View
                         style={[
                           styles.td,
                           {
-                            flex: 3.8,
+                            flex: 3.5,
                             flexDirection: "column",
                             alignItems: "flex-start",
                             justifyContent: "center",
@@ -939,81 +899,76 @@ const ProformaInvoiceFabricPrintFormat = ({
                         <Text
                           style={{
                             textAlign: "left",
-                            marginBottom: 4,
                             fontFamily: "Helvetica-Bold",
                           }}
                         >
-                          {row?.StyleItem?.name ||
-                            (row?.styleItemId &&
-                              styleItemList?.data?.find(
-                                (s) => s.id === row.styleItemId,
-                              )?.name) ||
-                            ""}
+                          {findFromList(
+                            row?.fabricId,
+                            fabricList?.data,
+                            "name",
+                          )}
                         </Text>
-                        {/* Style and Size breakups */}
-                        {renderStyleBreakups(row)}
+                        {colorName ? (
+                          <Text
+                            style={{
+                              textAlign: "left",
+                              marginTop: 2,
+                              color: "#444",
+                              fontSize: 7,
+                            }}
+                          >
+                            Color: {colorName}
+                          </Text>
+                        ) : null}
                       </View>
+
                       <Text
-                        style={[styles.td, { flex: 1.6, textAlign: "left" }]}
+                        style={[styles.td, { flex: 1.1, textAlign: "center" }]}
                       >
-                        {row?.ItemSubGroup?.name || ""}
+                        {findFromList(row?.hsnId, hsnList?.data, "name")}
                       </Text>
                       <Text
-                        style={[styles.td, { flex: 1.6, textAlign: "left" }]}
+                        style={[styles.td, { flex: 1.0, textAlign: "left" }]}
                       >
-                        {row?.ItemGroup?.name || ""}
+                        {findFromList(row?.kDiaId, kDiaList, "name")}
                       </Text>
                       <Text
-                        style={[styles.td, { flex: 1.2, textAlign: "left" }]}
+                        style={[styles.td, { flex: 1.0, textAlign: "left" }]}
                       >
-                        {row?.Hsn?.name || ""}
+                        {findFromList(row?.fDiaId, fDiaList, "name")}
                       </Text>
-                      {/* <Text
-                        style={[styles.td, { flex: 0.8, textAlign: "left" }]}
-                      >
-                        {row?.Uom?.name || ""}
-                      </Text> */}
                       <Text
-                        style={[styles.td, { flex: 0.8, textAlign: "right" }]}
+                        style={[styles.td, { flex: 1.0, textAlign: "right" }]}
+                      >
+                        {row?.numberOfRolls || ""}
+                      </Text>
+
+                      <Text
+                        style={[styles.td, { flex: 1.2, textAlign: "right" }]}
                       >
                         {row.qty ? parseFloat(row.qty).toFixed(3) : ""}
                       </Text>
-                      {/* <Text
-                        style={[styles.td, { flex: 0.8, textAlign: "right" }]}
-                      >
-                        {row.dozen ? parseFloat(row.dozen).toFixed(2) : ""}
-                      </Text> */}
                       <Text
-                        style={[styles.td, { flex: 1, textAlign: "right" }]}
+                        style={[styles.td, { flex: 1.4, textAlign: "right" }]}
                       >
                         {row.price
                           ? `${currencySymbol} ${formatCurrencyAmount(row.price, currencyCode || currencySymbol)}`
                           : ""}
                       </Text>
-                      {!isExport && (
-                        <>
-                          <Text
-                            style={[
-                              styles.td,
-                              { flex: 0.7, textAlign: "right" },
-                            ]}
-                          >
-                            {taxPct ? `${taxPct}%` : ""}
-                          </Text>
-                        </>
-                      )}
                       <Text
                         style={[
                           styles.td,
-                          { flex: 1.2, textAlign: "right" },
-                          { borderRight: "none" },
+                          {
+                            flex: 1.7,
+                            textAlign: "right",
+                            borderRight: "none",
+                          },
                         ]}
                       >
                         {gross
                           ? `${currencySymbol} ${formatCurrencyAmount(gross, currencyCode || currencySymbol)}`
                           : ""}
                       </Text>
-                      {/* Tax % and Net Amount — domestic only */}
                     </View>
                   );
                 })}
@@ -1025,7 +980,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                   {/* Totals bar */}
                   <View style={styles.totalRow}>
                     <Text
-                      style={[styles.td, { flex: 0.4, color: "transparent" }]}
+                      style={[styles.td, { flex: 0.5, color: "transparent" }]}
                     >
                       {" "}
                     </Text>
@@ -1033,7 +988,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                       style={[
                         styles.td,
                         {
-                          flex: 3.8,
+                          flex: 3.5,
                           fontFamily: "Helvetica-Bold",
                           color: DARK,
                           textAlign: "right",
@@ -1043,73 +998,33 @@ const ProformaInvoiceFabricPrintFormat = ({
                       TOTAL
                     </Text>
                     <Text
-                      style={[styles.td, { flex: 1.6, color: "transparent" }]}
+                      style={[styles.td, { flex: 1.1, color: "transparent" }]}
                     >
                       {" "}
                     </Text>
                     <Text
-                      style={[styles.td, { flex: 1.6, color: "transparent" }]}
+                      style={[styles.td, { flex: 1.0, color: "transparent" }]}
                     >
                       {" "}
                     </Text>
                     <Text
-                      style={[styles.td, { flex: 1.2, color: "transparent" }]}
+                      style={[styles.td, { flex: 1.0, color: "transparent" }]}
                     >
                       {" "}
                     </Text>
-                    {/* <Text
-                      style={[styles.td, { flex: 0.8, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text> */}
                     <Text
                       style={[
                         styles.td,
                         {
-                          flex: 0.8,
+                          flex: 1.0,
                           fontFamily: "Helvetica-Bold",
                           color: DARK,
                           textAlign: "right",
                         },
                       ]}
                     >
-                      {totalQty.toFixed(3)}
+                      {totalRolls > 0 ? totalRolls : ""}
                     </Text>
-                    {/* <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 0.8,
-                          fontFamily: "Helvetica-Bold",
-                          color: DARK,
-                          textAlign: "right",
-                        },
-                      ]}
-                    >
-                      {totalDozen.toFixed(2)}
-                    </Text> */}
-                    <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 1,
-                          fontFamily: "Helvetica-Bold",
-                          color: DARK,
-                          textAlign: "right",
-                        },
-                      ]}
-                    >
-                      {totalPrice > 0
-                        ? `${currencySymbol} ${formatCurrencyAmount(totalPrice, currencyCode || currencySymbol)}`
-                        : ""}
-                    </Text>
-                    {!isExport && (
-                      <Text
-                        style={[styles.td, { flex: 0.7, color: "transparent" }]}
-                      >
-                        {" "}
-                      </Text>
-                    )}
                     <Text
                       style={[
                         styles.td,
@@ -1119,7 +1034,38 @@ const ProformaInvoiceFabricPrintFormat = ({
                           color: DARK,
                           textAlign: "right",
                         },
-                        { borderRight: "none" },
+                      ]}
+                    >
+                      {totalQty > 0 ? totalQty.toFixed(3) : ""}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.td,
+                        {
+                          flex: 1.4,
+                          fontFamily: "Helvetica-Bold",
+                          color: DARK,
+                          textAlign: "right",
+                        },
+                      ]}
+                    >
+                      {totalPrice > 0
+                        ? `${currencySymbol} ${formatCurrencyAmount(
+                            totalPrice,
+                            currencyCode || currencySymbol,
+                          )}`
+                        : ""}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.td,
+                        {
+                          flex: 1.7,
+                          fontFamily: "Helvetica-Bold",
+                          color: DARK,
+                          textAlign: "right",
+                          borderRight: "none",
+                        },
                       ]}
                     >
                       {currencySymbol}{" "}
@@ -1260,7 +1206,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                               { fontFamily: "Helvetica-Bold" },
                             ]}
                           >
-                            Net Amount
+                            Total Amount
                           </Text>
                           <Text style={styles.summaryColon}>:</Text>
                           <Text
@@ -1311,7 +1257,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                             { color: "#ccc", fontFamily: "Helvetica-Bold" },
                           ]}
                         >
-                          Grand Total
+                          Net Amount
                         </Text>
                         <Text
                           style={[
