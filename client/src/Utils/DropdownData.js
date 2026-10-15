@@ -236,3 +236,8 @@ export const measurementType = [
     value: "tubular",
   },
 ];
+
+export const gridTypes = [
+  { show: "FABRIC", value: "FABRIC" },
+  { show: "YARN", value: "YARN" },
+];
