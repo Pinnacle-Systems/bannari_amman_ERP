@@ -48,7 +48,7 @@ export default function Form({
   const [accNo, setAccNo] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [swiftCode, setSwiftCode] = useState("");
-  const [bankHolderName, setBankHolderName] = useState("")
+  const [bankHolderName, setBankHolderName] = useState("");
   const [branchId, setBranchId] = useState("");
   const [active, setActive] = useState(true);
   const [searchValue, setSearchValue] = useState("");
@@ -94,7 +94,7 @@ export default function Form({
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name || "");
-      setBankHolderName(data?.bankHolderName || "")
+      setBankHolderName(data?.bankHolderName || "");
       setAccNo(data?.accNo || "");
       setIfsc(data?.ifsc || "");
       setSwiftCode(data?.swiftCode || "");
@@ -112,7 +112,8 @@ export default function Form({
   }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
 
   const data = {
-    name, bankHolderName,
+    name,
+    bankHolderName,
     accNo,
     ifsc,
     swiftCode,
@@ -125,7 +126,13 @@ export default function Form({
   };
 
   const validateData = (data) => {
-    if (data.name && data.bankHolderName && data.accNo && data.ifsc && data.branchId) {
+    if (
+      data.name &&
+      data.bankHolderName &&
+      data.accNo &&
+      data.ifsc &&
+      data.branchId
+    ) {
       return true;
     }
     return false;
@@ -352,10 +359,12 @@ export default function Form({
                 setValue={setBankHolderName}
                 required={true}
                 readOnly={readOnly}
-
                 disabled={childRecord.current > 0}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-x-2">
             <div className="mb-3 ">
               <TextInputNew
                 name="Acc No"
@@ -367,9 +376,7 @@ export default function Form({
                 disabled={childRecord.current > 0}
               />
             </div>
-          </div>
-          <div className="flex gap-x-2">
-            <div className="mb-3 w-[50%]">
+            <div className="mb-3 ">
               <TextInputNew
                 name="IFSC Code"
                 type="ifsc"
@@ -380,7 +387,7 @@ export default function Form({
                 disabled={childRecord.current > 0}
               />
             </div>
-            <div className="mb-3 w-[50%]">
+            <div className="mb-3 ">
               <TextInputNew
                 name="Swift Code"
                 type="swift"
@@ -579,7 +586,7 @@ export default function Form({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[38%] h-[440px]"}
+            widthClass={"w-[38%] h-[520px]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);
