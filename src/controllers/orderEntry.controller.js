@@ -5,30 +5,12 @@ import {
   create as _create,
   update as _update,
   remove as _remove,
-  getRefList as _getRefList,
-  geOrderItemsList as _geOrderItemsList,
-  getOrderEntryReport as _getOrderEntryReport
+  getOrderEntryReport as _getOrderEntryReport,
 } from "../services/orderEntry.service.js";
 
 async function get(req, res, next) {
   try {
     res.json(await _get(req));
-  } catch (err) {
-    console.error(`Error `, err.message);
-  }
-}
-
-async function getRefList(req, res, next) {
-  try {
-    res.json(await _getRefList(req));
-  } catch (err) {
-    console.error(`Error `, err.message);
-  }
-}
-
-async function geOrderItemsList(req, res, next) {
-  try {
-    res.json(await _geOrderItemsList(req));
   } catch (err) {
     console.error(`Error `, err.message);
   }
@@ -108,4 +90,11 @@ async function getOrderEntryReportHandler(req, res, next) {
   }
 }
 
-export { get, getOne, create, update, remove, getRefList ,geOrderItemsList, getOrderEntryReportHandler as getOrderEntryReport };
+export {
+  get,
+  getOne,
+  create,
+  update,
+  remove,
+  getOrderEntryReportHandler as getOrderEntryReport,
+};

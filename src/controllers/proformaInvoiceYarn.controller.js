@@ -1,6 +1,7 @@
 import { Prisma } from "../lib/prisma.js";
 import {
   get as _get,
+  getPIList as _getPIList,
   getOne as _getOne,
   create as _create,
   update as _update,
@@ -15,7 +16,14 @@ async function get(req, res, next) {
     res.status(500).json({ statusCode: 1, message: err.message });
   }
 }
-
+async function getPIList(req, res, next) {
+  try {
+    res.json(await _getPIList(req));
+  } catch (err) {
+    console.error(`Error `, err.message);
+    res.status(500).json({ statusCode: 1, message: err.message });
+  }
+}
 async function getOne(req, res, next) {
   try {
     res.json(await _getOne(req.params.id));
@@ -80,4 +88,4 @@ async function remove(req, res, next) {
   }
 }
 
-export { get, getOne, create, update, remove };
+export { get, getOne, create, update, remove, getPIList };

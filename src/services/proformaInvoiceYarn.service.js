@@ -104,6 +104,36 @@ async function get(req) {
   };
 }
 
+async function getPIList(req) {
+  const { branchId } = req.query;
+
+  const data = await prisma.proformaInvoiceYarn.findMany({
+    where: {
+      branchId: branchId ? parseInt(branchId) : undefined,
+      orderEntries: {
+        none: {},
+      },
+    },
+    select: {
+      id: true,
+      customerId: true,
+      docId: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { id: "desc" },
+  });
+
+  return {
+    statusCode: 0,
+    data,
+  };
+}
+
 async function getOne(id) {
   const data = await prisma.proformaInvoiceYarn.findUnique({
     where: { id: parseInt(id) },
@@ -491,4 +521,4 @@ async function remove(id) {
   return { statusCode: 0, data };
 }
 
-export { get, getOne, create, update, remove };
+export { get, getOne, create, update, remove, getPIList };

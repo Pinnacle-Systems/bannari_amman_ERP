@@ -365,11 +365,7 @@ export const TextInput = forwardRef(
           className={`h-7 w-full px-3 py-0 border border-gray-300 rounded-lg
           outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
           transition-all duration-150 shadow-sm
-          ${
-            readOnly || disabled
-              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-              : "bg-white hover:border-gray-400"
-          }
+           ${readOnly || disabled ? "bg-slate-100 cursor-not-allowed" : "bg-white cursor-pointer"}
           ${FORM_INPUT_TEXT_CLASS} ${className}`}
           autoFocus={autoFocus}
           onKeyDown={onKeyDown}

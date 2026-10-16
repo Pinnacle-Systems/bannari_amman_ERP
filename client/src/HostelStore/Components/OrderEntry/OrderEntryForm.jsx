@@ -37,8 +37,6 @@ import { Plus } from "lucide-react";
 import {
   useAddOrderEntryMutation,
   useGetOrderEntryByIdQuery,
-  useGetOrderEntryQuery,
-  useGetRefListQuery,
   useUpdateOrderEntryMutation,
 } from "../../../redux/uniformService/OrderEntryService.js";
 import { QRCodeCanvas } from "qrcode.react";
@@ -46,12 +44,8 @@ import CommonFormFooter from "../../../Basic/components/Reuseable/CommonFormFoot
 import { PDFViewer } from "@react-pdf/renderer";
 import OrderEntryPrintFormat from "./OrderEntryPrintFormat.jsx";
 import { FiFileText, FiPrinter, FiEye } from "react-icons/fi";
-import OrderItems from "./OrderItems.jsx";
-import { padRows } from "./OrderItemsUtils.js";
-import { useGetStyleMasterQuery } from "../../../redux/services/StyleMasterService.js";
-import { useGetStyleItemMasterQuery } from "../../../redux/services/StyleItemMasterService.js";
+
 import { useGetSizeMasterQuery } from "../../../redux/services/SizemasterService.js";
-import ReusableFormFooter from "../../../Basic/components/Reuseable/ReuseableFormFooter.jsx";
 import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 import { useAddApprovalStausMutation } from "../../../redux/uniformService/PoServices.js";
 import { useGetUomQuery } from "../../../redux/services/UomMasterService.js";
@@ -60,12 +54,11 @@ import ProformaInvoiceApi, {
   useGetPIListQuery,
   useLazyGetProformaInvoiceByIdQuery,
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
-import { useGetItemGroupMasterQuery } from "../../../redux/services/ItemGroupMasterService.js";
-import { useGetSizeTemplateQuery } from "../../../redux/services/SizeTemplateMaster.js";
+
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
 import { useDispatch } from "react-redux";
 import JobCardApi from "../../../redux/uniformService/JobCardService.js";
-import { useGetItemSubGroupMasterQuery } from "../../../redux/services/ItemSubGroupService";
+
 import PoSummary from "../PurchaseOrder/PoSummary";
 import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
 import { useGetTaxTemplateQuery } from "../../../redux/services/TaxTemplateServices.js";
@@ -78,7 +71,95 @@ import {
   BankMaster,
   CurrencyMaster,
 } from "../../../Basic/components";
+import {
+  useGetPIListYarnQuery,
+  useLazyGetYarnProformaInvoiceByIdQuery,
+} from "../../../redux/uniformService/YarnProformaInvoiceService.js";
+import YarnItems from "./yarnItems.jsx";
+import FabricItems from "./fabricItems.jsx";
+import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService.js";
+import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService.js";
+import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
+import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterService";
+import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
+import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
+import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
 
+const EMPTY_FABRIC_ROW = {
+  fabricId: "",
+  hsnId: "",
+  colorId: "",
+  designId: "",
+  gaugeId: "",
+  loopLengthId: "",
+  gsmId: "",
+  kDiaId: "",
+  fDiaId: "",
+  uomId: "",
+  width: "",
+  numberOfRolls: "",
+  weightPerRoll: "",
+  totalKgs: "",
+  pricePerKg: "",
+  totalPrice: "",
+  qty: "",
+  price: "",
+  amount: "",
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
+};
+
+const EMPTY_YARN_ROW = {
+  yarnId: "",
+  hsnId: "",
+  colorId: "",
+  uomId: "",
+  noOfbags: "",
+  weightPerBag: "",
+  qty: "",
+  price: "",
+  amount: "",
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
+};
+
+const padFabricItems = (itemsArray = [], minLength = 14) => {
+  const currentLength = itemsArray.length;
+  const formattedItems = itemsArray.map((item) =>
+    item.rowId
+      ? item
+      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
+  );
+
+  if (currentLength < minLength) {
+    const padding = Array.from({ length: minLength - currentLength }, () => ({
+      ...EMPTY_FABRIC_ROW,
+      rowId: Math.random().toString(36).substring(2, 9),
+    }));
+    return [...formattedItems, ...padding];
+  }
+  return formattedItems;
+};
+
+const padYarnItems = (itemsArray = [], minLength = 14) => {
+  const currentLength = itemsArray.length;
+  const formattedItems = itemsArray.map((item) =>
+    item.rowId
+      ? item
+      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
+  );
+
+  if (currentLength < minLength) {
+    const padding = Array.from({ length: minLength - currentLength }, () => ({
+      ...EMPTY_YARN_ROW,
+      rowId: Math.random().toString(36).substring(2, 9),
+    }));
+    return [...formattedItems, ...padding];
+  }
+  return formattedItems;
+};
 const OrderEntryForm = ({
   onClose,
   id,
@@ -101,39 +182,31 @@ const OrderEntryForm = ({
   const [customerId, setCustomerId] = useState("");
   const [remarks, setRemarks] = useState("");
   const [requirements, setRequirements] = useState("");
-  const [orderType, setOrderType] = useState("GENERAL");
-  const [productionType, setProductionType] = useState("SAMPLE");
+  const [orderType, setOrderType] = useState("AGAINSTPI");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [jobType, setJobType] = useState("Internal");
   const [docId, setDocId] = useState("");
-  const [searchDocId, setSearchDocId] = useState("");
-  const [searchDocDate, setSearchDocDate] = useState("");
   const [summary, setSummary] = useState(false);
   const [attachmentModal, setAttachmentModal] = useState(false);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState(null);
   const [attachments, setAttachments] = useState([]);
-  const [orderQty, setOrderQty] = useState("");
   const [termsAndCondition, setTermsAndCondition] = useState("");
   const [termsId, setTermsId] = useState("");
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
-  const [orderItems, setOrderItems] = useState([]);
+  const [orderFabricItems, setFabricItems] = useState(padFabricItems([]));
+  const [orderYarnItems, setYarnItems] = useState(padYarnItems([]));
   const [approvalModal, setApprovalModal] = useState(false);
   const [actionType, setActionType] = useState("");
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [proFormaId, setProFormaId] = useState("");
-  const [refNo, setRefNo] = useState("");
-  const [isRepeatedPI, setIsRepeatedPI] = useState(false);
-  const [validDays, setValidDays] = useState("");
+  const [proFormaFabricId, setProFormaIFabricId] = useState("");
+  const [proFormaYarnId, setProFormaIYarnId] = useState("");
   const [taxTemplateId, setTaxTemplateId] = useState("");
-  const [discountType, setDiscountType] = useState("Percentage");
-  const [discountValue, setDiscountValue] = useState(0);
-  const [conversionType, setConversionType] = useState("DOZEN");
+  const [discountType, setDiscountType] = useState("");
+  const [discountValue, setDiscountValue] = useState("");
   const [payTermId, setPayTermId] = useState("");
   const [bankId, setBankId] = useState("");
   const [currencyId, setCurrencyId] = useState("");
-  const [weightInKg, setWeightInKg] = useState("");
   const [carriageCharge, setCarriageCharge] = useState("");
   const [loadingId, setLoadingId] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
@@ -141,12 +214,13 @@ const OrderEntryForm = ({
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
   const [orderGridType, setOrderGridType] = useState("FABRIC");
-
+  const [fabricPIDocId, setFabricPIDocId] = useState("");
+  const [yarnPIDocId, setYarnPIDocId] = useState("");
   const dispatch = useDispatch();
   const qrRef = useRef(null);
   const customerRef = useRef(null);
   const childRecord = useRef(0);
-  const requirementRef = useRef(null);
+  const termsRef = useRef(null);
 
   const [dispatchInvalidate] = useInvalidateTags();
   const { userId, finYearId, branchId, companyId } = getCommonParams();
@@ -162,31 +236,30 @@ const OrderEntryForm = ({
 
   const {
     data: singleData,
-    status: queryStatus,
+
     isFetching: isSingleFetching,
     isLoading: isSingleLoading,
   } = useGetOrderEntryByIdQuery(id, {
     params,
     skip: !id,
   });
-  const { data: styleItemList } = useGetStyleItemMasterQuery({
-    params: { ...params },
-  });
-  const { data: styleList } = useGetStyleMasterQuery({ params });
+
   const { data: uomList } = useGetUomQuery({ params });
   const { data: sizeList } = useGetSizeMasterQuery({ params });
   const { data: gsmList } = useGetGsmMasterQuery({ params });
   const { data: fabricPIList } = useGetPIListQuery({
     params: { companyId, branchId },
   });
-  const { data: YarnPIList } = useGetPIListQuery({
+
+  const { data: YarnPIList } = useGetPIListYarnQuery({
     params: { companyId, branchId },
   });
-  const { data: itemGroupList } = useGetItemGroupMasterQuery({ params });
-  const { data: sizeTemplateList } = useGetSizeTemplateQuery({
-    params: { companyId },
-  });
+
   const { data: hsnList } = useGetHsnMasterQuery({ params });
+  const { data: colorList } = useGetColorMasterQuery({ params });
+
+  const { data: yarnList } = useGetYarnMasterQuery({ params });
+
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
   });
@@ -202,16 +275,29 @@ const OrderEntryForm = ({
     (item) => item?.id === currencyId,
   )?.code;
 
-  const { data: refList } = useGetRefListQuery({
-    params: { branchId, isRefDistinct: "true" },
-  });
-  const { data: itemSubGroupList } = useGetItemSubGroupMasterQuery({
-    params,
-  });
   const [addData] = useAddOrderEntryMutation();
   const [updateData] = useUpdateOrderEntryMutation();
   const [addApprovalStatus] = useAddApprovalStausMutation();
   const [getPIById] = useLazyGetProformaInvoiceByIdQuery();
+  const [getYarnPIById] = useLazyGetYarnProformaInvoiceByIdQuery();
+
+  const { data: fabricList } = useGetFabricMasterQuery({
+    params: { companyId },
+  });
+  const { data: designList } = useGetDesignMasterQuery({
+    params: { companyId },
+  });
+  const { data: loopLengthList } = useGetLoopLengthMasterQuery({
+    params: { companyId },
+  });
+  const { data: diaList } = useGetDiaMasterQuery({
+    params: { companyId },
+  });
+  const { data: gaugeList } = useGetGaugeMasterQuery({
+    params: { companyId },
+  });
+  const kDiaList = diaList?.data?.filter((val) => val?.kDia);
+  const fDiaList = diaList?.data?.filter((val) => val?.fDia);
 
   const status = singleData?.data?.approvalStatus?.status;
   const isDisabled =
@@ -225,34 +311,52 @@ const OrderEntryForm = ({
           ? moment.utc(data.docDate).format("YYYY-MM-DD")
           : moment.utc(new Date()).format("YYYY-MM-DD"),
       );
-      setOrderType(data?.orderType || "GENERAL");
+      setOrderType(data?.orderType || "AGAINSTPI");
       setCustomerId(data?.customerId || "");
       setRemarks(data?.remarks || "");
       setAttachments(data?.attachments ? data?.attachments : []);
-      setOrderQty(data?.orderQty || "");
       setRequirements(data?.requirements || "");
       setDeliveryDate(
         data?.deliveryDate
           ? moment.utc(data.deliveryDate).format("YYYY-MM-DD")
           : "",
       );
+      setFabricPIDocId(data?.ProformaFabric?.docId);
+      setYarnPIDocId(data?.ProformaYarn?.docId);
       setTermsAndCondition(data?.termsAndCondition || "");
       setTermsId(data?.termsId || "");
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
-      setOrderItems(padRows(data?.orderItems || []));
-      setProductionType(data?.productionType || "SAMPLE");
-      setProFormaId(data?.proFormaId || "");
-      setRefNo(data?.refNo || "");
-      setIsRepeatedPI(data?.isRepeatedPI || false);
-      setValidDays(data?.validDays ? data?.validDays : "");
+
+      const mappedItems = data?.orderFabricItems?.map((item) => ({
+        ...item,
+        weightPerRoll: item?.weightPerRoll?.toFixed(3),
+        totalKgs: item?.totalKgs?.toFixed(3),
+        pricePerKg: item?.pricePerKg?.toFixed(2),
+        totalPrice: item?.totalPrice?.toFixed(2),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
+      }));
+
+      setFabricItems(padFabricItems(mappedItems || []));
+
+      const mappedYarnItems = data?.orderYarnItems?.map((item) => ({
+        ...item,
+        weightPerBag: item?.weightPerBag?.toFixed(3),
+        qty: item?.qty?.toFixed(3),
+        price: item?.price?.toFixed(2),
+        amount: item?.amount?.toFixed(2),
+      }));
+
+      setYarnItems(padYarnItems(mappedYarnItems || []));
+      setProFormaIFabricId(data?.proFormaFabricId || "");
+      setProFormaIYarnId(data?.proFormaYarnId || "");
       setTaxTemplateId(data?.taxTemplateId || "");
-      setDiscountType(data?.discountType || "Percentage");
-      setDiscountValue(data?.discountValue || 0);
-      setConversionType(data?.conversionType || "DOZEN");
+      setDiscountType(data?.discountType || "");
+      setDiscountValue(data?.discountValue);
       setPayTermId(data?.payTermId || "");
       setBankId(data?.bankId || "");
       setCurrencyId(data?.currencyId || "");
-      setWeightInKg(data?.weightInKg?.toFixed(3) || "");
       setCarriageCharge(data?.carriageCharge?.toFixed(2) || "");
       setCarriageTax(data?.carriageTax?.toFixed(2) || "");
       setLoadingId(data?.loadingId || "");
@@ -274,38 +378,35 @@ const OrderEntryForm = ({
   let data = {
     id,
     docDate,
-    branchId,
-    userId,
+    branchId: parseInt(branchId),
+    userId: parseInt(userId),
+    finYearId: parseInt(finYearId),
+    companyId: parseInt(companyId),
+    customerId: parseInt(customerId),
     orderType,
-    productionType,
-    jobType,
-    customerId,
-    remarks,
-    finYearId,
-    attachments: attachments?.filter((i) => i.filePath),
-    orderQty,
-    requirements,
+    orderGridType,
+    proFormaFabricId: parseInt(proFormaFabricId),
+    proFormaYarnId: parseInt(proFormaYarnId),
+    customerPoNo,
+    taxTemplateId,
+    payTermId,
+    currencyId,
+    loadingId,
+    deliveryId,
     deliveryDate,
+    carriageCharge,
+    carriageTax,
+    bankId,
+    orderFabricItems: orderFabricItems?.filter((i) => i.fabricId),
+    orderYarnItems: orderYarnItems?.filter((i) => i.yarnId),
     termsAndCondition,
     termsId,
-    docId,
-    orderItems: orderItems?.filter((i) => i.styleItemId),
-    proFormaId,
-    refNo,
-    isRepeatedPI,
-    validDays,
-    taxTemplateId,
+    remarks,
+    requirements,
     discountType,
     discountValue,
-    conversionType,
-    payTermId,
-    bankId,
-    currencyId,
-    weightInKg,
-    carriageCharge,
-    deliveryId,
-    loadingId,
-    carriageTax,
+    attachments: attachments?.filter((i) => i.filePath),
+    docId,
   };
 
   const handleSubmitCustom = async (callback, data, text, nextProcess) => {
@@ -378,117 +479,76 @@ const OrderEntryForm = ({
     }
   };
 
-  const findDuplicates = (items) => {
-    const duplicates = [];
-
-    items.forEach((item, index) => {
-      const styleSeen = new Map();
-      (item.styleBreakup || []).forEach((style, styleIdx) => {
-        if (!style.styleId) return;
-        const key = `${style.styleId}`;
-        if (styleSeen.has(key)) {
-          duplicates.push({
-            rowIdx: index,
-            styleIdx: styleIdx,
-            duplicateOf: styleSeen.get(key),
-          });
-        } else {
-          styleSeen.set(key, styleIdx);
-        }
-      });
-    });
-
-    return duplicates;
-  };
   useEffect(() => {
     const charge = parseFloat(carriageCharge) || 0;
     const tax = parseFloat(carriageTax) || 0;
     const finalAmt = charge + (charge * tax) / 100;
     setCarriageFinalAmt(finalAmt ? finalAmt.toFixed(2) : "");
   }, [carriageCharge, carriageTax]);
+
   const validateRows = (items) => {
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (!item.styleItemId) {
-        errors.push(`Row ${index + 1}: Description of Goods is required`);
-      }
-      if (!item.itemGroupId) {
-        errors.push(`Row ${index + 1}: Item Group is required`);
-      }
-      if (!item.hsnId) {
-        errors.push(`Row ${index + 1}: HSN is required`);
-      }
-      if (!item.uomId) {
-        errors.push(`Row ${index + 1}: UOM is required`);
-      }
-
-      if (!item.orderQty || Number(item.orderQty) <= 0) {
-        errors.push(`Row ${index + 1}: Order Qty must be greater than 0`);
-      }
-
-      if (!item.price || Number(item.price) <= 0) {
-        errors.push(`Row ${index + 1}: Price must be greater than 0`);
-      }
-
-      const key = `${item.styleItemId}_${item.uomId}_${item.itemGroupId}`;
-      if (seen.has(key)) {
-        errors.push(`Row ${index + 1}: Duplicate item found`);
-      } else {
-        seen.add(key);
-      }
-
-      if (item.styleBreakup?.length) {
-        let sizeSum = 0;
-        item.styleBreakup.forEach((style, styleIndex) => {
-          if (!style.styleId) {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Style is required`,
-            );
-          }
-
-          if (style.sizeBreakup?.length) {
-            const sizeSeen = new Set();
-            style.sizeBreakup.forEach((size, sizeIndex) => {
-              if (!size.sizeId) {
-                errors.push(
-                  `Row ${index + 1}, Style ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Size is required`,
-                );
-              }
-
-              const qty = Number(size.qty || 0);
-              sizeSum += qty;
-
-              if (qty <= 0) {
-                errors.push(
-                  `Row ${index + 1}, Style ${styleIndex + 1}, Size Row ${sizeIndex + 1}: Qty must be greater than 0`,
-                );
-              }
-
-              if (size.sizeId) {
-                if (sizeSeen.has(size.sizeId)) {
-                  errors.push(
-                    `Row ${index + 1}, Style ${styleIndex + 1}: Duplicate size found`,
-                  );
-                } else {
-                  sizeSeen.add(size.sizeId);
-                }
-              }
-            });
-          } else {
-            errors.push(
-              `Row ${index + 1}, Style Row ${styleIndex + 1}: Size Breakup is required`,
-            );
-          }
-        });
-
-        if (orderType === "AGAINSTPI" && sizeSum !== Number(item.piQty)) {
-          // Relaxing error to match original logic, or strictly checking piQty
+      if (orderGridType === "FABRIC") {
+        if (!item.fabricId) {
+          errors.push(`Row ${index + 1}: Fabric is required`);
+        }
+        if (!item.hsnId) {
+          errors.push(`Row ${index + 1}: HSN is required`);
+        }
+        if (!item.loopLengthId) {
+          errors.push(`Row ${index + 1}: Loop Length is required`);
+        }
+        if (!item.kDiaId) {
+          errors.push(`Row ${index + 1}: KDia is required`);
+        }
+        if (!item.fDiaId) {
+          errors.push(`Row ${index + 1}: FDia is required`);
+        }
+        if (!item.uomId) {
+          errors.push(`Row ${index + 1}: UOM is required`);
+        }
+        if (!item.qty || Number(item.qty) <= 0) {
+          errors.push(`Row ${index + 1}: Qty is required`);
+        }
+        if (!item.price || Number(item.price) <= 0) {
+          errors.push(`Row ${index + 1}: Price is required`);
+        }
+        const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
+        if (seen.has(key)) {
+          errors.push(`Row ${index + 1}: Duplicate item found`);
+        } else {
+          seen.add(key);
         }
       } else {
-        errors.push(
-          `Row ${index + 1}: Style Breakup is required for Order Qty`,
-        );
+        if (!item.yarnId) {
+          errors.push(`Row ${index + 1}: Yarn is required`);
+        }
+        if (!item.hsnId) {
+          errors.push(`Row ${index + 1}: HSN is required`);
+        }
+        if (!item.uomId) {
+          errors.push(`Row ${index + 1}: UOM is required`);
+        }
+        if (!item.noOfbags || Number(item.noOfbags) <= 0) {
+          errors.push(`Row ${index + 1}: Number of Bags is required`);
+        }
+        if (!item.weightPerBag || Number(item.weightPerBag) <= 0) {
+          errors.push(`Row ${index + 1}: Weight per Bag is required`);
+        }
+        if (!item.qty || Number(item.qty) <= 0) {
+          errors.push(`Row ${index + 1}: Qty is required`);
+        }
+        if (!item.price || Number(item.price) <= 0) {
+          errors.push(`Row ${index + 1}: Price must be greater than 0`);
+        }
+        const key = `${item.yarnId}_${item.hsnId}_${item.colorId}_${item.noOfbags}_${item.weightPerBag}`;
+        if (seen.has(key)) {
+          errors.push(`Row ${index + 1}: Duplicate item found`);
+        } else {
+          seen.add(key);
+        }
       }
 
       if (isCustomerExport && !loadingId) {
@@ -504,32 +564,34 @@ const OrderEntryForm = ({
   };
 
   const validateData = (data) => {
-    const items = data?.orderItems || [];
+    const items =
+      data.orderGridType === "FABRIC"
+        ? data?.orderFabricItems || []
+        : data?.orderYarnItems || [];
     const checks = [
       { condition: !data.customerId, title: "Customer is required!" },
       { condition: !data.orderType, title: "Order Type is required!" },
       {
-        condition: data.orderType === "AGAINSTPI" && !data.proFormaId,
-        title: "PI No is required!",
+        condition:
+          data.orderType === "AGAINSTPI" &&
+          data.orderGridType === "FABRIC" &&
+          !data.proFormaFabricId,
+        title: "Fabric PI No is required!",
       },
-      ,
       {
         condition:
-          data.productionType === "BULK" &&
           data.orderType === "AGAINSTPI" &&
-          !data.refNo,
-        title: "RefNo is required!",
+          data.orderGridType === "YARN" &&
+          !data.proFormaYarnId,
+        title: "Yarn PI No is required!",
       },
+
       { condition: !data.deliveryDate, title: "Delivery Date is required!" },
       {
         condition: data.deliveryDate < data.docDate,
         title: "Delivery Date cannot be smaller than Doc Date!",
       },
-      { condition: !data.validDays, title: "Valid To is required!" },
-      {
-        condition: String(data.validDays).length >= 3,
-        title: "Valid To Days cannot be a 3-digit number!",
-      },
+
       { condition: items.length === 0, title: "Order Items are required!" },
       {},
     ];
@@ -552,24 +614,6 @@ const OrderEntryForm = ({
         icon: "warning",
         title: "Row Validation Error",
         html: `<div style="text-align:left">${rowErrors.join("<br/>")}</div>`,
-      });
-      return false;
-    }
-
-    // 🔹 Duplicate validation
-    const duplicates = findDuplicates(items);
-    if (duplicates.length > 0) {
-      const message = duplicates
-        .map(
-          (d) =>
-            `Row ${d.rowIdx + 1}, Style ${d.styleIdx + 1} is duplicate of Style ${d.duplicateOf + 1}`,
-        )
-        .join("<br/>");
-
-      Swal.fire({
-        icon: "warning",
-        title: "Duplicate Items Found",
-        html: `<div style="text-align:left">${message}</div>`,
       });
       return false;
     }
@@ -705,46 +749,20 @@ const OrderEntryForm = ({
     }
   };
 
-  // const fillWithDefaultRows = (items, total = 10) => {
-  //     const EMPTY_ROW = {
-  //         styleItemId: "",
-  //         uomId: "",
-  //         hsnId: "",
-  //         orderQty: "",
-  //         itemGroupId: "",
-  //         type: "",
-  //         sizeBreakup: [],
-  //     };
-
-  //     const filled = [...items];
-
-  //     if (filled.length < total) {
-  //         const remaining = total - filled.length;
-  //         for (let i = 0; i < remaining; i++) {
-  //             filled.push({ ...EMPTY_ROW });
-  //         }
-  //     }
-
-  //     return filled;
-  // };
-
-  // useEffect(() => {
-  //     if (!id) {
-  //         setOrderItems(fillWithDefaultRows([]));
-  //     }
-  const fillWithDefaultRows = (items = []) => padRows(items);
-
   const isSupplierOutside = useMemo(() => {
     return supplierData?.data?.City?.state?.name !== "TAMILNADU";
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const filteredItems = orderItems
-      .filter((i) => i.styleItemId)
-      .map((i) => ({
-        ...i,
-        qty: i.orderQty,
-      }));
+    const isFabric = orderGridType === "FABRIC";
+    const filteredItems = (
+      isFabric
+        ? (orderFabricItems || []).filter((i) => i.fabricId)
+        : (orderYarnItems || []).filter((i) => i.yarnId)
+    ).map((i) => ({
+      ...i,
+      qty: i.qty,
+    }));
     if (!filteredItems.length)
       return {
         items: [],
@@ -760,44 +778,23 @@ const OrderEntryForm = ({
       isSupplierOutside,
       discountType,
       discountValue,
-      conversionType === "DOZEN" ? true : false,
     );
   }, [
-    orderItems,
+    orderGridType,
+    orderFabricItems,
+    orderYarnItems,
     isSupplierOutside,
     discountType,
     discountValue,
-    conversionType,
   ]);
-  const handleConversionChange = (newVal) => {
-    setConversionType(newVal);
-    setOrderItems((prev) =>
-      prev.map((row) => {
-        const qty = parseFloat(row.orderQty) || 0;
-        const price = parseFloat(row.price) || 0;
-        const dozen = qty / 12;
-        let amount = "";
-
-        if (newVal === "DOZEN") {
-          amount = dozen > 0 && price > 0 ? (dozen * price).toFixed(2) : "";
-        } else {
-          amount = qty > 0 && price > 0 ? (qty * price).toFixed(2) : "";
-        }
-
-        return {
-          ...row,
-          dozen: dozen > 0 ? dozen.toFixed(2) : "",
-          amount,
-        };
-      }),
-    );
-  };
 
   return (
     <>
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
-          poItems={orderItems}
+          poItems={
+            orderGridType === "FABRIC" ? orderFabricItems : orderYarnItems
+          }
           totals={enrichedData}
           readOnly={readOnly || isDisabled || childRecord.current > 0}
           discountType={discountType}
@@ -1195,25 +1192,31 @@ const OrderEntryForm = ({
           <PDFViewer className="w-full h-full border-none">
             <OrderEntryPrintFormat
               data={singleData?.data}
-              customerDetails={customerList?.data?.find(
-                (c) => c.id === customerId,
-              )}
+              taxDetails={enrichedData}
+              totals={enrichedData}
+              customerDetails={
+                customerList?.data?.find((c) => c.id === customerId) ||
+                supplierData?.data
+              }
               branchData={branchData?.data}
-              qrCodeDataUrl={qrCodeDataUrl}
-              styleItemList={styleItemList}
-              itemSubGroupList={itemSubGroupList}
-              itemGroupList={itemGroupList}
-              gsmList={gsmList}
+              isCustomerExport={isCustomerExport}
+              cityList={cityList}
+              currencyList={currencyList}
+              payTermList={payTermList}
+              bankList={bankList}
+              carriageFinalAmt={carriageFinalAmt}
               uomList={uomList}
               sizeList={sizeList}
               hsnList={hsnList}
-              totals={enrichedData}
-              discountType={discountType}
-              currencyCode={currencyCode}
-              isCurrencySymbol={isCurrencySymbol}
-              isCustomerExport={isCustomerExport}
-              cityList={cityList}
-              carriageFinalAmt={carriageFinalAmt}
+              colorList={colorList}
+              gsmList={gsmList}
+              designList={designList}
+              kDiaList={kDiaList}
+              fDiaList={fDiaList}
+              loopLengthList={loopLengthList}
+              gaugeList={gaugeList}
+              fabricList={fabricList}
+              yarnList={yarnList}
             />
           </PDFViewer>
         </Modal>
@@ -1278,7 +1281,7 @@ const OrderEntryForm = ({
                       addNewLabel="+ Add New Customer"
                       childComponent={PartyMaster}
                       addNewModalWidth="w-[90%] h-[95%]"
-                      disabled={childRecord.current > 0 || readOnly}
+                      disabled={childRecord.current > 0 || readOnly || id}
                       ref={customerRef}
                       openOnFocus={true}
                     />
@@ -1323,13 +1326,14 @@ const OrderEntryForm = ({
                       value={orderType}
                       setValue={(value) => {
                         setOrderType(value);
-                        setProFormaId("");
+                        setProFormaIFabricId("");
+                        setProFormaIYarnId("");
                         if (value === "GENERAL") {
-                          setOrderItems(fillWithDefaultRows([]));
+                          setFabricItems(padFabricItems([]));
+                          setYarnItems(padYarnItems([]));
                           setTaxTemplateId("");
-                          setDiscountType("Percentage");
-                          setDiscountValue(0);
-                          setConversionType("DOZEN");
+                          setDiscountType("");
+                          setDiscountValue();
                           setTermsId("");
                           setTermsAndCondition("");
                           setDeliveryDate("");
@@ -1337,7 +1341,6 @@ const OrderEntryForm = ({
                           setPayTermId("");
                           setBankId("");
                           setCurrencyId("");
-                          setWeightInKg("");
                           setCarriageCharge("");
                           setLoadingId("");
                           setDeliveryId("");
@@ -1347,7 +1350,7 @@ const OrderEntryForm = ({
                       }}
                       required={true}
                       readOnly={readOnly}
-                      disabled={childRecord.current > 0 || readOnly}
+                      disabled={childRecord.current > 0 || readOnly || id}
                     />
                   </div>
                   <div className="w-24 mr-1">
@@ -1360,124 +1363,260 @@ const OrderEntryForm = ({
                       }}
                       required={true}
                       readOnly={readOnly}
-                      disabled={childRecord.current > 0 || readOnly}
+                      disabled={childRecord.current > 0 || readOnly || id}
                     />
                   </div>
-                  <div className="w-44">
-                    <DropdownNew
-                      name="PI No"
-                      dataList={fabricPIList?.data?.filter((item) =>
-                        id
-                          ? item?.customerId === customerId
-                          : isRepeatedPI
-                            ? item?.customerId === customerId && item?.hasBulk
-                            : item?.customerId === customerId && !item?.hasBulk,
-                      )}
-                      value={proFormaId}
-                      setValue={setProFormaId}
-                      required={orderType === "AGAINSTPI"}
-                      readOnly={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "GENERAL"
-                      }
-                      disabled={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "GENERAL"
-                      }
-                      otherField={"docId"}
-                      beforeChange={async (selectedValue) => {
-                        if (!selectedValue) {
-                          setOrderItems(fillWithDefaultRows([]));
-                          return;
-                        }
-
-                        const res = await getPIById(selectedValue?.id).unwrap();
-                        {
-                          console.log("res", res);
-                        }
-
-                        setTaxTemplateId(res?.data?.taxTemplateId || "");
-                        setDiscountType(
-                          res?.data?.discountType || "Percentage",
-                        );
-                        setDiscountValue(res?.data?.discountValue || 0);
-                        setConversionType(res?.data?.conversionType || "DOZEN");
-                        if (res?.data?.termsId) setTermsId(res.data.termsId);
-                        if (res?.data?.termsAndCondition)
-                          setTermsAndCondition(res.data.termsAndCondition);
-                        if (res?.data?.deliveryDate)
-                          setDeliveryDate(
-                            moment
-                              .utc(res.data.deliveryDate)
-                              .format("YYYY-MM-DD"),
-                          );
-                        if (res?.data?.remarks) setRemarks(res.data.remarks);
-
-                        setPayTermId(res?.data?.payTermId || "");
-                        setBankId(res?.data?.bankId || "");
-                        setCurrencyId(res?.data?.currencyId || "");
-                        setWeightInKg(res?.data?.weightInKg || "");
-                        setCarriageCharge(res?.data?.carriageCharge || "");
-                        setLoadingId(res?.data?.loadingId || "");
-                        setDeliveryId(res?.data?.deliveryId || "");
-                        setCarriageTax(res?.data?.carriageTax || "");
-                        setCustomerPoNo(res?.data?.customerPoNo || "");
-
-                        const mappedItems =
-                          Object.values(
-                            (res?.data?.items || []).reduce((acc, item) => {
-                              const key = item.styleItemId;
-
-                              if (
-                                !acc[key] ||
-                                acc[key].quoteVersion < item.quoteVersion
-                              ) {
-                                acc[key] = item;
+                  {orderGridType === "FABRIC" ? (
+                    <>
+                      {id ? (
+                        <>
+                          <div className="w-44">
+                            <TextInput
+                              name="Fabric PI No"
+                              placeholder="Fabric PI No"
+                              value={fabricPIDocId}
+                              disabled={true}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-44">
+                            <DropdownNew
+                              name="Fabric PI No"
+                              dataList={fabricPIList?.data?.filter(
+                                (item) => item?.customerId === customerId,
+                              )}
+                              value={proFormaFabricId}
+                              setValue={setProFormaIFabricId}
+                              required={orderType === "AGAINSTPI"}
+                              readOnly={
+                                childRecord.current > 0 ||
+                                readOnly ||
+                                orderType === "GENERAL"
                               }
+                              disabled={
+                                childRecord.current > 0 ||
+                                readOnly ||
+                                orderType === "GENERAL"
+                              }
+                              otherField={"docId"}
+                              beforeChange={async (selectedValue) => {
+                                if (!selectedValue) {
+                                  setFabricItems(padFabricItems([]));
+                                  return;
+                                }
 
-                              return acc;
-                            }, {}),
-                          )
-                            .sort((a, b) => a.id - b.id)
-                            .map((item) => ({
-                              styleItemId: item.styleItemId,
-                              orderQty: item.qty || "",
-                              piQty: Number(item.qty) || 0,
-                              sizeId: item.sizeId || "",
-                              uomId: item.uomId || "",
-                              gsmId: item.gsmId || "",
-                              hsnId: item.hsnId || "",
-                              labelWidth: item.labelWidth || "",
-                              price: item.price || "",
-                              amount: item.amount || "",
-                              dozen: item.dozen || "",
-                              discountType: item.discountType || "",
-                              discountValue: item.discountValue || "",
-                              taxPercent: item.taxPercent || "",
-                              taxType: item.taxType || "",
-                              styleBreakup:
-                                item?.PIStyleBreakup?.length > 0
-                                  ? item.PIStyleBreakup.map((st) => ({
-                                      styleId: st.styleId || "",
-                                      sizeBreakup:
-                                        st.PISizeBreakup?.length > 0
-                                          ? st.PISizeBreakup.map((sz) => ({
-                                              sizeId: sz.sizeId || "",
-                                              qty: sz.qty || "",
-                                            }))
-                                          : [{ sizeId: "", qty: "" }],
-                                    }))
-                                  : [],
-                              itemGroupId: item.StyleItem?.itemGroupId,
-                              itemSubGroupId: item.StyleItem?.itemSubGroupId,
-                            })) || [];
+                                const res = await getPIById(
+                                  selectedValue?.id,
+                                ).unwrap();
 
-                        setOrderItems(fillWithDefaultRows(mappedItems));
-                      }}
-                    />
-                  </div>
+                                setTaxTemplateId(
+                                  res?.data?.taxTemplateId || "",
+                                );
+                                setDiscountType(res?.data?.discountType || "");
+                                setDiscountValue(res?.data?.discountValue);
+
+                                if (res?.data?.termsId)
+                                  setTermsId(res.data.termsId);
+                                if (res?.data?.termsAndCondition)
+                                  setTermsAndCondition(
+                                    res.data.termsAndCondition,
+                                  );
+                                if (res?.data?.deliveryDate)
+                                  setDeliveryDate(
+                                    moment
+                                      .utc(res.data.deliveryDate)
+                                      .format("YYYY-MM-DD"),
+                                  );
+                                if (res?.data?.remarks)
+                                  setRemarks(res.data.remarks);
+
+                                setPayTermId(res?.data?.payTermId || "");
+                                setBankId(res?.data?.bankId || "");
+                                setCurrencyId(res?.data?.currencyId || "");
+
+                                setCarriageCharge(
+                                  res?.data?.carriageCharge?.toFixed(2) || "",
+                                );
+                                setLoadingId(res?.data?.loadingId || "");
+                                setDeliveryId(res?.data?.deliveryId || "");
+                                setCarriageTax(res?.data?.carriageTax || "");
+                                setCustomerPoNo(res?.data?.customerPoNo || "");
+
+                                const itemsArr = res?.data?.fabricItems || [];
+                                const maxVersion =
+                                  itemsArr.length > 0
+                                    ? Math.max(
+                                        res?.data?.quoteVersion || 1,
+                                        ...itemsArr.map(
+                                          (i) => Number(i.quoteVersion) || 1,
+                                        ),
+                                      )
+                                    : res?.data?.quoteVersion || 1;
+
+                                const latestItems = itemsArr.filter(
+                                  (item) =>
+                                    (Number(item.quoteVersion) || 1) ===
+                                    Number(maxVersion),
+                                );
+
+                                const mappedItems = latestItems?.map(
+                                  (item) => ({
+                                    ...item,
+                                    weightPerRoll: item?.weightPerRoll
+                                      ? Number(item?.weightPerRoll)?.toFixed(3)
+                                      : "",
+                                    totalKgs: item?.totalKgs
+                                      ? Number(item?.totalKgs)?.toFixed(3)
+                                      : "",
+                                    pricePerKg: item?.pricePerKg
+                                      ? Number(item?.pricePerKg)?.toFixed(2)
+                                      : "",
+                                    totalPrice: item?.totalPrice
+                                      ? Number(item?.totalPrice)?.toFixed(2)
+                                      : "",
+                                    qty: item?.qty
+                                      ? Number(item?.qty)?.toFixed(3)
+                                      : "",
+                                    price: item?.price
+                                      ? Number(item?.price)?.toFixed(2)
+                                      : "",
+                                    amount: item?.amount
+                                      ? Number(item?.amount)?.toFixed(2)
+                                      : "",
+                                  }),
+                                );
+
+                                setFabricItems(padFabricItems(mappedItems));
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {id ? (
+                        <>
+                          <div className="w-44">
+                            <TextInput
+                              name="Yarn PI No"
+                              placeholder="Yarn PI No"
+                              value={yarnPIDocId}
+                              disabled={true}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-44">
+                            <DropdownNew
+                              name="Yarn PI No"
+                              dataList={YarnPIList?.data?.filter(
+                                (item) => item?.customerId === customerId,
+                              )}
+                              value={proFormaYarnId}
+                              setValue={setProFormaIYarnId}
+                              required={orderType === "AGAINSTPI"}
+                              readOnly={
+                                childRecord.current > 0 ||
+                                readOnly ||
+                                orderType === "GENERAL"
+                              }
+                              disabled={
+                                childRecord.current > 0 ||
+                                readOnly ||
+                                orderType === "GENERAL"
+                              }
+                              otherField={"docId"}
+                              beforeChange={async (selectedValue) => {
+                                if (!selectedValue) {
+                                  setYarnItems(padYarnItems([]));
+                                  return;
+                                }
+
+                                const res = await getYarnPIById(
+                                  selectedValue?.id,
+                                ).unwrap();
+
+                                setTaxTemplateId(
+                                  res?.data?.taxTemplateId || "",
+                                );
+                                setDiscountType(res?.data?.discountType || "");
+                                setDiscountValue(res?.data?.discountValue);
+
+                                if (res?.data?.termsId)
+                                  setTermsId(res.data.termsId);
+                                if (res?.data?.termsAndCondition)
+                                  setTermsAndCondition(
+                                    res.data.termsAndCondition,
+                                  );
+                                if (res?.data?.deliveryDate)
+                                  setDeliveryDate(
+                                    moment
+                                      .utc(res.data.deliveryDate)
+                                      .format("YYYY-MM-DD"),
+                                  );
+                                if (res?.data?.remarks)
+                                  setRemarks(res.data.remarks);
+
+                                setPayTermId(res?.data?.payTermId || "");
+                                setBankId(res?.data?.bankId || "");
+                                setCurrencyId(res?.data?.currencyId || "");
+
+                                setCarriageCharge(
+                                  res?.data?.carriageCharge?.toFixed(2) || "",
+                                );
+                                setLoadingId(res?.data?.loadingId || "");
+                                setDeliveryId(res?.data?.deliveryId || "");
+                                setCarriageTax(res?.data?.carriageTax || "");
+                                setCustomerPoNo(res?.data?.customerPoNo || "");
+
+                                const itemsArr = res?.data?.yarnItems || [];
+                                const maxVersion =
+                                  itemsArr.length > 0
+                                    ? Math.max(
+                                        res?.data?.quoteVersion || 1,
+                                        ...itemsArr.map(
+                                          (i) => Number(i.quoteVersion) || 1,
+                                        ),
+                                      )
+                                    : res?.data?.quoteVersion || 1;
+
+                                const latestItems = itemsArr.filter(
+                                  (item) =>
+                                    (Number(item.quoteVersion) || 1) ===
+                                    Number(maxVersion),
+                                );
+
+                                const mappedItems = latestItems?.map(
+                                  (item) => ({
+                                    ...item,
+                                    weightPerBag: item?.weightPerBag
+                                      ? Number(item?.weightPerBag)?.toFixed(3)
+                                      : "",
+                                    qty: item?.qty
+                                      ? Number(item?.qty)?.toFixed(3)
+                                      : "",
+                                    price: item?.price
+                                      ? Number(item?.price)?.toFixed(2)
+                                      : "",
+                                    amount: item?.amount
+                                      ? Number(item?.amount)?.toFixed(2)
+                                      : "",
+                                  }),
+                                );
+
+                                setYarnItems(padYarnItems(mappedItems));
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+
                   <div className="flex-1 min-w-[130px]">
                     <TextInput
                       name="Customer Po No"
@@ -1726,249 +1865,189 @@ const OrderEntryForm = ({
         detailsLayout="default"
         detailsLayouts={["default"]}
         gridItems={
-          <OrderItems
-            orderItems={orderItems}
-            setOrderItems={setOrderItems}
-            readOnly={readOnly || childRecord?.current > 0}
-            styleItemList={styleItemList}
-            styleList={styleList}
-            sizeList={sizeList}
-            uomList={uomList}
-            gsmList={gsmList}
-            id={id}
-            itemGroupList={itemGroupList}
-            sizeTemplateList={sizeTemplateList}
-            hsnList={hsnList}
-            requirementRef={requirementRef}
-            childRecord={childRecord}
-            itemSubGroupList={itemSubGroupList}
-            enrichedItems={enrichedData}
-            taxTemplateId={taxTemplateId}
-            conversionType={conversionType}
-            isSupplierOutside={isSupplierOutside}
-            orderType={orderType}
-            isCustomerExport={isCustomerExport}
-            currencyCode={currencyCode}
-            isCurrencySymbol={isCurrencySymbol}
-          />
+          orderGridType === "FABRIC" ? (
+            <FabricItems
+              orderFabricItems={orderFabricItems}
+              setFabricItems={setFabricItems}
+              readOnly={
+                readOnly ||
+                childRecord?.current > 0 ||
+                orderType === "AGAINSTPI"
+              }
+              uomList={uomList}
+              hsnList={hsnList}
+              colorList={colorList}
+              gsmList={gsmList}
+              designList={designList}
+              kDiaList={kDiaList}
+              fDiaList={fDiaList}
+              loopLengthList={loopLengthList}
+              gaugeList={gaugeList}
+              fabricList={fabricList}
+              id={id}
+              termsRef={termsRef}
+              childRecord={childRecord}
+              enrichedItems={enrichedData}
+              taxTemplateId={taxTemplateId}
+              isSupplierOutside={isSupplierOutside}
+              orderType={orderType}
+              isCustomerExport={isCustomerExport}
+              currencyCode={currencyCode}
+              isCurrencySymbol={isCurrencySymbol}
+            />
+          ) : (
+            <YarnItems
+              orderYarnItems={orderYarnItems}
+              setYarnItems={setYarnItems}
+              readOnly={
+                readOnly ||
+                childRecord?.current > 0 ||
+                orderType === "AGAINSTPI"
+              }
+              uomList={uomList}
+              hsnList={hsnList}
+              colorList={colorList}
+              yarnList={yarnList}
+              id={id}
+              termsRef={termsRef}
+              childRecord={childRecord}
+              enrichedItems={enrichedData}
+              taxTemplateId={taxTemplateId}
+              isSupplierOutside={isSupplierOutside}
+              orderType={orderType}
+              isCustomerExport={isCustomerExport}
+              currencyCode={currencyCode}
+              isCurrencySymbol={isCurrencySymbol}
+            />
+          )
         }
         footer={
           <>
-            <ReusableFormFooter
-              sections={[
-                {
-                  title: "Customer Requirements",
-                  value: requirements,
-                  onChange: setRequirements,
-                  placeholder: "Enter requirements...",
-                  readOnly: readOnly || childRecord.current > 0,
-                  ref: requirementRef,
-                },
-                {
-                  title: "Remarks",
-                  value: remarks,
-                  onChange: setRemarks,
-                  placeholder: "Additional notes...",
-                  readOnly: readOnly || childRecord.current > 0,
-                },
-              ]}
-              hasSummaryTitle={
-                <span className="block text-center w-full">Summary</span>
+            <CommonFormFooter
+              remarks={remarks}
+              setRemarks={setRemarks}
+              terms={termsAndCondition}
+              setTerms={setTermsAndCondition}
+              readOnly={readOnly || childRecord.current > 0}
+              showTermSelect={true}
+              rightSummaryTitle="Summary"
+              twoColumnRightSummary={true}
+              termsRef={termsRef}
+              sectionColClass="md:col-span-3"
+              summaryColClass="md:col-span-6"
+              termValue={termsId}
+              onTermChange={(value) => setTermsId(value)}
+              termOptions={
+                termsData?.data?.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                  templateText: item.description || "",
+                })) || []
               }
-              sectionColClass="md:col-span-4"
-              summaryColClass="md:col-span-4"
               totalsRows={[
                 {
-                  key: "summary_grid",
-                  label: "",
-                  valueContainerClassName: "w-full",
-                  renderValue: () => {
-                    const taxTotals = !isCustomerExport
-                      ? (enrichedData.slabBreakup || []).reduce((acc, curr) => {
-                          const type = curr?.tax?.split(" ")[0];
-                          acc[type] = (acc[type] || 0) + curr.amount;
-                          return acc;
-                        }, {})
-                      : {};
-
-                    return (
-                      <div className="grid grid-cols-2 w-full gap-x-4 gap-y-1">
-                        {/* Left Column */}
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800">
-                              <span>Total Discount</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-medium text-slate-800 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {formatCurrencyAmount(
-                                enrichedData.itemDiscount +
-                                  enrichedData.overallDiscount >
-                                  0
-                                  ? enrichedData.itemDiscount +
-                                      enrichedData.overallDiscount
-                                  : 0,
-                                currencyCode || isCurrencySymbol,
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800">
-                              <span>Taxable Amount</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-medium text-slate-800 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {formatCurrencyAmount(
-                                enrichedData.taxable || 0,
-                                currencyCode || isCurrencySymbol,
-                              )}
-                            </span>
-                          </div>
-
-                          {taxTotals.CGST !== undefined &&
-                          taxTotals.SGST !== undefined ? (
-                            <div className="flex items-center justify-between w-full max-w-[210px]">
-                              <div className="flex items-center gap-1">
-                                <span className="text-slate-800 w-[32px]">
-                                  CGST
-                                </span>
-                                <span className="text-slate-800">:</span>
-                                <span className="font-medium text-slate-800">
-                                  {formatCurrencyAmount(
-                                    taxTotals.CGST,
-                                    currencyCode || isCurrencySymbol,
-                                  )}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-slate-800 w-[32px]">
-                                  SGST
-                                </span>
-                                <span className="text-slate-800">:</span>
-                                <span className="font-medium text-slate-800 text-right">
-                                  {formatCurrencyAmount(
-                                    taxTotals.SGST,
-                                    currencyCode || isCurrencySymbol,
-                                  )}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            Object.keys(taxTotals).map((type) => (
-                              <div
-                                key={type}
-                                className="flex items-center justify-between w-full max-w-[210px]"
-                              >
-                                <div className="flex justify-between w-[130px] text-slate-800">
-                                  <span>{type}</span>
-                                  <span>:</span>
-                                </div>
-                                <span className="font-medium text-slate-800 text-right w-[65px]">
-                                  {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                                  {formatCurrencyAmount(
-                                    taxTotals[type],
-                                    currencyCode || isCurrencySymbol,
-                                  )}
-                                </span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-
-                        {/* Right Column */}
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800">
-                              <span>Round Off</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-medium text-slate-800 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {formatCurrencyAmount(
-                                enrichedData.roundOff || 0,
-                                currencyCode || isCurrencySymbol,
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                              <span>Net Amount</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-bold text-indigo-700 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {formatCurrencyAmount(
-                                !isCustomerExport
-                                  ? enrichedData.net
-                                  : (enrichedData.items?.reduce(
-                                      (sum, item) =>
-                                        sum + (parseFloat(item.amount) || 0),
-                                      0,
-                                    ) || 0) -
-                                      (enrichedData.itemDiscount +
-                                        enrichedData.overallDiscount >
-                                      0
-                                        ? enrichedData.itemDiscount +
-                                          enrichedData.overallDiscount
-                                        : 0),
-                                currencyCode || isCurrencySymbol,
-                              )}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800">
-                              <span>Carriage Charges</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-medium text-slate-800 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {!isNaN(parseFloat(carriageFinalAmt)) &&
-                              carriageFinalAmt !== ""
-                                ? formatCurrencyAmount(
-                                    carriageFinalAmt,
-                                    currencyCode || isCurrencySymbol,
-                                  )
-                                : "0.00"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between w-full max-w-[210px]">
-                            <div className="flex justify-between w-[130px] text-slate-800 font-bold">
-                              <span>Grand Total</span>
-                              <span>:</span>
-                            </div>
-                            <span className="font-bold text-indigo-700 text-right w-[65px]">
-                              {isCurrencySymbol ? isCurrencySymbol : ""}{" "}
-                              {formatCurrencyAmount(
-                                (!isCustomerExport
-                                  ? enrichedData.net
-                                  : (enrichedData.items?.reduce(
-                                      (sum, item) =>
-                                        sum + (parseFloat(item.amount) || 0),
-                                      0,
-                                    ) || 0) -
-                                    (enrichedData.itemDiscount +
-                                      enrichedData.overallDiscount >
-                                    0
-                                      ? enrichedData.itemDiscount +
-                                        enrichedData.overallDiscount
-                                      : 0)) +
-                                  (parseFloat(carriageFinalAmt) || 0),
-                                currencyCode || isCurrencySymbol,
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  },
-                  summaryColumn: "left",
-                  emphasized: false,
+                  key: "totalDiscount",
+                  label: "Total Discount",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                    enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                      ? enrichedData.itemDiscount + enrichedData.overallDiscount
+                      : 0,
+                    currencyCode || isCurrencySymbol,
+                  )}`,
+                  summaryColumn: "right",
+                },
+                {
+                  key: "taxableAmount",
+                  label: "Taxable Amount",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                    enrichedData.taxable || 0,
+                    currencyCode || isCurrencySymbol,
+                  )}`,
+                  summaryColumn: "right",
+                },
+                ...(!isCustomerExport
+                  ? Object.entries(
+                      (enrichedData.slabBreakup || []).reduce((acc, curr) => {
+                        const type = curr?.tax?.split(" ")[0];
+                        acc[type] = (acc[type] || 0) + curr.amount;
+                        return acc;
+                      }, {}),
+                    ).map(([type, amount]) => ({
+                      key: `tax-${type}`,
+                      label: type,
+                      value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                        amount,
+                        currencyCode || isCurrencySymbol,
+                      )}`,
+                      summaryColumn: "right",
+                    }))
+                  : []),
+                {
+                  key: "roundOff",
+                  label: "Round Off",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                    enrichedData.roundOff || 0,
+                    currencyCode || isCurrencySymbol,
+                  )}`,
+                  summaryColumn: "right",
+                },
+                {
+                  key: "netAmount",
+                  label: "Total Amount",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                    !isCustomerExport
+                      ? enrichedData.net
+                      : (enrichedData.items?.reduce(
+                          (sum, item) => sum + (parseFloat(item.amount) || 0),
+                          0,
+                        ) || 0) -
+                          (enrichedData.itemDiscount +
+                            enrichedData.overallDiscount >
+                          0
+                            ? enrichedData.itemDiscount +
+                              enrichedData.overallDiscount
+                            : 0),
+                    currencyCode || isCurrencySymbol,
+                  )}`,
+                  summaryColumn: "right",
+                  emphasized: true,
+                  valueClassName: "text-indigo-700",
+                },
+                {
+                  key: "carriageCharges",
+                  label: "Carriage Charges",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
+                    !isNaN(parseFloat(carriageFinalAmt)) &&
+                    carriageFinalAmt !== ""
+                      ? formatCurrencyAmount(
+                          carriageFinalAmt,
+                          currencyCode || isCurrencySymbol,
+                        )
+                      : "0.00"
+                  }`,
+                  summaryColumn: "right",
+                },
+                {
+                  key: "grandTotal",
+                  label: "Net Amount",
+                  value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                    (!isCustomerExport
+                      ? enrichedData.net
+                      : (enrichedData.items?.reduce(
+                          (sum, item) => sum + (parseFloat(item.amount) || 0),
+                          0,
+                        ) || 0) -
+                        (enrichedData.itemDiscount +
+                          enrichedData.overallDiscount >
+                        0
+                          ? enrichedData.itemDiscount +
+                            enrichedData.overallDiscount
+                          : 0)) + (parseFloat(carriageFinalAmt) || 0),
+                    currencyCode || isCurrencySymbol,
+                  )}`,
+                  summaryColumn: "right",
+                  emphasized: true,
+                  valueClassName: "text-indigo-700",
                 },
               ]}
             />

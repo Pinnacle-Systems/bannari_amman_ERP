@@ -186,7 +186,7 @@ export const DropdownWithModal = forwardRef(
             <div
               title={selectedLabel || "Select"}
               className={`flex h-7 w-full items-center px-3 py-0 border border-gray-300 rounded-lg
-              bg-slate-100 text-slate-700 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis
+              bg-slate-100 text-black shadow-sm whitespace-nowrap overflow-hidden text-ellipsis
               ${FORM_INPUT_TEXT_CLASS} ${className}`}
             >
               {selectedLabel || "Select"}
@@ -201,7 +201,7 @@ export const DropdownWithModal = forwardRef(
               required={required}
               className={`h-8.5 w-full px-3 py-1 border border-gray-300 rounded-lg
             focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
-            transition-all duration-150 shadow-sm ${readOnly || disabled ? "bg-slate-100" : ""}
+            transition-all duration-150 shadow-sm  ${readOnly || disabled ? "bg-slate-100 cursor-not-allowed" : "bg-white cursor-pointer"}
             ${FORM_INPUT_TEXT_CLASS} ${className}`}
               value={value}
               onChange={(e) => {
@@ -432,7 +432,11 @@ export const DropdownWithModal = forwardRef(
                       e.preventDefault();
                       if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
                         handleSelect(filtered[highlightedIndex].value, true);
-                      } else if (childComponent && !isDisabled && search.trim()) {
+                      } else if (
+                        childComponent &&
+                        !isDisabled &&
+                        search.trim()
+                      ) {
                         const trimmed = search.trim();
                         setPendingSearch(trimmed ? trimmed.toUpperCase() : "");
                         setIsOpen(false);
@@ -511,7 +515,10 @@ export const DropdownWithModal = forwardRef(
                             <button
                               type="button"
                               onClick={(e) => {
-                                if (option?.childRecord || childRecordCount(option?._count)) {
+                                if (
+                                  option?.childRecord ||
+                                  childRecordCount(option?._count)
+                                ) {
                                   Swal.fire({
                                     title: `Child Record Exists`,
                                     text: `"${option.show}" cannot be deleted because it has linked records.`,
@@ -579,11 +586,14 @@ export const DropdownWithModal = forwardRef(
                   editLabel={editingOption.show}
                   hasChildRecord={Boolean(
                     editingOption.childRecord ||
-                      childRecordCount(editingOption?._count),
+                    childRecordCount(editingOption?._count),
                   )}
                   onSuccess={(updatedId) => {
                     setEditingOption(null);
-                    if (updatedId && String(editingOption.value) === String(value)) {
+                    if (
+                      updatedId &&
+                      String(editingOption.value) === String(value)
+                    ) {
                       setValue(updatedId);
                     }
                   }}
@@ -607,7 +617,7 @@ export const DropdownWithModal = forwardRef(
                   deleteLabel={deletingOption.show}
                   hasChildRecord={Boolean(
                     deletingOption.childRecord ||
-                      childRecordCount(deletingOption?._count),
+                    childRecordCount(deletingOption?._count),
                   )}
                   onSuccess={handleDeleteSuccess}
                   onClose={() => setDeletingOption(null)}
