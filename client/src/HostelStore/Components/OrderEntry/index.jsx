@@ -13,13 +13,13 @@ import { FaPlus } from "react-icons/fa";
 import OrderEntryReport from "./OrderEntryReport.jsx";
 import OrderEntryForm from "./OrderEntryForm.jsx";
 import { useIsApprover } from "../../../CustomHooks/userIsApprover.js";
-import ProformaInvoiceApi from "../../../redux/uniformService/ProformaInvoiceService.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
-import JobCardApi from "../../../redux/uniformService/JobCardService.js";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
 import Swal from "sweetalert2";
 import { useGetCityQuery } from "../../../redux/services/CityMasterService.js";
-
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
+import { invalidateOrderEntryModule } from "../../../redux/Dispatch/OrderInvalidateTags.js";
 const index = () => {
   const [showForm, setShowForm] = useState(false);
   const [id, setId] = useState("");
@@ -73,9 +73,9 @@ const index = () => {
 
       try {
         let deldata = await removeData(id).unwrap();
-        dispatch(ProformaInvoiceApi.util.invalidateTags(["proformaInvoice"]));
-        dispatch(JobCardApi.util.invalidateTags(["jobCard"]));
-        dispatchInvalidate();
+        invalidateFabricModule();
+        invalidateYarnModule();
+        invalidateOrderEntryModule();
         if (deldata?.statusCode == 1) {
           Swal.fire({
             icon: "error",

@@ -200,7 +200,6 @@ const FabricItems = ({
       })),
     );
   };
-  console.log(orderFabricItems, "orderFabricItems");
 
   return (
     <>

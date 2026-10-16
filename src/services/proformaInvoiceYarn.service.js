@@ -68,11 +68,11 @@ async function get(req) {
       customer: { select: { id: true, name: true } },
       yarnItems: true,
 
-      //   _count: {
-      //     select: {
-      //       orderEntries: true,
-      //     },
-      //   },
+      _count: {
+        select: {
+          orderEntries: true,
+        },
+      },
     },
     orderBy: { id: "desc" },
   });
@@ -97,7 +97,7 @@ async function get(req) {
     data: data?.map((item) => {
       return {
         ...item,
-        // childRecord: item?._count?.orderEntries || 0,
+        childRecord: item?._count?.orderEntries || 0,
       };
     }),
     totalCount,
@@ -151,11 +151,11 @@ async function getOne(id) {
         },
       },
       customer: true,
-      //   _count: {
-      //     select: {
-      //       orderEntries: true,
-      //     },
-      //   },
+      _count: {
+        select: {
+          orderEntries: true,
+        },
+      },
     },
   });
   if (!data) return NoRecordFound("Proforma Invoice");
@@ -163,7 +163,7 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      //   childRecord: data?._count?.orderEntries || 0,
+      childRecord: data?._count?.orderEntries || 0,
     },
   };
 }

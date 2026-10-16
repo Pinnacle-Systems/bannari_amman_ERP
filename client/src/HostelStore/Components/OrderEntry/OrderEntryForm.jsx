@@ -1,12 +1,9 @@
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 
 import {
-  CheckBox,
-  CheckBoxNew,
   DateInputNew,
   DropdownInput,
   DropdownNew,
-  ReusableInput,
   TextInput,
 } from "../../../Inputs";
 import { orderTypes, gridTypes } from "../../../Utils/DropdownData";
@@ -28,7 +25,6 @@ import {
   dropDownListObject,
   dropDownListObjectMultiple,
 } from "../../../Utils/contructObject";
-import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
 import { PartyMaster } from "../index.js";
 import { DropdownWithModal } from "../../../Inputs/Reuseable.js";
 import Modal from "../../../UiComponents/Modal/index.js";
@@ -50,14 +46,13 @@ import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 import { useAddApprovalStausMutation } from "../../../redux/uniformService/PoServices.js";
 import { useGetUomQuery } from "../../../redux/services/UomMasterService.js";
 import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService.js";
-import ProformaInvoiceApi, {
+import {
   useGetPIListQuery,
   useLazyGetProformaInvoiceByIdQuery,
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
 
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
 import { useDispatch } from "react-redux";
-import JobCardApi from "../../../redux/uniformService/JobCardService.js";
 
 import PoSummary from "../PurchaseOrder/PoSummary";
 import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
@@ -84,7 +79,9 @@ import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterSer
 import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
 import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
 import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
-
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
+import { invalidateOrderEntryModule } from "../../../redux/Dispatch/OrderInvalidateTags.js";
 const EMPTY_FABRIC_ROW = {
   fabricId: "",
   hsnId: "",
@@ -216,13 +213,11 @@ const OrderEntryForm = ({
   const [orderGridType, setOrderGridType] = useState("FABRIC");
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
-  const dispatch = useDispatch();
   const qrRef = useRef(null);
   const customerRef = useRef(null);
   const childRecord = useRef(0);
   const termsRef = useRef(null);
 
-  const [dispatchInvalidate] = useInvalidateTags();
   const { userId, finYearId, branchId, companyId } = getCommonParams();
   const params = {
     branchId,
@@ -470,9 +465,9 @@ const OrderEntryForm = ({
             }
           },
         });
-        dispatchInvalidate();
-        dispatch(ProformaInvoiceApi.util.invalidateTags(["proformaInvoice"]));
-        dispatch(JobCardApi.util.invalidateTags(["jobCard"]));
+        invalidateFabricModule();
+        invalidateYarnModule();
+        invalidateOrderEntryModule();
       }
     } catch (error) {
       console.log("handle", error);

@@ -200,7 +200,6 @@ const ProformaInvoiceFabricItems = ({
       })),
     );
   };
-  console.log(fabricItems, "fabricItems");
 
   return (
     <>
