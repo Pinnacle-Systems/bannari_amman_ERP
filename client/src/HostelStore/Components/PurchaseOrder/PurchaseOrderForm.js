@@ -8,7 +8,7 @@ import {
   ReusableSearchableInput,
   TextInput,
 } from "../../../Inputs";
-import { deliveryTypes, poTypes } from "../../../Utils/DropdownData";
+import { deliveryTypes, gridTypes, poTypes } from "../../../Utils/DropdownData";
 import { useCallback, useEffect, useRef, useState } from "react";
 import moment from "moment";
 import { findFromList, getCommonParams, ModeChip } from "../../../Utils/helper";
@@ -92,8 +92,8 @@ const PurchaseOrderForm = ({
   const [taxTemplateId, setTaxTemplateId] = useState("");
   const [payTermId, setPayTermId] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [poType, setPoType] = useState("Order Purchase");
-  const [poMaterial, setPoMaterial] = useState("DyedYarn");
+  const [poType, setPoType] = useState("GENERAL");
+  const [orderGridType, setOrderGridType] = useState("FABRIC");
   const [supplierId, setSupplierId] = useState("");
   const [termsAndCondtion, setTermsAndCondtion] = useState("");
   const [termsId, setTermsId] = useState("");
@@ -103,7 +103,6 @@ const PurchaseOrderForm = ({
   const [taxPercent, setTaxPercent] = useState();
   const [orderId, setOrderId] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [PurchaseType, setPurchaseType] = useState("General Purchase");
   const [summary, setSummary] = useState(false);
   const [docId, setDocId] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
@@ -125,12 +124,11 @@ const PurchaseOrderForm = ({
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { branchId, userId, finYearId } = getCommonParams();
-  const params = { branchId, userId, finYearId, poMaterial: poMaterial };
+  const params = { branchId, userId, finYearId };
   const { data: supplierDetails } = useGetPartyByIdQuery(supplierId, {
     skip: !supplierId,
   });
   const openTabs = useSelector((state) => state.openTabs);
-  const isAdmin = userData?.role?.name === "ADMIN";
 
   const activeTab = openTabs.tabs.find((tab) => tab.active);
   const { data: pageData } = useGetPagesQuery({});
@@ -148,7 +146,6 @@ const PurchaseOrderForm = ({
     singleData?.data?.childRecordInward + singleData?.data?.childRecordCancel;
 
   const { data: orderData } = useGetOrderEntryQuery({ params });
-  console.log(orderData, "orderData");
 
   const [addApprovalStatus] = useAddApprovalStausMutation();
   const [addData] = useAddPoMutation();
@@ -193,7 +190,6 @@ const PurchaseOrderForm = ({
           : data?.deliveryToId || "",
       );
       setRemarks(data?.remarks || "");
-      setPurchaseType(data?.PurchaseType ? data?.PurchaseType : "");
       setOrderId(data?.orderId ? data?.orderId : "");
       setRequirementId(data?.requirementId ? data?.requirementId : "");
       setTaxTemplateId(data?.taxTemplateId ? data?.taxTemplateId : "");
@@ -368,10 +364,6 @@ const PurchaseOrderForm = ({
     }
   };
 
-  const findDuplicates = (items) => {
-    return items;
-  };
-
   const validateData = (data) => {
     const result = validatePurchaseOrderData({
       data,
@@ -501,21 +493,6 @@ const PurchaseOrderForm = ({
 
   const allSuppliers = supplierList ? supplierList.data : [];
 
-  function filterSupplier() {
-    let finalSupplier = [];
-    if (poMaterial.toLowerCase().includes("yarn")) {
-      finalSupplier = allSuppliers.filter((s) => s.yarn);
-    } else if (poMaterial.toLowerCase().includes("fabric")) {
-      finalSupplier = allSuppliers.filter((s) => s.fabric);
-    } else {
-      finalSupplier = allSuppliers.filter(
-        (s) => s.PartyOnAccessoryItems?.length > 0,
-      );
-    }
-    return finalSupplier;
-  }
-  let supplierListBasedOnSupply = filterSupplier();
-
   const { data: deliveryToBranch } = useGetBranchByIdQuery(deliveryToId, {
     skip: deliveryType === "ToParty",
   });
@@ -541,29 +518,6 @@ const PurchaseOrderForm = ({
 
   const taxGroupWise = groupBy(poItems, "taxPercent");
 
-  const filtered = Object.fromEntries(
-    Object.entries(taxGroupWise)
-      .filter(([key]) => key && key !== "undefined")
-      .map(([key, arr]) => [
-        key,
-        arr.filter((item) => {
-          if (!item) return false;
-
-          const gross = parseFloat(item?.gross || 0) || 0;
-          const quantity = parseFloat(item?.quantity || 0) || 0;
-
-          return Boolean(
-            item?.styleItemId ||
-            item?.itemId ||
-            item?.yarnId ||
-            item?.description ||
-            gross > 0 ||
-            quantity > 0,
-          );
-        }),
-      ])
-      .filter(([_, arr]) => arr.length > 0),
-  );
   const taxBreakdownSummaryRaw = totals?.slabBreakup || [];
   const aggregatedTaxBreakdown = taxBreakdownSummaryRaw?.reduce((acc, row) => {
     const taxType = row?.tax?.split(" ")[0];
@@ -573,8 +527,7 @@ const PurchaseOrderForm = ({
     acc[taxType].amount += parseFloat(row?.amount || 0);
     return acc;
   }, {});
-  // const taxBreakdownSummary =
-  //   totals?.slabBreakup?.filter((row) => (row?.amount || 0) > 0) || [];
+
   const taxBreakdownSummary = Object.values(aggregatedTaxBreakdown);
 
   const taxBreakdownContent =
@@ -663,24 +616,6 @@ const PurchaseOrderForm = ({
     }
   };
 
-  function getTotalQty() {
-    const filteredRows = poItems?.filter((item) => {
-      if (!item.styleItemId) return false;
-
-      if (!id) return true;
-
-      if (isNewVersion) return item.quoteVersion === "New";
-
-      return parseInt(item.quoteVersion) === parseInt(quoteVersion ?? "");
-    });
-
-    const qty = filteredRows?.reduce((acc, curr) => {
-      return acc + (parseFloat(curr?.qty) || 0);
-    }, 0);
-
-    return parseFloat(qty || 0);
-  }
-
   useEffect(() => {
     supplierRef.current?.focus();
   }, []);
@@ -702,28 +637,6 @@ const PurchaseOrderForm = ({
     }
   }, [id, termsData, termsId]);
 
-  const getTitleChip = (text) => {
-    if (id && readOnly) {
-      return {
-        label: `View ${text}`,
-        className: "bg-gray-200 text-gray-700",
-      };
-    }
-    if (id && !readOnly) {
-      return {
-        label: `Edit ${text}`,
-        className: "bg-blue-100 text-blue-700",
-      };
-    }
-    if (!id && !readOnly) {
-      return {
-        label: `Create ${text}`,
-        className: "bg-green-100 text-green-700",
-      };
-    }
-    return { label: "", className: "" };
-  };
-
   const getModeChip = () => {
     if (id && readOnly) {
       return { label: "Read", className: "bg-red-600 text-white" };
@@ -739,7 +652,6 @@ const PurchaseOrderForm = ({
   const isFullyLocked =
     effectiveReadOnly || (isPostApprovalLock && isDeliveryThresholdPassed);
   const isCoreLocked = isFullyLocked || isPostApprovalLock;
-  const chip = getModeChip();
 
   const actionButtonClass =
     "px-3 py-2 rounded-md flex items-center justify-center text-sm text-white transition";
@@ -960,8 +872,7 @@ const PurchaseOrderForm = ({
   const fieldWidthDate = "w-full min-w-0";
   const narrowFieldWrap = "min-w-0";
   const partyDropdownMinWidth = 260;
-  const supplierCompactGridClass =
-    "grid grid-cols-1 gap-1 items-end md:grid-cols-2 xl:grid-cols-[172px_minmax(0,1.15fr)_minmax(0,0.8fr)]";
+  const supplierCompactGridClass = "grid grid-cols-2 gap-x-3";
   const deliveryCompactGridClass =
     "grid grid-cols-1 gap-1 items-end md:grid-cols-[100px_minmax(0,1fr)_110px] xl:grid-cols-[100px_minmax(0,1fr)_110px]";
   const sidebarSectionGridClass = "grid grid-cols-1 gap-1";
@@ -1021,7 +932,21 @@ const PurchaseOrderForm = ({
           className={`${compactFieldClass} w-full max-w-none`}
         />
       </div>
-      {console.log(orderEntryId, "orderEntryId")}
+      <div className={narrowFieldWrap}>
+        <DropdownInput
+          name="Item Type"
+          options={gridTypes}
+          value={orderGridType}
+          setValue={(value) => {
+            setOrderGridType(value);
+          }}
+          required={true}
+          readOnly={isCoreLocked}
+          disabled={orderId || childRecordCount > 0 || isCoreLocked}
+          className={`${compactFieldClass} w-full max-w-none`}
+          autoFocus={true}
+        />
+      </div>
       <div className={narrowFieldWrap}>
         <DropdownInput
           name="Tax Type"
@@ -1138,7 +1063,7 @@ const PurchaseOrderForm = ({
                     "branchName",
                     "id",
                   )
-                : dropDownListObject(supplierListBasedOnSupply, "name", "id")
+                : dropDownListObject(allSuppliers, "name", "id")
             }
             value={deliveryToId}
             setValue={setDeliveryToId}
@@ -1186,7 +1111,7 @@ const PurchaseOrderForm = ({
   const basicDetailsCompactSection = (
     <div className={compactCardClass}>
       <h2 className={compactSectionTitleClass}>Basic Details</h2>
-      <div className="grid grid-cols-2 gap-1 items-end md:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_95px_100px_130px_100px]">
+      <div className="grid grid-cols-2 gap-1 gap-x-2 items-end md:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_95px_140px_170px]">
         {basicDetailsFields}
       </div>
     </div>
@@ -1365,7 +1290,7 @@ const PurchaseOrderForm = ({
                     "branchName",
                     "id",
                   )
-                : dropDownListObject(supplierListBasedOnSupply, "name", "id")
+                : dropDownListObject(allSuppliers, "name", "id")
             }
             value={deliveryToId}
             setValue={setDeliveryToId}
