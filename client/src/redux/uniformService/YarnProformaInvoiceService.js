@@ -23,7 +23,19 @@ const YarnProformaInvoiceApi = createApi({
       },
       providesTags: ["yarnProformaInvoice"],
     }),
-
+    getPIListYarn: builder.query({
+      query: ({ params }) => {
+        return {
+          url: `${YARN_PROFORMA_INVOICE_API}/proFormaList`,
+          method: "GET",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+          params,
+        };
+      },
+      providesTags: ["yarnProformaInvoice"],
+    }),
     getYarnProformaInvoiceById: builder.query({
       query: (id) => {
         return {
@@ -66,6 +78,7 @@ const YarnProformaInvoiceApi = createApi({
 
 export const {
   useGetYarnProformaInvoiceQuery,
+  useGetPIListYarnQuery,
   useGetYarnProformaInvoiceByIdQuery,
   useLazyGetYarnProformaInvoiceByIdQuery,
   useAddYarnProformaInvoiceMutation,

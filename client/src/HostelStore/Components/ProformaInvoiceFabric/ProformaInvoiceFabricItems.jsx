@@ -803,7 +803,7 @@ const ProformaInvoiceFabricItems = ({
                   className="grid-editable-cell border border-gray-300 text-center text-[11px]"
                 >
                   <button
-                    disabled={!rowItem.fabricId || readOnly}
+                    disabled={!rowItem.fabricId}
                     className="text-indigo-600 w-full hover:text-indigo-800 disabled:text-gray-300 table-data-input"
                     onClick={() => {
                       setCurrentWeightSelectedIndex(originalIndex);

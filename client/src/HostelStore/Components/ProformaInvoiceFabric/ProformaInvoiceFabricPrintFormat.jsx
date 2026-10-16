@@ -15,17 +15,17 @@ import { numberToWords } from "number-to-words";
 const DARK = "#1a1a2e";
 const DARK2 = "#2d2d44";
 const LIGHT_BG = "#fafafa";
-const BORDER = "#b0b0b8";
-const BORDER_LIGHT = "#ddd";
-const BORDER_ROW = "#c8c8d0";
+const BORDER = "#000";
+const BORDER_LIGHT = "#000";
+const BORDER_ROW = "#000";
 
 const styles = StyleSheet.create({
-  borderBox: { border: `1 solid #ccc`, margin: 0, padding: 0 },
+  borderBox: { border: `1 solid #000`, margin: 0, padding: 0 },
   page: {
     fontFamily: "Helvetica",
-    fontSize: 8,
+    fontSize: 10,
     padding: 0,
-    paddingBottom: 52,
+    paddingBottom: 42,
     backgroundColor: "#fff",
   },
 
@@ -37,22 +37,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 10,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 5,
     borderBottom: `1.5 solid ${DARK}`,
   },
-  logo: { height: 52, width: 52 },
+  logo: { height: 44, width: 44 },
   companyCenter: { alignItems: "center", flex: 1 },
   companyName: {
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#000",
     letterSpacing: 0.5,
   },
   companyAddress: {
-    fontSize: 7.5,
-    color: "#555",
+    fontSize: 9.5,
+    color: "#000",
     textAlign: "center",
     marginTop: 2,
   },
@@ -61,39 +61,41 @@ const styles = StyleSheet.create({
     backgroundColor: DARK,
     color: "#fff",
     textAlign: "center",
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 3,
-    paddingVertical: 6,
-    marginBottom: 8,
+    paddingVertical: 4,
+    marginBottom: 5,
   },
 
   // ── META PILLS ──
   metaRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "flex-start",
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
     paddingTop: 4,
-    paddingBottom: 6,
-    gap: 6,
+    paddingBottom: 5,
+    gap: 4,
+    rowGap: 4,
   },
   metaPill: {
     flexDirection: "row",
     backgroundColor: "#f4f4f6",
     border: `1 solid ${BORDER_LIGHT}`,
     borderLeft: `2 solid ${DARK}`,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2.5,
     borderRadius: 2,
   },
-  metaLabel: { fontSize: 7.5, color: "#888", marginRight: 3 },
-  metaValue: { fontSize: 7.5, fontFamily: "Helvetica-Bold", color: DARK },
+  metaLabel: { fontSize: 9.5, color: "#000", marginRight: 2 },
+  metaValue: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: "#000" },
 
   // ── FROM / TO SECTION ──
   twoCol: {
     flexDirection: "row",
-    marginHorizontal: 20,
-    marginBottom: 8,
+    marginHorizontal: 8,
+    marginBottom: 5,
     border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
   },
@@ -101,33 +103,33 @@ const styles = StyleSheet.create({
   sectionHeader: {
     backgroundColor: DARK2,
     color: "#e8e8f0",
-    fontSize: 7.5,
+    fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 1,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 3.5,
   },
-  sectionBody: { padding: 8 },
+  sectionBody: { padding: 5 },
   partyName: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#000",
     marginBottom: 3,
   },
   partyAddr: {
-    fontSize: 7.5,
-    color: "#555",
+    fontSize: 9.5,
+    color: "#000",
     textTransform: "uppercase",
     marginBottom: 4,
     lineHeight: 1.5,
   },
   partyRow: { flexDirection: "row", marginBottom: 2 },
-  partyLabel: { fontSize: 7.5, color: "#888", width: 72 },
-  partyValue: { fontSize: 7.5, color: "#222", fontFamily: "Helvetica-Bold" },
+  partyLabel: { fontSize: 9.5, color: "#000", width: 84 },
+  partyValue: { fontSize: 9.5, color: "#000", fontFamily: "Helvetica-Bold" },
 
   // ── EXPORT DETAILS GRID ──
   exportGrid: {
-    marginHorizontal: 20,
+    marginHorizontal: 8,
     marginBottom: 8,
     border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
@@ -136,24 +138,24 @@ const styles = StyleSheet.create({
   },
   exportCol: { flex: 1, padding: 8, borderRight: `1 solid ${BORDER_LIGHT}` },
   exportItem: { flexDirection: "row", marginBottom: 4 },
-  exportLabel: { fontSize: 7.5, color: "#888", width: 88 },
+  exportLabel: { fontSize: 9.5, color: "#000", width: 98 },
   exportValue: {
-    fontSize: 7.5,
-    color: DARK,
+    fontSize: 9.5,
+    color: "#000",
     fontFamily: "Helvetica-Bold",
     flex: 1,
   },
 
   // ── TABLE ──
-  tableWrap: { marginHorizontal: 20, border: `1 solid ${BORDER}` },
+  tableWrap: { marginHorizontal: 8, border: `1 solid ${BORDER}` },
   tableHeader: { flexDirection: "row", backgroundColor: DARK },
   th: {
-    fontSize: 7.5,
+    fontSize: 10.5,
     fontFamily: "Helvetica-Bold",
     color: "#fff",
     textAlign: "center",
     borderRight: `1 solid #4a4a60`,
-    paddingVertical: 5,
+    paddingVertical: 4,
     paddingHorizontal: 3,
   },
   trOdd: {
@@ -167,18 +169,18 @@ const styles = StyleSheet.create({
     backgroundColor: LIGHT_BG,
   },
   td: {
-    fontSize: 7.5,
-    color: "#333",
+    fontSize: 10.5,
+    color: "#000",
     textAlign: "center",
     borderRight: `1 solid ${BORDER_ROW}`,
-    paddingVertical: 4,
+    paddingVertical: 3,
     paddingHorizontal: 3,
   },
 
   // ── TOTALS ROW ──
   totalRow: {
     flexDirection: "row",
-    marginHorizontal: 20,
+    marginHorizontal: 8,
     backgroundColor: "#e8e8ec",
     borderLeft: `1 solid ${BORDER}`,
     borderRight: `1 solid ${BORDER}`,
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
   taxBox: {
     width: 160,
     marginTop: 8,
-    marginRight: 20,
+    marginRight: 8,
     alignSelf: "flex-end",
     border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
@@ -199,37 +201,37 @@ const styles = StyleSheet.create({
     backgroundColor: DARK2,
     color: "#e8e8f0",
     textAlign: "center",
-    fontSize: 7.5,
+    fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 1,
     paddingVertical: 4,
   },
   taxRow: {
     flexDirection: "row",
-    borderTop: `1 solid #ebebeb`,
+    borderTop: `1 solid #000`,
   },
   taxRowNet: {
     flexDirection: "row",
     borderTop: `1 solid ${DARK}`,
     backgroundColor: DARK,
   },
-  taxLabel: { flex: 1, fontSize: 7.5, color: "#333", padding: 4 },
+  taxLabel: { flex: 1, fontSize: 9.5, color: "#000", padding: 4 },
   taxValue: {
-    fontSize: 7.5,
-    color: "#333",
+    fontSize: 9.5,
+    color: "#000",
     textAlign: "right",
     padding: 4,
     minWidth: 55,
   },
   taxLabelNet: {
     flex: 1,
-    fontSize: 7.5,
+    fontSize: 9.5,
     color: "#fff",
     fontFamily: "Helvetica-Bold",
     padding: 4,
   },
   taxValueNet: {
-    fontSize: 7.5,
+    fontSize: 9.5,
     color: "#fff",
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
@@ -240,9 +242,9 @@ const styles = StyleSheet.create({
   // ── BANK + SUMMARY ──
   bankSummaryRow: {
     flexDirection: "row",
-    marginHorizontal: 20,
-    marginTop: 8,
-    gap: 8,
+    marginHorizontal: 8,
+    marginTop: 5,
+    gap: 6,
   },
   bankBox: {
     flex: 1,
@@ -258,34 +260,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottom: `1 solid ${BORDER_LIGHT}`,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2.5,
   },
   summaryLabel: {
-    fontSize: 7.5,
-    color: "#888",
+    fontSize: 9.5,
+    color: "#000",
     textAlign: "right",
     flex: 1,
+    fontFamily: "Helvetica-Bold",
   },
   summaryColon: {
-    fontSize: 7.5,
-    color: "#888",
-    width: 8,
+    fontSize: 9.5,
+    color: "#000",
+    width: 10,
     textAlign: "center",
   },
   summaryValue: {
-    fontSize: 7.5,
+    fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#000",
     textAlign: "right",
-    width: 55,
+    width: 75,
   },
 
   // ── BOTTOM SECTION ──
   bottomSection: {
-    marginHorizontal: 20,
-    marginTop: 8,
+    marginHorizontal: 8,
+    marginTop: 5,
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
   remarksBox: {
     flex: 1,
@@ -298,31 +301,59 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
+  // ── SIGNATURES ──
+  signaturesContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 8,
+    right: 8,
+  },
+  signaturesRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTop: `1 solid ${BORDER_LIGHT}`,
+    paddingTop: 3,
+  },
+  signatureRole: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 8.5,
+    color: "#000",
+    fontFamily: "Helvetica-Bold",
+  },
+
   // ── FOOTER ──
   footerBar: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
     position: "absolute",
-    bottom: 10,
+    bottom: 5,
     left: 0,
     right: 0,
   },
-  footerRight: { fontSize: 8, color: DARK, fontFamily: "Helvetica-Bold" },
+  footerRight: { fontSize: 8.5, color: "#000", fontFamily: "Helvetica-Bold" },
 
   // ── AMOUNT IN WORDS ──
   wordsBar: {
-    marginHorizontal: 20,
-    marginTop: 8,
-    backgroundColor: LIGHT_BG,
-    padding: 6,
+    marginHorizontal: 8,
+    marginTop: 5,
+    backgroundColor: "#fff",
+    padding: 4.5,
     border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
   },
-  wordsText: { fontSize: 7.5, color: "#555" },
-  wordsValue: { fontFamily: "Helvetica-Bold", color: DARK },
+  wordsText: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
+  },
+  wordsValue: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
+  },
 });
 
 // ── TABLE COLUMNS ─────────────────────────────────────────────────────────────
@@ -372,14 +403,14 @@ const ContinuationBar = ({ docId, branchName }) => (
       justifyContent: "space-between",
       alignItems: "center",
       backgroundColor: DARK,
-      paddingHorizontal: 20,
+      paddingHorizontal: 8,
       paddingVertical: 6,
       marginBottom: 2,
     }}
   >
     <Text
       style={{
-        fontSize: 9,
+        fontSize: 11,
         fontFamily: "Helvetica-Bold",
         color: "#fff",
         letterSpacing: 2,
@@ -387,7 +418,7 @@ const ContinuationBar = ({ docId, branchName }) => (
     >
       PROFORMA INVOICE — Continued
     </Text>
-    <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.7)" }}>
+    <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
       PI No: {docId} | {branchName}
     </Text>
   </View>
@@ -415,7 +446,6 @@ const ProformaInvoiceFabricPrintFormat = ({
   fabricList,
 }) => {
   if (!data) return null;
-  console.log(data, "data");
 
   const isExport = isExportProp ?? data?.customer?.isCustomerExport ?? false;
   let currencySymbol =
@@ -446,7 +476,6 @@ const ProformaInvoiceFabricPrintFormat = ({
   const allItems = rawItems.filter(
     (i) => parseFloat(i.qty) > 0 || parseFloat(i.price) > 0,
   );
-  console.log(allItems, "allItems");
 
   // Totals
   const totalRolls = allItems?.reduce(
@@ -557,16 +586,33 @@ const ProformaInvoiceFabricPrintFormat = ({
   const deliveryPort =
     findFromList(data?.deliveryId, cityList?.data, "name") || "";
 
-  // Pagination
-  // const pageChunks = chunkItems(allItems);
-  // const renderChunks = pageChunks.length === 0 ? [[]] : pageChunks;
-  // Only chunk if items exceed page 1 capacity
+  // Smart pagination for Fabric:
+  // Each fabric item has 3 lines (~45pt height).
+  // Single-page invoice (with Header, TwoCol, Summary, Words, Bank Details, Signatures): up to 3 items.
+  // Multi-page invoice: Page 1 up to 5 items, Continuation up to 10 items, Last Page up to 4 items.
   const pageChunks = (() => {
     if (allItems.length === 0) return [[]];
+    const total = allItems.length;
+    if (total <= 3) return [allItems];
+
+    if (total <= 9) {
+      let p1Count = Math.min(5, total - 1);
+      if (total - p1Count > 4) {
+        p1Count = total - 4;
+      }
+      return [allItems.slice(0, p1Count), allItems.slice(p1Count)];
+    }
+
     const pages = [];
     let rem = [...allItems];
-    pages.push(rem.splice(0, ROWS_PAGE_1));
-    while (rem.length > 0) pages.push(rem.splice(0, ROWS_PAGE_CONT));
+    pages.push(rem.splice(0, 5));
+    while (rem.length > 4) {
+      const take = Math.min(10, rem.length - 1);
+      pages.push(rem.splice(0, take));
+    }
+    if (rem.length > 0) {
+      pages.push(rem);
+    }
     return pages;
   })();
 
@@ -620,7 +666,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </View>
                       {branch?.contactEmail ? (
                         <Text
-                          style={{ fontSize: 7.5, color: "#555", marginTop: 1 }}
+                          style={{ fontSize: 9.5, color: "#000", marginTop: 1 }}
                         >
                           {branch.contactEmail}
                           {branch?.contactMobile
@@ -640,19 +686,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                   {/* INTRO TEXT */}
                   <View
                     style={{
-                      marginHorizontal: 20,
-                      marginBottom: 6,
-                      backgroundColor: "#f9f9fb",
+                      marginHorizontal: 8,
+                      marginBottom: 5,
+                      backgroundColor: "#fff",
                       border: `1 solid ${BORDER_LIGHT}`,
                       borderRadius: 3,
-                      padding: 8,
+                      paddingVertical: 5,
+                      paddingHorizontal: 7,
                     }}
                   >
                     {isExport && (
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: DARK,
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                           marginBottom: 3,
                           letterSpacing: 0.3,
@@ -663,7 +710,11 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </Text>
                     )}
                     <Text
-                      style={{ fontSize: 7.5, color: "#555", marginBottom: 2 }}
+                      style={{
+                        fontSize: 10.5,
+                        color: "#000",
+                        marginBottom: 2,
+                      }}
                     >
                       Herewith we are giving our rate quotation for the
                       following items.If you have any questions about the rate
@@ -682,7 +733,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                           : "",
                       },
                       {
-                        label: "Payment Term",
+                        label: "Pay Term",
                         value:
                           findFromList(
                             data?.payTermId,
@@ -876,14 +927,42 @@ const ProformaInvoiceFabricPrintFormat = ({
                     colorList?.data,
                     "name",
                   );
+                  const designName = findFromList(
+                    row?.designId,
+                    designList?.data,
+                    "name",
+                  );
+                  const gaugeName = findFromList(
+                    row?.gaugeId,
+                    gaugeList?.data,
+                    "name",
+                  );
+                  const loopLengthName = findFromList(
+                    row?.loopLengthId,
+                    loopLengthList?.data,
+                    "name",
+                  );
+                  const gsm = findFromList(row?.gsmId, gsmList?.data, "name");
 
                   return (
                     <View key={globalOffset + index} style={rowStyle}>
-                      <Text
-                        style={[styles.td, { flex: 0.5, textAlign: "center" }]}
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 0.5, justifyContent: "center" },
+                        ]}
                       >
-                        {globalOffset + index + 1}
-                      </Text>
+                        <Text
+                          style={{
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "center",
+                            width: "100%",
+                          }}
+                        >
+                          {globalOffset + index + 1}
+                        </Text>
+                      </View>
                       <View
                         style={[
                           styles.td,
@@ -900,6 +979,8 @@ const ProformaInvoiceFabricPrintFormat = ({
                           style={{
                             textAlign: "left",
                             fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
                           }}
                         >
                           {findFromList(
@@ -913,62 +994,165 @@ const ProformaInvoiceFabricPrintFormat = ({
                             style={{
                               textAlign: "left",
                               marginTop: 2,
-                              color: "#444",
-                              fontSize: 7,
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
                             }}
                           >
-                            Color: {colorName}
+                            Color: {colorName} | Design : {designName}
+                          </Text>
+                        ) : null}
+                        {gaugeName ? (
+                          <Text
+                            style={{
+                              textAlign: "left",
+                              marginTop: 2,
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                            }}
+                          >
+                            Gauge: {gaugeName} | Loop Length : {loopLengthName}{" "}
+                            | Gsm : {gsm}
                           </Text>
                         ) : null}
                       </View>
 
-                      <Text
-                        style={[styles.td, { flex: 1.1, textAlign: "center" }]}
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.1, justifyContent: "center" },
+                        ]}
                       >
-                        {findFromList(row?.hsnId, hsnList?.data, "name")}
-                      </Text>
-                      <Text
-                        style={[styles.td, { flex: 1.0, textAlign: "left" }]}
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "center",
+                            width: "100%",
+                          }}
+                        >
+                          {findFromList(row?.hsnId, hsnList?.data, "name")}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
                       >
-                        {findFromList(row?.kDiaId, kDiaList, "name")}
-                      </Text>
-                      <Text
-                        style={[styles.td, { flex: 1.0, textAlign: "left" }]}
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "left",
+                            width: "100%",
+                          }}
+                        >
+                          {findFromList(row?.kDiaId, kDiaList, "name")}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
                       >
-                        {findFromList(row?.fDiaId, fDiaList, "name")}
-                      </Text>
-                      <Text
-                        style={[styles.td, { flex: 1.0, textAlign: "right" }]}
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "left",
+                            width: "100%",
+                          }}
+                        >
+                          {findFromList(row?.fDiaId, fDiaList, "name")}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
                       >
-                        {row?.numberOfRolls || ""}
-                      </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row?.numberOfRolls || ""}
+                        </Text>
+                      </View>
 
-                      <Text
-                        style={[styles.td, { flex: 1.2, textAlign: "right" }]}
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.2, justifyContent: "center" },
+                        ]}
                       >
-                        {row.qty ? parseFloat(row.qty).toFixed(3) : ""}
-                      </Text>
-                      <Text
-                        style={[styles.td, { flex: 1.4, textAlign: "right" }]}
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row.qty ? parseFloat(row.qty).toFixed(3) : ""}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.4, justifyContent: "center" },
+                        ]}
                       >
-                        {row.price
-                          ? `${currencySymbol} ${formatCurrencyAmount(row.price, currencyCode || currencySymbol)}`
-                          : ""}
-                      </Text>
-                      <Text
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row.price
+                            ? `${currencySymbol} ${formatCurrencyAmount(row.price, currencyCode || currencySymbol)}`
+                            : ""}
+                        </Text>
+                      </View>
+                      <View
                         style={[
                           styles.td,
                           {
                             flex: 1.7,
-                            textAlign: "right",
+                            justifyContent: "center",
                             borderRight: "none",
                           },
                         ]}
                       >
-                        {gross
-                          ? `${currencySymbol} ${formatCurrencyAmount(gross, currencyCode || currencySymbol)}`
-                          : ""}
-                      </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {gross
+                            ? `${currencySymbol} ${formatCurrencyAmount(gross, currencyCode || currencySymbol)}`
+                            : ""}
+                        </Text>
+                      </View>
                     </View>
                   );
                 })}
@@ -990,7 +1174,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         {
                           flex: 3.5,
                           fontFamily: "Helvetica-Bold",
-                          color: DARK,
+                          color: "#000",
                           textAlign: "right",
                         },
                       ]}
@@ -1018,7 +1202,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         {
                           flex: 1.0,
                           fontFamily: "Helvetica-Bold",
-                          color: DARK,
+                          color: "#000",
                           textAlign: "right",
                         },
                       ]}
@@ -1031,7 +1215,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         {
                           flex: 1.2,
                           fontFamily: "Helvetica-Bold",
-                          color: DARK,
+                          color: "#000",
                           textAlign: "right",
                         },
                       ]}
@@ -1044,7 +1228,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         {
                           flex: 1.4,
                           fontFamily: "Helvetica-Bold",
-                          color: DARK,
+                          color: "#000",
                           textAlign: "right",
                         },
                       ]}
@@ -1062,7 +1246,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         {
                           flex: 1.7,
                           fontFamily: "Helvetica-Bold",
-                          color: DARK,
+                          color: "#000",
                           textAlign: "right",
                           borderRight: "none",
                         },
@@ -1094,8 +1278,8 @@ const ProformaInvoiceFabricPrintFormat = ({
                           <View style={styles.sectionBody}>
                             <Text
                               style={{
-                                fontSize: 7.5,
-                                color: "#555",
+                                fontSize: 9.5,
+                                color: "#000",
                                 lineHeight: 1.5,
                               }}
                             >
@@ -1115,7 +1299,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         >
                           <Text style={styles.sectionHeader}>REMARKS</Text>
                           <View style={styles.sectionBody}>
-                            <Text style={{ fontSize: 7.5, color: "#555" }}>
+                            <Text style={{ fontSize: 9.5, color: "#000" }}>
                               {data.remarks}
                             </Text>
                           </View>
@@ -1134,7 +1318,10 @@ const ProformaInvoiceFabricPrintFormat = ({
                       }}
                     >
                       <Text
-                        style={[styles.sectionHeader, { textAlign: "center" }]}
+                        style={[
+                          styles.sectionHeader,
+                          { textAlign: "center", fontSize: 9.5 },
+                        ]}
                       >
                         SUMMARY
                       </Text>
@@ -1254,7 +1441,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         <Text
                           style={[
                             styles.summaryLabel,
-                            { color: "#ccc", fontFamily: "Helvetica-Bold" },
+                            { color: "#fff", fontFamily: "Helvetica-Bold" },
                           ]}
                         >
                           Net Amount
@@ -1262,7 +1449,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                         <Text
                           style={[
                             styles.summaryColon,
-                            { color: "#ccc", fontFamily: "Helvetica-Bold" },
+                            { color: "#fff", fontFamily: "Helvetica-Bold" },
                           ]}
                         >
                           :
@@ -1289,31 +1476,39 @@ const ProformaInvoiceFabricPrintFormat = ({
                   {/* ── BANK DETAILS ── */}
                   <View
                     style={{
-                      marginHorizontal: 20,
-                      marginTop: 8,
+                      marginHorizontal: 8,
+                      marginTop: 5,
                       border: `1 solid ${BORDER_LIGHT}`,
                       borderRadius: 3,
-                      padding: 8,
+                      padding: 5,
+                      backgroundColor: "#fff",
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 8,
+                        fontSize: 10.5,
                         fontFamily: "Helvetica-Bold",
-                        color: DARK,
+                        color: "#000",
                         marginBottom: 4,
                       }}
                     >
                       Bank Details
                     </Text>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Account Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1321,13 +1516,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Bank Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1335,13 +1537,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Account No.
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1349,13 +1558,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Branch Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1363,13 +1579,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row" }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         IFSC Code
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1378,8 +1601,8 @@ const ProformaInvoiceFabricPrintFormat = ({
                     </View>
                   </View>
 
-                  {/* Spacer to reserve space for the fixed absolute signature block at the bottom */}
-                  <View style={{ height: 80 }} />
+                  {/* Spacer to reserve clearance above signatures and page number */}
+                  <View style={{ height: 18 }} />
                 </>
               )}
 
@@ -1388,7 +1611,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                 <View
                   style={{
                     flexDirection: "row",
-                    marginHorizontal: 20,
+                    marginHorizontal: 8,
                     backgroundColor: "#f4f4f6",
                     borderLeft: `1 solid ${BORDER}`,
                     borderRight: `1 solid ${BORDER}`,
@@ -1400,7 +1623,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                       styles.td,
                       {
                         flex: isExport ? 8 : 8.7,
-                        color: "#888",
+                        color: "#000",
                         fontStyle: "italic",
                         textAlign: "right",
                       },
@@ -1414,7 +1637,7 @@ const ProformaInvoiceFabricPrintFormat = ({
                       {
                         flex: 1.2,
                         fontFamily: "Helvetica-Bold",
-                        color: DARK,
+                        color: "#000",
                         textAlign: "right",
                       },
                       isExport && { borderRight: "none" },
@@ -1433,44 +1656,23 @@ const ProformaInvoiceFabricPrintFormat = ({
               )}
             </View>
 
-            {/* SIGNATURES — pinned to the absolute bottom of the LAST page */}
-            <View
-              style={{ position: "absolute", bottom: 40, left: 20, right: 20 }}
-              fixed
-            >
+            {/* SIGNATURES — pinned cleanly above footer bar on the LAST page */}
+            <View style={styles.signaturesContainer} fixed>
               <View
                 render={({ pageNumber, totalPages }) => {
                   if (pageNumber === totalPages) {
                     return (
-                      <View>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            borderTop: `1 solid ${BORDER_LIGHT}`,
-                            paddingTop: 4,
-                          }}
-                        >
-                          {[
-                            "Prepared By",
-                            "Checked By",
-                            "Approved By",
-                            "Customer Sign",
-                          ].map((role) => (
-                            <Text
-                              key={role}
-                              style={{
-                                flex: 1,
-                                textAlign: "center",
-                                fontSize: 7.5,
-                                color: "#555",
-                                fontFamily: "Helvetica-Bold",
-                              }}
-                            >
-                              {role}
-                            </Text>
-                          ))}
-                        </View>
+                      <View style={styles.signaturesRow}>
+                        {[
+                          "Prepared By",
+                          "Checked By",
+                          "Approved By",
+                          "Customer Sign",
+                        ].map((role) => (
+                          <Text key={role} style={styles.signatureRole}>
+                            {role}
+                          </Text>
+                        ))}
                       </View>
                     );
                   }

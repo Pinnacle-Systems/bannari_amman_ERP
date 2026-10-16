@@ -18,8 +18,7 @@ import {
   buildIncludeForModule,
   createApprovalLog,
 } from "../utils/approvalHelper.js";
-import moment from "moment";
-import { itemGroup } from "../routes/index.js";
+
 const REFERENCE_PAGE = "ORDER ENTRY";
 
 async function getNextDocId(
@@ -188,16 +187,11 @@ async function get(req) {
           name: true,
         },
       },
-      _count: {
-        select: {
-          JobCard: true,
-        },
-      },
-      JobCard: {
-        include: {
-          processRoute: true,
-        },
-      },
+      // _count: {
+      //   select: {
+      //     JobCard: true,
+      //   },
+      // },
     },
     orderBy: {
       id: "desc",
@@ -284,7 +278,7 @@ async function get(req) {
 
     return {
       ...order,
-      childRecord: order._count.JobCard,
+      // childRecord: order._count.JobCard,
       approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
     };
   });
@@ -317,191 +311,6 @@ async function get(req) {
   };
 }
 
-async function getRefList(req) {
-  const { branchId, companyId, isRefDistinct } = req.query;
-
-  let data = await prisma.orderEntry.findMany({
-    where: {
-      branchId: branchId ? parseInt(branchId) : undefined,
-    },
-    select: {
-      id: true,
-      refNo: true,
-      docId: true,
-      customerId: true,
-      orderItems: {
-        select: {
-          id: true,
-          styleItemId: true,
-          jobCards: {
-            select: {
-              id: true,
-            },
-          },
-          _count: {
-            select: {
-              jobCards: true,
-            },
-          },
-        },
-      },
-    },
-    distinct: isRefDistinct === "true" ? ["refNo"] : ["docId"],
-    orderBy: {
-      refNo: "asc",
-    },
-  });
-
-  // ── only for non-distinct ref mode ─────────────────────────
-  if (isRefDistinct !== "true") {
-    const { module, hasApproval } = await getModuleApprovalSetup(
-      REFERENCE_PAGE,
-      branchId,
-    );
-
-    const orderIds = data.map((o) => o.id);
-
-    const approvalLogs = await prisma.approvalLog.findMany({
-      where: {
-        referencePage: REFERENCE_PAGE,
-        referenceId: { in: orderIds },
-      },
-      select: {
-        id: true,
-        referenceId: true,
-        status: true,
-        remarks: true,
-        currentLevel: true,
-        LevelLogs: {
-          select: {
-            action: true,
-            levelNo: true,
-            userId: true,
-            createdAt: true,
-            User: {
-              select: {
-                id: true,
-                username: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-      },
-    });
-
-    const approvalLogMap = approvalLogs.reduce((acc, log) => {
-      acc[log.referenceId] = log;
-      return acc;
-    }, {});
-
-    const activeConfigs =
-      hasApproval && module
-        ? await prisma.approvalConfig.findMany({
-            where: {
-              moduleId: module.id,
-              branchId: parseInt(branchId),
-              active: true,
-            },
-            include: {
-              ConfigConditions: {
-                include: {
-                  Field: true,
-                  Operator: true,
-                  CompareField: true,
-                },
-              },
-              approvalLevels: {
-                include: {
-                  LevelUsers: true,
-                },
-                orderBy: {
-                  levelNo: "asc",
-                },
-              },
-            },
-          })
-        : [];
-
-    data = data.map((order) => {
-      const totalItems = order.orderItems.length;
-
-      const createdItems = order.orderItems.filter(
-        (item) => item._count.jobCards > 0,
-      ).length;
-
-      let creationStatus = "NOT_CREATED";
-
-      if (totalItems > 0 && createdItems === totalItems) {
-        creationStatus = "FULLY_CREATED";
-      } else if (createdItems > 0) {
-        creationStatus = "PARTIALLY_CREATED";
-      }
-      const log = approvalLogMap[order.id] ?? null;
-
-      let shouldTrigger = false;
-
-      if (!log && hasApproval && activeConfigs.length > 0) {
-        shouldTrigger = evaluateConfigs(activeConfigs, order);
-      }
-
-      return {
-        ...order,
-        creationStatus,
-        approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
-        orderItems: order.orderItems.map((item) => ({
-          ...item,
-          childRecordCount: item._count.jobCards,
-        })),
-      };
-    });
-  }
-
-  return { statusCode: 0, data };
-}
-
-async function geOrderItemsList(req) {
-  const { orderEntryId } = req.query;
-
-  let data = await prisma.orderItems.findMany({
-    where: {
-      orderEntryId: parseInt(orderEntryId),
-    },
-    select: {
-      id: true,
-      styleItemId: true,
-      itemGroupId: true,
-      ItemGroup: {
-        select: {
-          name: true,
-        },
-      },
-      StyleItem: {
-        select: {
-          name: true,
-        },
-      },
-      _count: {
-        select: {
-          jobCards: true,
-        },
-      },
-    },
-  });
-
-  const result = data.map((item) => ({
-    id: item.styleItemId,
-    childRecord: item._count.jobCards,
-    name: item.StyleItem?.name || "",
-    itemGroupId: item.itemGroupId,
-    itemGroupName: item.ItemGroup?.name,
-  }));
-
-  return { statusCode: 0, data: result };
-}
-
 async function getOne(id) {
   const data = await prisma.orderEntry.findUnique({
     where: {
@@ -509,35 +318,7 @@ async function getOne(id) {
     },
     include: {
       attachments: true,
-      orderItems: {
-        include: {
-          OrderStyleBreakup: {
-            include: {
-              OrderSizeBreakup: true,
-            },
-          },
-          ItemGroup: {
-            select: {
-              name: true,
-            },
-          },
-          Hsn: {
-            select: {
-              name: true,
-            },
-          },
-          jobCards: {
-            include: {
-              processRoute: true,
-            },
-          },
-          _count: {
-            select: {
-              jobCards: true,
-            },
-          },
-        },
-      },
+
       Branch: {
         select: {
           branchName: true,
@@ -553,16 +334,25 @@ async function getOne(id) {
           Branch: true,
         },
       },
-      JobCard: {
-        include: {
-          processRoute: true,
-        },
-      },
-      _count: {
+      ProformaFabric: {
         select: {
-          JobCard: true,
+          id: true,
+          docId: true,
         },
       },
+      ProformaYarn: {
+        select: {
+          id: true,
+          docId: true,
+        },
+      },
+      orderYarnItems: true,
+      orderFabricItems: true,
+      // _count: {
+      //   select: {
+      //     JobCard: true,
+      //   },
+      // },
     },
   });
 
@@ -620,21 +410,9 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      orderItems: data.orderItems.map((item) => ({
-        ...item,
-        styleBreakup:
-          item.OrderStyleBreakup?.length > 0
-            ? item.OrderStyleBreakup.map((style) => ({
-                ...style,
-                sizeBreakup: style.OrderSizeBreakup,
-              }))
-            : [],
-        OrderStyleBreakup: undefined,
-        childRecord: item._count.jobCards,
-        _count: undefined,
-      })),
+
       approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
-      childRecord: data._count.JobCard,
+      // childRecord: data._count.JobCard,
       approvalLog: log,
     },
   };
@@ -644,36 +422,34 @@ async function create(body) {
   const {
     userId,
     branchId,
+    finYearId,
+    companyId,
     docDate,
     customerId,
     orderType,
-    deliveryDate,
-    remarks,
-    requirements,
-    finYearId,
-    orderQty,
-    attachments,
-    draftSave,
-    termsAndCondition,
-    termsId,
-    orderItems,
-    productionType,
-    proFormaId,
-    refNo,
-    isRepeatedPI,
-    validDays,
+    orderGridType,
+    proFormaFabricId,
+    proFormaYarnId,
     taxTemplateId,
-    discountType,
-    discountValue,
-    conversionType,
     payTermId,
-    bankId,
     currencyId,
-    weightInKg,
-    carriageCharge,
     loadingId,
     deliveryId,
+    deliveryDate,
+    carriageCharge,
     carriageTax,
+    bankId,
+    orderFabricItems,
+    orderYarnItems,
+    termsAndCondition,
+    termsId,
+    remarks,
+    requirements,
+    discountType,
+    discountValue,
+    attachments,
+    draftSave,
+    customerPoNo,
   } = await body;
   let finYearDate = await getFinYearStartTimeEndTime(finYearId);
   const shortCode = finYearDate
@@ -695,76 +471,67 @@ async function create(body) {
     branchId,
   );
   let data;
-  // const safeorderQty =
-  //   orderQty && !isNaN(Number(orderQty)) ? parseFloat(orderQty) : null;
-  const parsedOrderItems =
-    typeof orderItems === "string" ? JSON.parse(orderItems) : orderItems;
-  const safeOrderItems =
-    parsedOrderItems?.length > 0
-      ? parsedOrderItems.map((item) => ({
-          styleItemId: item?.styleItemId ? parseInt(item.styleItemId) : null,
-          itemGroupId: item?.itemGroupId ? parseInt(item.itemGroupId) : null,
-          itemSubGroupId: item?.itemSubGroupId
-            ? parseInt(item?.itemSubGroupId)
+
+  const parsedFabricItems =
+    typeof orderFabricItems === "string"
+      ? JSON.parse(orderFabricItems)
+      : orderFabricItems;
+  const parsedyarnItems =
+    typeof orderYarnItems === "string"
+      ? JSON.parse(orderYarnItems)
+      : orderYarnItems;
+  const safeFabricItems =
+    parsedFabricItems?.length > 0
+      ? parsedFabricItems.map((item) => ({
+          fabricId: item.fabricId ? parseInt(item.fabricId) : null,
+          hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+          colorId: item.colorId ? parseInt(item.colorId) : null,
+          designId: item.designId ? parseInt(item.designId) : null,
+          gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+          loopLengthId: item.loopLengthId ? parseInt(item.loopLengthId) : null,
+          gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+          kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+          fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+          uomId: item.uomId ? parseInt(item.uomId) : null,
+          width: item.width || null,
+          numberOfRolls: item.numberOfRolls
+            ? parseFloat(item.numberOfRolls)
             : null,
-          labelWidth: item?.labelWidth ?? "",
-          trackingType: item?.trackingType,
-          price: item?.price ? parseFloat(item.price) : null,
-          amount: item?.amount ? parseFloat(item.amount) : null,
-          dozen: item?.dozen ? parseFloat(item.dozen) : null,
-          taxPercent:
-            item?.taxPercent && !isNaN(Number(item.taxPercent))
-              ? parseFloat(item.taxPercent)
-              : null,
-          discountType: item?.discountType || null,
-          discountValue:
-            item?.discountValue && !isNaN(Number(item.discountValue))
-              ? parseFloat(item.discountValue)
-              : null,
-          orderQty:
-            item?.orderQty && !isNaN(Number(item.orderQty))
-              ? parseInt(item.orderQty)
-              : null,
-          uomId: item?.uomId ? parseInt(item.uomId) : null,
-          hsnId: item?.hsnId ? parseInt(item.hsnId) : null,
-          sizeTemplateId: item?.sizeTemplateId
-            ? parseInt(item.sizeTemplateId)
+          weightPerRoll: item.weightPerRoll
+            ? parseFloat(item.weightPerRoll)
             : null,
-          OrderStyleBreakup:
-            item?.styleBreakup?.length > 0
-              ? {
-                  create: item.styleBreakup.map((style) => ({
-                    styleId: style.styleId ? parseInt(style.styleId) : null,
-                    OrderSizeBreakup:
-                      style.sizeBreakup?.length > 0
-                        ? {
-                            create: style.sizeBreakup.map((s) => ({
-                              sizeId: s.sizeId ? parseInt(s.sizeId) : null,
-                              qty: s.qty ? parseInt(s.qty) : null,
-                              barcodeFrom: s.barcodeFrom,
-                              barcodeTo: s.barcodeTo,
-                            })),
-                          }
-                        : undefined,
-                  })),
-                }
-              : undefined,
-          // sizeId: item?.sizeId ? parseInt(item.sizeId) : null,
+          totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+          pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+          totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
+          qty: parseFloat(item.qty || 0),
+          price: parseFloat(item.price || 0),
+          amount: item.amount ? parseFloat(item.amount) : null,
+          taxPercent: parseFloat(item.taxPercent || 0),
+          discountType: item.discountType,
+          discountValue: parseFloat(item.discountValue || 0),
         }))
       : [];
-  let finalRefNo = refNo || null;
-  if (productionType === "SAMPLE" && newDocId) {
-    const parts = newDocId.split("/");
-    // ["MP", "26-27", "ORD", "1"]
 
-    if (parts.length >= 4) {
-      const finYear = parts[1]; // 26-27
-      const number = parts[3]; // 1
+  const safeYarnItems =
+    parsedyarnItems?.length > 0
+      ? parsedyarnItems.map((item) => ({
+          yarnId: item.yarnId ? parseInt(item.yarnId) : null,
+          hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+          colorId: item.colorId ? parseInt(item.colorId) : null,
 
-      finalRefNo = `${finYear}/SAM/${number}`;
-    }
-  }
-  const validTo = moment(docDate).add(validDays, "days").endOf("day").toDate();
+          uomId: item.uomId ? parseInt(item.uomId) : null,
+          noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
+
+          weightPerBag: parseFloat(item.weightPerBag || 0),
+          qty: parseFloat(item.qty || 0),
+          price: parseFloat(item.price || 0),
+          amount: item.amount ? parseFloat(item.amount) : null,
+          taxPercent: parseFloat(item.taxPercent || 0),
+          discountType: item.discountType,
+          discountValue: parseFloat(item.discountValue || 0),
+        }))
+      : [];
+
   await prisma.$transaction(async (tx) => {
     data = await tx.orderEntry.create({
       data: {
@@ -772,36 +539,55 @@ async function create(body) {
         docDate: docDate ? new Date(docDate) : null,
         createdById: parseInt(userId),
         branchId: parseInt(branchId),
-        customerId: parseInt(customerId),
+        companyId: companyId ? parseInt(companyId) : null,
+        finYearId: finYearId ? parseInt(finYearId) : null,
+        customerId: customerId ? parseInt(customerId) : null,
         orderType,
-        productionType,
+        orderGridType,
+        proFormaFabricId: proFormaFabricId ? parseInt(proFormaFabricId) : null,
+        proFormaYarnId: proFormaYarnId ? parseInt(proFormaYarnId) : null,
+        taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
+        discountType: discountType || null,
+        discountValue: discountValue ? parseFloat(discountValue) : null,
+        payTermId: payTermId ? parseInt(payTermId) : null,
+        bankId: bankId ? parseInt(bankId) : null,
+        currencyId: currencyId ? parseInt(currencyId) : null,
+        loadingId: loadingId ? parseInt(loadingId) : null,
+        deliveryId: deliveryId ? parseInt(deliveryId) : null,
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
+        carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
+        carriageTax: carriageTax ? parseFloat(carriageTax) : null,
+        customerPoNo: customerPoNo || null,
+        termsAndCondition,
+        termsId: termsId ? parseInt(termsId) : null,
         remarks,
         requirements,
         termsId: termsId ? parseInt(termsId) : null,
         termsAndCondition,
-        proFormaId: proFormaId ? parseInt(proFormaId) : null,
-        isRepeatedPI: isRepeatedPI === true || isRepeatedPI === "true",
-        refNo: finalRefNo ?? "",
-        validDays: validDays ? parseInt(validDays) : null,
-        validTo: validTo,
+
         taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
         discountType: discountType || null,
         discountValue: discountValue ? parseFloat(discountValue) : null,
-        conversionType: conversionType || null,
+
         payTermId: payTermId ? parseInt(payTermId) : null,
         bankId: bankId ? parseInt(bankId) : null,
         currencyId: currencyId ? parseInt(currencyId) : null,
-        weightInKg: weightInKg ? parseFloat(weightInKg) : null,
+
         carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         loadingId: loadingId ? parseInt(loadingId) : null,
         deliveryId: deliveryId ? parseInt(deliveryId) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
 
-        orderItems:
-          safeOrderItems.length > 0
+        orderYarnItems:
+          safeYarnItems.length > 0
             ? {
-                create: safeOrderItems,
+                create: safeYarnItems,
+              }
+            : undefined,
+        orderFabricItems:
+          safeFabricItems.length > 0
+            ? {
+                create: safeFabricItems,
               }
             : undefined,
         attachments:
@@ -848,49 +634,57 @@ async function update(id, body, files) {
   const {
     userId,
     branchId,
-    docDate,
     customerId,
     orderType,
-    deliveryDate,
-    remarks,
-    requirements,
-    orderQty,
-    attachments,
-    termsId,
-    termsAndCondition,
-    orderItems,
-    submitApproval,
-    productionType,
-    proFormaId,
-    refNo,
-    isRepeatedPI,
-    validDays,
+    orderGridType,
+    proFormaFabricId,
+    proFormaYarnId,
     taxTemplateId,
-    discountType,
-    discountValue,
-    conversionType,
     payTermId,
-    bankId,
     currencyId,
-    weightInKg,
-    carriageCharge,
     loadingId,
     deliveryId,
+    deliveryDate,
+    carriageCharge,
     carriageTax,
+    bankId,
+    orderFabricItems,
+    orderYarnItems,
+    termsAndCondition,
+    termsId,
+    remarks,
+    requirements,
+    discountType,
+    discountValue,
+    attachments,
+    customerPoNo,
+    submitApproval,
   } = await body;
 
-  const safeorderQty =
-    orderQty && !isNaN(Number(orderQty)) ? parseFloat(orderQty) : null;
-
-  const parseAttachments = JSON.parse(attachments || "[]");
+  const parseAttachments =
+    typeof attachments === "string"
+      ? JSON.parse(attachments || "[]")
+      : attachments || [];
   const incomingIds = parseAttachments
     ?.filter((i) => i.id)
     .map((i) => parseInt(i.id));
 
-  const parsedItems = JSON.parse(orderItems || "[]");
-  const incomingItemIds = parsedItems
+  const parsedFabricItems =
+    typeof orderFabricItems === "string"
+      ? JSON.parse(orderFabricItems || "[]")
+      : orderFabricItems || [];
+  const incomingFabricItemIds = parsedFabricItems
     ?.filter((i) => i.id)
     .map((i) => parseInt(i.id));
+
+  const parsedYarnItems =
+    typeof orderYarnItems === "string"
+      ? JSON.parse(orderYarnItems || "[]")
+      : orderYarnItems || [];
+  const incomingYarnItemIds = parsedYarnItems
+    ?.filter((i) => i.id)
+    .map((i) => parseInt(i.id));
+
   const { module, hasApproval } = await getModuleApprovalSetup(
     REFERENCE_PAGE,
     branchId,
@@ -902,13 +696,20 @@ async function update(id, body, files) {
     },
     include: {
       attachments: { select: { id: true, filePath: true } },
-      orderItems: true,
+      orderFabricItems: true,
+      orderYarnItems: true,
     },
   });
-  if (!dataFound) return NoRecordFound("Purchase Inward");
-  const removedItemIds = dataFound.orderItems
-    .filter((item) => !incomingItemIds.includes(item.id))
+  if (!dataFound) return NoRecordFound("Order Entry");
+
+  const removedFabricItemIds = (dataFound.orderFabricItems || [])
+    .filter((item) => !incomingFabricItemIds.includes(item.id))
     .map((item) => item.id);
+  const removedYarnItemIds = (dataFound.orderYarnItems || [])
+    .filter((item) => !incomingYarnItemIds.includes(item.id))
+    .map((item) => item.id);
+  const allRemovedItemIds = [...removedFabricItemIds, ...removedYarnItemIds];
+
   const removedAttachments = dataFound.attachments.filter(
     (existing) => !incomingIds.includes(existing.id),
   );
@@ -941,178 +742,166 @@ async function update(id, body, files) {
 
   // Delete old files for attachments where file was replaced
   updatedAttachmentsWithNewFile.forEach((att) => unlinkFile(att.filePath));
-  let finalRefNo = refNo || null;
-  if (productionType === "SAMPLE" && dataFound.docId) {
-    const parts = dataFound.docId.split("/");
-    if (parts.length >= 4) {
-      const finYear = parts[1];
-      const number = parts[3];
 
-      finalRefNo = `${finYear}/SAM/${number}`;
-    }
-  }
-  const validTo = moment(docDate).add(validDays, "days").endOf("day").toDate();
   await prisma.$transaction(async (tx) => {
-    await tx.notification.deleteMany({
-      where: {
-        referencePage: REFERENCE_PAGE,
-        referenceId: {
-          in: removedItemIds,
+    if (allRemovedItemIds.length > 0) {
+      await tx.notification.deleteMany({
+        where: {
+          referencePage: REFERENCE_PAGE,
+          referenceId: {
+            in: allRemovedItemIds,
+          },
         },
-      },
-    });
+      });
+    }
+
     data = await tx.orderEntry.update({
       where: {
         id: parseInt(id),
       },
       data: {
-        docDate: docDate ? new Date(docDate) : null,
         updatedById: parseInt(userId),
-        branchId: parseInt(branchId),
-        customerId: parseInt(customerId),
+
+        customerId: customerId ? parseInt(customerId) : null,
         orderType,
-        productionType,
-        deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
-        remarks,
-        requirements,
-        orderQty: safeorderQty,
-        termsAndCondition,
-        termsId: termsId ? parseInt(termsId) : null,
-        proFormaId: proFormaId ? parseInt(proFormaId) : null,
-        isRepeatedPI: isRepeatedPI === true || isRepeatedPI === "true",
-        refNo: finalRefNo ?? "",
-        validDays: validDays ? parseInt(validDays) : null,
-        validTo: validTo,
+        orderGridType,
+        proFormaFabricId: proFormaFabricId ? parseInt(proFormaFabricId) : null,
+        proFormaYarnId: proFormaYarnId ? parseInt(proFormaYarnId) : null,
         taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
         discountType: discountType || null,
         discountValue: discountValue ? parseFloat(discountValue) : null,
-        conversionType: conversionType || null,
         payTermId: payTermId ? parseInt(payTermId) : null,
         bankId: bankId ? parseInt(bankId) : null,
         currencyId: currencyId ? parseInt(currencyId) : null,
-        weightInKg: weightInKg ? parseFloat(weightInKg) : null,
-        carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         loadingId: loadingId ? parseInt(loadingId) : null,
         deliveryId: deliveryId ? parseInt(deliveryId) : null,
+        deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
+        carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
+        customerPoNo: customerPoNo || null,
+        termsAndCondition,
+        termsId: termsId ? parseInt(termsId) : null,
+        remarks,
+        requirements,
 
-        orderItems: {
-          deleteMany: incomingItemIds.length
-            ? { id: { notIn: incomingItemIds } }
-            : {}, // delete all if no items sent
-          update: parsedItems
+        orderFabricItems: {
+          deleteMany: incomingFabricItemIds.length
+            ? { id: { notIn: incomingFabricItemIds } }
+            : {},
+          update: parsedFabricItems
             .filter((item) => item.id)
             .map((item) => ({
               where: { id: parseInt(item.id) },
               data: {
-                styleItemId: item.styleItemId
-                  ? parseInt(item.styleItemId)
-                  : null,
-                itemGroupId: item.itemGroupId
-                  ? parseInt(item.itemGroupId)
-                  : null,
-                itemSubGroupId: item?.itemSubGroupId
-                  ? parseInt(item?.itemSubGroupId)
-                  : null,
-                labelWidth: item?.labelWidth ?? "",
-                trackingType: item.trackingType,
-                price: item?.price ? parseFloat(item.price) : null,
-                amount: item?.amount ? parseFloat(item.amount) : null,
-                dozen: item?.dozen ? parseFloat(item.dozen) : null,
-                taxPercent:
-                  item?.taxPercent && !isNaN(Number(item.taxPercent))
-                    ? parseFloat(item.taxPercent)
-                    : null,
-                discountType: item?.discountType || null,
-                discountValue:
-                  item?.discountValue && !isNaN(Number(item.discountValue))
-                    ? parseFloat(item.discountValue)
-                    : null,
-                sizeTemplateId: item.sizeTemplateId
-                  ? parseInt(item.sizeTemplateId)
-                  : null,
+                fabricId: item.fabricId ? parseInt(item.fabricId) : null,
                 hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-
-                orderQty: item.orderQty ? parseInt(item.orderQty) : null,
-                sizeId: item.sizeId ? parseInt(item.sizeId) : null,
-                uomId: item.uomId ? parseInt(item.uomId) : null,
+                colorId: item.colorId ? parseInt(item.colorId) : null,
+                designId: item.designId ? parseInt(item.designId) : null,
+                gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+                loopLengthId: item.loopLengthId
+                  ? parseInt(item.loopLengthId)
+                  : null,
                 gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-                OrderStyleBreakup: {
-                  deleteMany: {},
-                  create:
-                    item.styleBreakup?.length > 0
-                      ? item.styleBreakup.map((st) => ({
-                          styleId: st.styleId ? parseInt(st.styleId) : null,
-                          OrderSizeBreakup:
-                            st.sizeBreakup?.length > 0
-                              ? {
-                                  create: st.sizeBreakup.map((s) => ({
-                                    sizeId: s.sizeId
-                                      ? parseInt(s.sizeId)
-                                      : null,
-                                    qty: s.qty ? parseInt(s.qty) : null,
-                                    barcodeFrom: s.barcodeFrom,
-                                    barcodeTo: s.barcodeTo,
-                                  })),
-                                }
-                              : undefined,
-                        }))
-                      : [],
-                },
+                kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+                fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+                uomId: item.uomId ? parseInt(item.uomId) : null,
+                width: item.width || null,
+                numberOfRolls: item.numberOfRolls
+                  ? parseFloat(item.numberOfRolls)
+                  : null,
+                weightPerRoll: item.weightPerRoll
+                  ? parseFloat(item.weightPerRoll)
+                  : null,
+                totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+                pricePerKg: item.pricePerKg
+                  ? parseFloat(item.pricePerKg)
+                  : null,
+                totalPrice: item.totalPrice
+                  ? parseFloat(item.totalPrice)
+                  : null,
+                qty: parseFloat(item.qty || 0),
+                price: parseFloat(item.price || 0),
+                amount: item.amount ? parseFloat(item.amount) : null,
+                taxPercent: parseFloat(item.taxPercent || 0),
+                discountType: item.discountType || null,
+                discountValue: parseFloat(item.discountValue || 0),
               },
             })),
-
-          create: parsedItems
+          create: parsedFabricItems
             .filter((item) => !item.id)
             .map((item) => ({
-              styleItemId: item.styleItemId ? parseInt(item.styleItemId) : null,
-              itemGroupId: item.itemGroupId ? parseInt(item.itemGroupId) : null,
-              itemSubGroupId: item?.itemSubGroupId
-                ? parseInt(item?.itemSubGroupId)
-                : null,
-              labelWidth: item?.labelWidth ?? "",
-              trackingType: item.trackingType,
-              price: item?.price ? parseFloat(item.price) : null,
-              amount: item?.amount ? parseFloat(item.amount) : null,
-              dozen: item?.dozen ? parseFloat(item.dozen) : null,
-              taxPercent:
-                item?.taxPercent && !isNaN(Number(item.taxPercent))
-                  ? parseFloat(item.taxPercent)
-                  : null,
-              discountType: item?.discountType || null,
-              discountValue:
-                item?.discountValue && !isNaN(Number(item.discountValue))
-                  ? parseFloat(item.discountValue)
-                  : null,
-              sizeTemplateId: item.sizeTemplateId
-                ? parseInt(item.sizeTemplateId)
-                : null,
+              fabricId: item.fabricId ? parseInt(item.fabricId) : null,
               hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-              orderQty: item.orderQty ? parseInt(item.orderQty) : null,
-              sizeId: item.sizeId ? parseInt(item.sizeId) : null,
-              uomId: item.uomId ? parseInt(item.uomId) : null,
+              colorId: item.colorId ? parseInt(item.colorId) : null,
+              designId: item.designId ? parseInt(item.designId) : null,
+              gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+              loopLengthId: item.loopLengthId
+                ? parseInt(item.loopLengthId)
+                : null,
               gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-              OrderStyleBreakup:
-                item.styleBreakup?.length > 0
-                  ? {
-                      create: item.styleBreakup.map((st) => ({
-                        styleId: st.styleId ? parseInt(st.styleId) : null,
-                        OrderSizeBreakup:
-                          st.sizeBreakup?.length > 0
-                            ? {
-                                create: st.sizeBreakup.map((s) => ({
-                                  sizeId: s.sizeId ? parseInt(s.sizeId) : null,
-                                  qty: s.qty ? parseInt(s.qty) : null,
-                                  barcodeFrom: s.barcodeFrom,
-                                  barcodeTo: s.barcodeTo,
-                                })),
-                              }
-                            : undefined,
-                      })),
-                    }
-                  : undefined,
+              kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+              fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+              uomId: item.uomId ? parseInt(item.uomId) : null,
+              width: item.width || null,
+              numberOfRolls: item.numberOfRolls
+                ? parseFloat(item.numberOfRolls)
+                : null,
+              weightPerRoll: item.weightPerRoll
+                ? parseFloat(item.weightPerRoll)
+                : null,
+              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+              pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
+              qty: parseFloat(item.qty || 0),
+              price: parseFloat(item.price || 0),
+              amount: item.amount ? parseFloat(item.amount) : null,
+              taxPercent: parseFloat(item.taxPercent || 0),
+              discountType: item.discountType || null,
+              discountValue: parseFloat(item.discountValue || 0),
             })),
         },
+
+        orderYarnItems: {
+          deleteMany: incomingYarnItemIds.length
+            ? { id: { notIn: incomingYarnItemIds } }
+            : {},
+          update: parsedYarnItems
+            .filter((item) => item.id)
+            .map((item) => ({
+              where: { id: parseInt(item.id) },
+              data: {
+                yarnId: item.yarnId ? parseInt(item.yarnId) : null,
+                hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+                colorId: item.colorId ? parseInt(item.colorId) : null,
+                uomId: item.uomId ? parseInt(item.uomId) : null,
+                noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
+                weightPerBag: parseFloat(item.weightPerBag || 0),
+                qty: parseFloat(item.qty || 0),
+                price: parseFloat(item.price || 0),
+                amount: item.amount ? parseFloat(item.amount) : null,
+                taxPercent: parseFloat(item.taxPercent || 0),
+                discountType: item.discountType || null,
+                discountValue: parseFloat(item.discountValue || 0),
+              },
+            })),
+          create: parsedYarnItems
+            .filter((item) => !item.id)
+            .map((item) => ({
+              yarnId: item.yarnId ? parseInt(item.yarnId) : null,
+              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+              colorId: item.colorId ? parseInt(item.colorId) : null,
+              uomId: item.uomId ? parseInt(item.uomId) : null,
+              noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
+              weightPerBag: parseFloat(item.weightPerBag || 0),
+              qty: parseFloat(item.qty || 0),
+              price: parseFloat(item.price || 0),
+              amount: item.amount ? parseFloat(item.amount) : null,
+              taxPercent: parseFloat(item.taxPercent || 0),
+              discountType: item.discountType || null,
+              discountValue: parseFloat(item.discountValue || 0),
+            })),
+        },
+
         attachments: {
           deleteMany: {
             ...(incomingIds.length > 0 && {
@@ -1194,10 +983,17 @@ async function remove(id) {
     include: {
       attachments: { select: { filePath: true } },
       orderItems: { select: { id: true } },
+      orderFabricItems: { select: { id: true } },
+      orderYarnItems: { select: { id: true } },
     },
   });
+  const allItemIds = [
+    ...(dataFound?.orderItems || []),
+    ...(dataFound?.orderFabricItems || []),
+    ...(dataFound?.orderYarnItems || []),
+  ];
   await Promise.all(
-    dataFound.orderItems.map((item) =>
+    allItemIds.map((item) =>
       prisma.notification.deleteMany({
         where: {
           referenceId: item.id,
@@ -1241,28 +1037,7 @@ async function getOrderEntryReport(req) {
     include: {
       customer: { select: { name: true } },
       Branch: { select: { branchName: true } },
-      JobCard: {
-        select: {
-          docId: true,
-          docDate: true,
-          runningQty: true,
-          orderQty: true,
-          rollQty: true,
-          styleItemId: true,
-          StyleItem: { select: { name: true } },
-          processRoute: {
-            orderBy: { sequence: "asc" },
-            select: {
-              sequence: true,
-              isFront: true,
-              isFrontAndBack: true,
-              status: true,
-              completedQty: true,
-              Process: { select: { name: true, isOutsideJob: true } },
-            },
-          },
-        },
-      },
+
       SalesOrder: {
         select: {
           docId: true,
@@ -1342,13 +1117,4 @@ async function getOrderEntryReport(req) {
   };
 }
 
-export {
-  get,
-  getOne,
-  create,
-  update,
-  remove,
-  getRefList,
-  geOrderItemsList,
-  getOrderEntryReport,
-};
+export { get, getOne, create, update, remove, getOrderEntryReport };

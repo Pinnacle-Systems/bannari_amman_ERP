@@ -6,67 +6,66 @@ import {
   Image,
   StyleSheet,
 } from "@react-pdf/renderer";
-import Logo from "../../../assets/mplogo.png";
+import Logo from "../../../assets/bannarispintexlogo.jpeg";
 import moment from "moment";
 import { findFromList, formatCurrencyAmount } from "../../../Utils/helper";
 import { numberToWords } from "number-to-words";
-const BORDER_LIGHT = "#ddd";
-const LIGHT_BG = "#fafafa";
+
+// ─── COLOR PALETTE ────────────────────────────────────────────────────────────
 const DARK = "#1a1a2e";
 const DARK2 = "#2d2d44";
-// ─── COLOR PALETTE ────────────────────────────────────────────────────────────
+const LIGHT_BG = "#fafafa";
+const BORDER = "#000";
+const BORDER_LIGHT = "#000";
+const BORDER_ROW = "#000";
+
 const styles = StyleSheet.create({
-  borderBox: { border: "1 solid #ccc", margin: 0, padding: 0 },
+  borderBox: { border: `1 solid #000`, margin: 0, padding: 0 },
   page: {
     fontFamily: "Helvetica",
-    fontSize: 8,
+    fontSize: 10,
     padding: 0,
-    paddingBottom: 60,
+    paddingBottom: 42,
     backgroundColor: "#fff",
   },
 
   // ── TOP ACCENT BAR ──
-  topBar: { height: 4, backgroundColor: "#1a1a2e" },
+  topBar: { height: 4, backgroundColor: DARK },
 
   // ── HEADER ──
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 10,
-    borderBottom: "1.5 solid #1a1a2e",
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 5,
+    borderBottom: `1.5 solid ${DARK}`,
   },
-  logo: { height: 52, width: 52 },
-  companyLeft: { width: 140, alignItems: "flex-start" },
+  logo: { height: 44, width: 44 },
   companyCenter: { alignItems: "center", flex: 1 },
   companyName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a2e",
+    fontSize: 19,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
     letterSpacing: 0.5,
   },
-  companyRight: { width: 140, alignItems: "flex-start" },
-  companyRightRow: { flexDirection: "row", marginBottom: 2, width: "100%" },
-  companyLabel: { fontSize: 7.5, color: "#888", width: 38 },
-  companyColon: { fontSize: 7.5, color: "#888", width: 8 },
-  companyValue: {
-    fontSize: 7.5,
-    color: "#1a1a2e",
-    fontWeight: "bold",
-    flex: 1,
+  companyAddress: {
+    fontSize: 9.5,
+    color: "#000",
+    textAlign: "center",
+    marginTop: 2,
   },
 
   titleBand: {
-    backgroundColor: "#1a1a2e",
+    backgroundColor: DARK,
     color: "#fff",
     textAlign: "center",
-    fontSize: 13,
-    fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "Helvetica-Bold",
     letterSpacing: 3,
-    paddingVertical: 6,
-    marginBottom: 10,
+    paddingVertical: 4,
+    marginBottom: 5,
   },
 
   // ── META PILLS ──
@@ -74,62 +73,63 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
     paddingTop: 4,
-    paddingBottom: 6,
-    gap: 6,
+    paddingBottom: 5,
+    gap: 4,
+    rowGap: 4,
   },
   metaPill: {
     flexDirection: "row",
     backgroundColor: "#f4f4f6",
-    border: "1 solid #ddd",
-    borderLeft: "2 solid #1a1a2e",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    border: `1 solid ${BORDER_LIGHT}`,
+    borderLeft: `2 solid ${DARK}`,
+    paddingHorizontal: 5,
+    paddingVertical: 2.5,
     borderRadius: 2,
-    marginBottom: 4,
   },
-  metaLabel: { fontSize: 7.5, color: "#888", marginRight: 3 },
-  metaValue: { fontSize: 7.5, fontWeight: "bold", color: "#1a1a2e" },
+  metaLabel: { fontSize: 9.5, color: "#000", marginRight: 2 },
+  metaValue: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: "#000" },
 
   // ── FROM / TO SECTION ──
   twoCol: {
     flexDirection: "row",
-    marginHorizontal: 20,
-    marginBottom: 10,
-    border: "1 solid #ddd",
+    marginHorizontal: 8,
+    marginBottom: 5,
+    border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
   },
   colHalf: { flex: 1 },
   sectionHeader: {
-    backgroundColor: "#2d2d44",
+    backgroundColor: DARK2,
     color: "#e8e8f0",
-    fontSize: 7.5,
-    fontWeight: "bold",
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
     letterSpacing: 1,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 3.5,
   },
-  sectionBody: { padding: 8 },
+  sectionBody: { padding: 5 },
   partyName: {
-    fontSize: 9,
-    fontWeight: "bold",
-    color: "#1a1a2e",
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
     marginBottom: 3,
   },
   partyAddr: {
-    fontSize: 7.5,
-    color: "#555",
+    fontSize: 9.5,
+    color: "#000",
     textTransform: "uppercase",
     marginBottom: 4,
     lineHeight: 1.5,
   },
-  partyRow: { flexDirection: "row", marginBottom: 1.5 },
-  partyLabel: { fontSize: 7.5, color: "#888", width: 58 },
-  partyValue: { fontSize: 7.5, color: "#222", fontWeight: "bold" },
+  partyRow: { flexDirection: "row", marginBottom: 2 },
+  partyLabel: { fontSize: 9.5, color: "#000", width: 84 },
+  partyValue: { fontSize: 9.5, color: "#000", fontFamily: "Helvetica-Bold" },
+
   // ── EXPORT DETAILS GRID ──
   exportGrid: {
-    marginHorizontal: 20,
+    marginHorizontal: 8,
     marginBottom: 8,
     border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
@@ -138,187 +138,214 @@ const styles = StyleSheet.create({
   },
   exportCol: { flex: 1, padding: 8, borderRight: `1 solid ${BORDER_LIGHT}` },
   exportItem: { flexDirection: "row", marginBottom: 4 },
-  exportLabel: { fontSize: 7.5, color: "#888", width: 88 },
+  exportLabel: { fontSize: 9.5, color: "#000", width: 98 },
   exportValue: {
-    fontSize: 7.5,
-    color: DARK,
+    fontSize: 9.5,
+    color: "#000",
     fontFamily: "Helvetica-Bold",
     flex: 1,
   },
 
-  // ── ORDER DETAILS BOX ──
-  detailsGrid: {
-    marginHorizontal: 20,
-    marginBottom: 10,
-    border: "1 solid #ddd",
-    borderRadius: 3,
-    flexDirection: "row",
-    backgroundColor: "#fafafa",
-  },
-  detailsCol: { flex: 1, padding: 8, borderRight: "1 solid #ddd" },
-  detailsItem: { flexDirection: "row", marginBottom: 4 },
-  detailsLabel: { fontSize: 7.5, color: "#888", width: 80 },
-  detailsValue: { fontSize: 7.5, color: "#1a1a2e", fontWeight: "bold" },
-
   // ── TABLE ──
-  tableWrap: { marginHorizontal: 20, border: "1 solid #b0b0b8" },
-  tableHeader: { flexDirection: "row", backgroundColor: "#1a1a2e" },
+  tableWrap: { marginHorizontal: 8, border: `1 solid ${BORDER}` },
+  tableHeader: { flexDirection: "row", backgroundColor: DARK },
   th: {
-    fontSize: 7.5,
-    fontWeight: "bold",
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
     color: "#fff",
     textAlign: "center",
-    borderRight: "1 solid #4a4a60",
-    paddingVertical: 5,
+    borderRight: `1 solid #4a4a60`,
+    paddingVertical: 4,
     paddingHorizontal: 3,
   },
   trOdd: {
     flexDirection: "row",
-    borderBottom: "1 solid #c8c8d0",
+    borderBottom: `1 solid ${BORDER_ROW}`,
     backgroundColor: "#fff",
   },
   trEven: {
     flexDirection: "row",
-    borderBottom: "1 solid #c8c8d0",
-    backgroundColor: "#fafafa",
+    borderBottom: `1 solid ${BORDER_ROW}`,
+    backgroundColor: LIGHT_BG,
   },
   td: {
-    fontSize: 7.5,
-    color: "#333",
+    fontSize: 10.5,
+    color: "#000",
     textAlign: "center",
-    borderRight: "1 solid #c8c8d0",
-    paddingVertical: 4,
+    borderRight: `1 solid ${BORDER_ROW}`,
+    paddingVertical: 3,
     paddingHorizontal: 3,
   },
 
-  // ── REQUIREMENTS SECTION ──
-  requirementsBox: {
-    marginHorizontal: 20,
-    marginBottom: 10,
-    border: "1 solid #ddd",
-    borderRadius: 3,
-  },
-  requirementsBody: {
-    padding: 10,
-    fontSize: 8,
-    lineHeight: 1.5,
-    color: "#333",
-    minHeight: 40,
+  // ── TOTALS ROW ──
+  totalRow: {
+    flexDirection: "row",
+    marginHorizontal: 8,
+    backgroundColor: "#e8e8ec",
+    borderLeft: `1 solid ${BORDER}`,
+    borderRight: `1 solid ${BORDER}`,
+    borderBottom: `1 solid ${BORDER}`,
   },
 
-  // ── FOOTER BAR ──
-  footerBar: {
+  // ── BANK + SUMMARY ──
+  bankSummaryRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    position: "absolute",
-    bottom: 10,
-    left: 0,
-    right: 0,
+    marginHorizontal: 8,
+    marginTop: 5,
+    gap: 6,
   },
-  footerRight: {
-    textAlign: "center",
-    fontSize: 8,
-    color: "#1a1a2e",
-    fontWeight: "bold",
-  },
-  // ── AMOUNT IN WORDS ──
-  wordsBar: {
-    marginHorizontal: 20,
-    marginTop: 8,
-    backgroundColor: "#f8f8f9",
-    padding: 6,
-    border: "1 solid #ddd",
+  bankBox: {
+    flex: 1,
+    border: `1 solid ${BORDER_LIGHT}`,
     borderRadius: 3,
   },
-  wordsText: { fontSize: 7.5, color: "#555" },
-  wordsValue: { fontWeight: "bold", color: "#1a1a2e" },
+  summaryBox: {
+    width: 200,
+    border: `1 solid ${BORDER_LIGHT}`,
+    borderRadius: 3,
+  },
   summaryRow: {
     flexDirection: "row",
-    borderBottom: "1 solid #e0e0e0",
+    borderBottom: `1 solid ${BORDER_LIGHT}`,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2.5,
   },
   summaryLabel: {
-    fontSize: 7.5,
-    color: "#888",
+    fontSize: 9.5,
+    color: "#000",
     textAlign: "right",
     flex: 1,
+    fontFamily: "Helvetica-Bold",
   },
   summaryColon: {
-    fontSize: 7.5,
-    color: "#888",
-    width: 8,
+    fontSize: 9.5,
+    color: "#000",
+    width: 10,
     textAlign: "center",
   },
   summaryValue: {
-    fontSize: 7.5,
-    color: "#1a1a2e",
-    fontWeight: "bold",
-    width: 65,
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
     textAlign: "right",
+    width: 75,
+  },
+
+  // ── BOTTOM SECTION ──
+  bottomSection: {
+    marginHorizontal: 8,
+    marginTop: 5,
+    flexDirection: "row",
+    gap: 6,
+  },
+  remarksBox: {
+    flex: 1,
+    border: `1 solid ${BORDER_LIGHT}`,
+    borderRadius: 3,
+  },
+  termsBox: {
+    flex: 2,
+    border: `1 solid ${BORDER_LIGHT}`,
+    borderRadius: 3,
+  },
+
+  // ── SIGNATURES ──
+  signaturesContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 8,
+    right: 8,
+  },
+  signaturesRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTop: `1 solid ${BORDER_LIGHT}`,
+    paddingTop: 3,
+  },
+  signatureRole: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 8.5,
+    color: "#000",
+    fontFamily: "Helvetica-Bold",
+  },
+
+  // ── FOOTER ──
+  footerBar: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    position: "absolute",
+    bottom: 5,
+    left: 0,
+    right: 0,
+  },
+  footerRight: { fontSize: 8.5, color: "#000", fontFamily: "Helvetica-Bold" },
+
+  // ── AMOUNT IN WORDS ──
+  wordsBar: {
+    marginHorizontal: 8,
+    marginTop: 5,
+    backgroundColor: "#fff",
+    padding: 4.5,
+    border: `1 solid ${BORDER_LIGHT}`,
+    borderRadius: 3,
+  },
+  wordsText: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
+  },
+  wordsValue: {
+    fontSize: 10.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#000",
   },
 });
 
 // ── TABLE COLUMNS ─────────────────────────────────────────────────────────────
-const getColumns = (isExport) => [
-  { label: "S.No", flex: 0.4 },
-  { label: "Description of Goods", flex: 2.5 },
-  { label: "Item Sub Group", flex: 1.2 },
-  { label: "Item Group", flex: 1.2 },
-  { label: "HSN", flex: 0.8 },
-  { label: "UOM", flex: 0.7 },
-
-  { label: "Order Qty", flex: 0.9 },
-  { label: "Price", flex: 0.9 },
-  ...(!isExport ? [{ label: "Tax %", flex: 0.7 }] : []),
-  { label: "Gross", flex: 1.2 },
+const getFabricColumns = () => [
+  { label: "S.No", flex: 0.5, align: "center" },
+  { label: "Description of Goods", flex: 3.5, align: "center" },
+  { label: "HSN", flex: 1.1, align: "center" },
+  { label: "K Dia", flex: 1.0, align: "center" },
+  { label: "F Dia", flex: 1.0, align: "center" },
+  { label: "Rolls", flex: 1.0, align: "center" },
+  { label: "Weight", flex: 1.2, align: "center" },
+  { label: "Rate per KG", flex: 1.4, align: "center" },
+  { label: "Gross Amount", flex: 1.7, align: "center" },
 ];
 
-const ROWS_PAGE_1 = 10;
-const ROWS_PAGE_CONT = 22;
+const getYarnColumns = () => [
+  { label: "S.No", flex: 0.4, align: "center" },
+  { label: "Description of Goods", flex: 3.2, align: "center" },
+  { label: "HSN", flex: 1.0, align: "center" },
+  { label: "No of Bags", flex: 0.8, align: "center" },
+  { label: "Weight per Bag", flex: 1.0, align: "center" },
+  { label: "Total Weight", flex: 1.0, align: "center" },
+  { label: "Rate per KG", flex: 1.1, align: "center" },
+  { label: "Gross Amount", flex: 1.3, align: "center" },
+];
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-const forceWrap = (text) => {
-  if (typeof text !== "string") return text || "";
-  return text
-    .split(" ")
-    .map((word) => {
-      if (word.length > 20) {
-        return word.match(/.{1,20}/g).join("\n");
-      }
-      return word;
-    })
-    .join(" ");
-};
-
-const chunkItems = (items) => {
-  const pages = [];
-  let rem = [...items];
-  pages.push(rem.splice(0, ROWS_PAGE_1));
-  while (rem.length > 0) pages.push(rem.splice(0, ROWS_PAGE_CONT));
-  return pages;
-};
-
-const TableHeader = ({ isExport, currencySymbol }) => {
-  const cols = getColumns(isExport);
+const TableHeader = ({ isFabric, currencySymbol }) => {
+  const cols = isFabric ? getFabricColumns() : getYarnColumns();
   return (
     <View style={styles.tableHeader}>
-      {cols.map(({ label, flex }, i) => (
+      {cols.map(({ label, flex, align }, i) => (
         <Text
           key={label}
           style={[
             styles.th,
             { flex },
+            align && { textAlign: align },
             i === cols.length - 1 && { borderRight: "none" },
           ]}
         >
-          {label === "Price" && currencySymbol
-            ? `Price (${currencySymbol})`
-            : label === "Gross" && currencySymbol
-              ? `Gross (${currencySymbol})`
+          {label === "Rate per KG" && currencySymbol
+            ? `Rate per KG\n(${currencySymbol})`
+            : label === "Gross Amount" && currencySymbol
+              ? `Gross Amount\n(${currencySymbol})`
               : label}
         </Text>
       ))}
@@ -332,69 +359,129 @@ const ContinuationBar = ({ docId, branchName }) => (
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      backgroundColor: "#1a1a2e",
-      paddingHorizontal: 20,
+      backgroundColor: DARK,
+      paddingHorizontal: 8,
       paddingVertical: 6,
+      marginBottom: 2,
     }}
   >
     <Text
       style={{
-        fontSize: 9,
-        fontWeight: "bold",
+        fontSize: 11,
+        fontFamily: "Helvetica-Bold",
         color: "#fff",
         letterSpacing: 2,
       }}
     >
       ORDER ENTRY — Continued
     </Text>
-    <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.7)" }}>
+    <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
       Order No: {docId} | {branchName}
     </Text>
   </View>
 );
 
-// ── COMPONENT ─────────────────────────────────────────────────────────────────
+// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 const OrderEntryPrintFormat = ({
   data,
+  taxDetails,
+  totals,
   customerDetails,
   branchData,
-  qrCodeDataUrl,
-  styleItemList,
-  sizeList,
-  uomList,
-  itemGroupList,
-  itemSubGroupList,
-  hsnList,
-  totals,
-  discountType,
-  currencyCode,
-  isCurrencySymbol,
   isCustomerExport: isExportProp,
   cityList,
+  currencyList,
+  payTermList,
+  bankList,
   carriageFinalAmt,
+  uomList,
+  sizeList,
+  hsnList,
+  colorList,
+  gsmList,
+  designList,
+  kDiaList,
+  fDiaList,
+  loopLengthList,
+  gaugeList,
+  fabricList,
+  yarnList,
 }) => {
   if (!data) return null;
-  console.log("data", data);
 
-  const isExport = isExportProp ?? data?.customer?.isCustomerExport ?? false;
-  let currencySymbol = isCurrencySymbol || currencyCode || "Rs.";
+  const resolvedTaxDetails = taxDetails || totals;
+  const isFabric = (data?.orderGridType || "FABRIC") === "FABRIC";
+
+  const customer = customerDetails || data?.customer || {};
+  const branch = branchData || data?.Branch || {};
+  const bank = data?.Bank || findFromList(data?.bankId, bankList?.data) || {};
+
+  const isExport =
+    isExportProp ??
+    customer?.isCustomerExport ??
+    data?.customer?.isCustomerExport ??
+    false;
+
+  let currencySymbol =
+    findFromList(data?.currencyId, currencyList?.data, "symbol") || "Rs.";
   if (currencySymbol.includes("₹"))
     currencySymbol = currencySymbol.replace("₹", "Rs.");
-  const loadingPort =
-    findFromList(data?.loadingId, cityList?.data, "name") || "";
-  const deliveryPort =
-    findFromList(data?.deliveryId, cityList?.data, "name") || "";
-  const taxSlabBreakup = (totals?.slabBreakup || []).filter(
-    (s) => (s.amount || 0) > 0,
+  const currencyCode =
+    findFromList(data?.currencyId, currencyList?.data, "code") || "INR";
+
+  // Item rows filtering
+  const rawFabricItems = data?.orderFabricItems || [];
+  const rawYarnItems = data?.orderYarnItems || [];
+
+  const fabricItems = rawFabricItems.filter(
+    (i) => i.fabricId || parseFloat(i.qty) > 0 || parseFloat(i.price) > 0,
+  );
+
+  const yarnItems = rawYarnItems.filter(
+    (i) =>
+      i.yarnId ||
+      parseFloat(i.qty) > 0 ||
+      parseFloat(i.noOfbags) > 0 ||
+      parseFloat(i.price) > 0,
+  );
+
+  const allItems = isFabric ? fabricItems : yarnItems;
+
+  // Totals
+  const totalRolls = fabricItems.reduce(
+    (s, i) => s + (parseFloat(i?.numberOfRolls) || 0),
+    0,
+  );
+  const totalBags = yarnItems.reduce(
+    (s, i) => s + (parseFloat(i?.noOfbags) || 0),
+    0,
+  );
+  const totalQty = allItems.reduce((s, i) => s + (parseFloat(i?.qty) || 0), 0);
+  const totalPrice = allItems.reduce(
+    (s, i) => s + (parseFloat(i?.price) || 0),
+    0,
+  );
+  const totalGross = allItems.reduce(
+    (s, i) => s + (parseFloat(i?.amount) || 0),
+    0,
+  );
+
+  const taxableTotal = parseFloat(resolvedTaxDetails?.taxable || 0);
+  const carriageCharge = parseFloat(carriageFinalAmt) || 0;
+  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
+
+  const netAmount = parseFloat(resolvedTaxDetails?.net || 0);
+  const taxSlabBreakup = (resolvedTaxDetails?.slabBreakup || []).filter(
+    (s) => (s?.amount || 0) > 0,
   );
 
   const consolidatedTaxSlabs = (() => {
     const taxMap = {};
     const others = [];
     taxSlabBreakup.forEach((slab) => {
-      const cgstMatch = slab.tax.match(/^CGST\s+([\d.]+)%$/i);
-      const sgstMatch = slab.tax.match(/^SGST\s+([\d.]+)%$/i);
-      const igstMatch = slab.tax.match(/^IGST\s+([\d.]+)%$/i);
+      const cgstMatch = slab.tax?.match(/^CGST\s+([\d.]+)%$/i);
+      const sgstMatch = slab.tax?.match(/^SGST\s+([\d.]+)%$/i);
+      const igstMatch = slab.tax?.match(/^IGST\s+([\d.]+)%$/i);
 
       if (cgstMatch) {
         const rate = parseFloat(cgstMatch[1]);
@@ -422,124 +509,18 @@ const OrderEntryPrintFormat = ({
       }
     });
 
-    const combined = Object.values(taxMap).sort((a, b) => a.rate - b.rate);
+    const combined = Object.values(taxMap).sort((a, b) => {
+      if (a.rate !== b.rate) return a.rate - b.rate;
+      return a.type.localeCompare(b.type);
+    });
     return [...combined, ...others];
   })();
 
-  const taxableTotal = totals?.taxable || 0;
-
-  const carriageCharge = parseFloat(carriageFinalAmt) || 0;
-  const grandTotalExport = taxableTotal + carriageCharge;
-  const netAmountDomestic = (totals?.net || 0) + carriageCharge;
-
-  const orderItems = (data?.orderItems || []).filter(
-    (item) => item.styleItemId,
-  );
-
-  // ── Grand total ──
-  const totalOrderQty = orderItems.reduce(
-    (s, r) => s + (parseFloat(r.orderQty) || 0),
-    0,
-  );
-  const totalPrice = orderItems.reduce(
-    (s, r) => s + (parseFloat(r.price) || 0),
-    0,
-  );
-
-  // ── Pagination ──
-  const pageChunks = chunkItems(orderItems);
-  const pageOffsets = pageChunks.reduce((acc, chunk, i) => {
-    acc.push(i === 0 ? 0 : acc[i - 1] + pageChunks[i - 1].length);
-    return acc;
-  }, []);
-
-  // If no items, render a single empty page
-  const renderChunks = pageChunks.length === 0 ? [[]] : pageChunks;
-
-  // ── Helper: build size breakup label lines ──
-  const renderStyleBreakups = (row) => {
-    // Merge DB state and form state
-    const styleBreakups = row?.orderStyleBreakup || row?.styleBreakup || [];
-
-    // Multiple styles format
-    if (styleBreakups && styleBreakups.length > 0) {
-      return styleBreakups.map((st, idx) => {
-        // Resolve style name
-        let styleName = st?.StyleItem?.name;
-        if (!styleName && st?.styleId) {
-          const foundStyle = styleItemList?.data?.find(
-            (s) => s.id === st.styleId,
-          );
-          if (foundStyle) styleName = foundStyle.name;
-        }
-
-        const sizeBreakup = st?.orderSizeBreakup || st?.sizeBreakup || [];
-        const validSizes = sizeBreakup.filter(
-          (sb) => (Number(sb.qty) || 0) > 0,
-        );
-
-        const sizesText =
-          validSizes && validSizes.length > 0
-            ? validSizes
-                .map((sb) => {
-                  let sName = sb?.Size?.name || "All";
-                  if (!sb?.Size?.name && sb?.sizeId) {
-                    const foundSize = sizeList?.data?.find(
-                      (s) => s.id === sb.sizeId,
-                    );
-                    if (foundSize) sName = foundSize.name;
-                  }
-                  return `${sName}: ${Number(sb.qty)}`;
-                })
-                .join("  |  ")
-            : "";
-
-        return (
-          <View key={idx} style={{ marginBottom: 4 }}>
-            {styleName ? (
-              <Text
-                style={{ textAlign: "left", fontSize: 7, fontWeight: "bold" }}
-              >
-                {styleName}
-              </Text>
-            ) : null}
-            {sizesText ? (
-              <Text style={{ fontSize: 6.5, color: "#555", marginTop: 2 }}>
-                {sizesText}
-              </Text>
-            ) : null}
-          </View>
-        );
-      });
-    }
-
-    // Old single style format
-    const breakup = (row?.orderSizeBreakup || row?.sizeBreakup || [])?.filter(
-      (sb) => (Number(sb.qty) || 0) > 0,
-    );
-    const sizesText =
-      breakup && breakup.length > 0
-        ? breakup
-            .map((sb) => {
-              const sName =
-                sb?.Size?.name || sb?.sizeName || sb?.sizeId || "All";
-              return `${sName}: ${Number(sb.qty)}`;
-            })
-            .join("  |  ")
-        : "";
-
-    return (
-      <View style={{ marginBottom: 4 }}>
-        {sizesText ? (
-          <Text style={{ fontSize: 6.5, color: "#555", marginTop: 2 }}>
-            {sizesText}
-          </Text>
-        ) : null}
-      </View>
-    );
-  };
-  const bank = data?.Bank || {};
-  console.log(bank, "bank");
+  const finalAmountForWords = isExport
+    ? grandTotal
+    : netAmount + carriageCharge;
+  const netInt = Math.floor(finalAmountForWords);
+  const netDecimal = Math.round((finalAmountForWords - netInt) * 100);
 
   const getAmountInWords = (intVal, decVal, currCode) => {
     const intWords = numberToWords
@@ -560,15 +541,99 @@ const OrderEntryPrintFormat = ({
     } else if (code === "EUR" || code === "EU" || code === "EURO") {
       return `${intWords} Euros And ${decWords} Cents Only`;
     } else {
-      // Default to INR
       return `${intWords} Rupees${decVal > 0 ? ` And ${decWords} Paise` : ""} Only`;
     }
   };
 
-  const finalAmountForWords = isExport ? grandTotalExport : netAmountDomestic;
-  const netInt = Math.floor(finalAmountForWords);
-  const netDecimal = Math.round((finalAmountForWords - netInt) * 100);
   const amountWords = getAmountInWords(netInt, netDecimal, currencyCode);
+
+  const loadingPort =
+    findFromList(data?.loadingId, cityList?.data, "name") || "";
+  const deliveryPort =
+    findFromList(data?.deliveryId, cityList?.data, "name") || "";
+
+  // Smart pagination
+  const pageChunks = (() => {
+    if (allItems.length === 0) return [[]];
+    const total = allItems.length;
+    const p1SingleMax = isFabric ? 3 : 4;
+    const p1Max = isFabric ? 5 : 6;
+    const pContMax = isFabric ? 10 : 12;
+    const lastPageMax = isFabric ? 4 : 5;
+
+    if (total <= p1SingleMax) return [allItems];
+
+    if (total <= p1Max + lastPageMax) {
+      let p1Count = Math.min(p1Max, total - 1);
+      if (total - p1Count > lastPageMax) {
+        p1Count = total - lastPageMax;
+      }
+      return [allItems.slice(0, p1Count), allItems.slice(p1Count)];
+    }
+
+    const pages = [];
+    let rem = [...allItems];
+    pages.push(rem.splice(0, p1Max));
+    while (rem.length > lastPageMax) {
+      const take = Math.min(pContMax, rem.length - 1);
+      pages.push(rem.splice(0, take));
+    }
+    if (rem.length > 0) {
+      pages.push(rem);
+    }
+    return pages;
+  })();
+
+  const renderChunks = pageChunks.filter(
+    (chunk, i) => i === 0 || chunk.length > 0,
+  );
+  const pageOffsets = renderChunks.reduce((acc, chunk, i) => {
+    acc.push(i === 0 ? 0 : acc[i - 1] + renderChunks[i - 1].length);
+    return acc;
+  }, []);
+
+  const metaPills = [
+    { label: "Order No", value: data?.docId },
+    {
+      label: "Order Date",
+      value: data?.docDate ? moment(data.docDate).format("DD-MM-YYYY") : "",
+    },
+    { label: "Order Type", value: data?.orderType || "—" },
+    {
+      label: "Item Type",
+      value: data?.orderGridType || (isFabric ? "FABRIC" : "YARN"),
+    },
+    ...(data?.orderType === "AGAINSTPI"
+      ? [
+          {
+            label: isFabric ? "Fabric PI No" : "Yarn PI No",
+            value: isFabric
+              ? data?.ProformaFabric?.docId || data?.fabricPIDocId || "—"
+              : data?.ProformaYarn?.docId || data?.yarnPIDocId || "—",
+          },
+        ]
+      : []),
+    ...(data?.customerPoNo
+      ? [{ label: "Customer PO No", value: data.customerPoNo }]
+      : []),
+    ...(data?.payTermId
+      ? [
+          {
+            label: "Pay Term",
+            value:
+              findFromList(data.payTermId, payTermList?.data, "name") || "",
+          },
+        ]
+      : []),
+    ...(data?.deliveryDate
+      ? [
+          {
+            label: "Delivery Date",
+            value: moment(data.deliveryDate).format("DD-MM-YYYY"),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <Document>
@@ -576,87 +641,133 @@ const OrderEntryPrintFormat = ({
         const isFirstPage = pageIndex === 0;
         const isLastPage = pageIndex === renderChunks.length - 1;
         const globalOffset = pageOffsets[pageIndex] || 0;
-        const minRows = isFirstPage ? ROWS_PAGE_1 : ROWS_PAGE_CONT;
-        const emptyCount = Math.max(0, minRows - chunkRows.length);
 
         return (
           <Page key={pageIndex} size="A4" style={styles.borderBox}>
             <View style={styles.page}>
               {isFirstPage ? (
                 <>
-                  {/* ── FULL HEADER ── */}
+                  {/* ── HEADER ── */}
                   <View style={styles.header}>
-                    <View style={styles.companyLeft}>
+                    <View style={{ width: 60 }}>
                       <Image src={Logo} style={styles.logo} />
                     </View>
                     <View style={styles.companyCenter}>
                       <Text style={styles.companyName}>
-                        {branchData?.branchName || "BANNARI AMMAN"}
+                        {branch?.branchName || "BANNARI AMMAN"}
                       </Text>
                       <Text style={styles.companyAddress}>
-                        {branchData?.address || ""}
+                        {branch?.address || ""}
                       </Text>
-                      {branchData?.contactEmail ? (
+                      <View style={{ flexDirection: "row", gap: 10 }}>
+                        <Text style={styles.companyAddress}>
+                          GSTIN : {branch?.gstNo || ""}
+                        </Text>
+                        <Text style={styles.companyAddress}>
+                          PAN : {branch?.panNo || ""}
+                        </Text>
+                        <Text style={styles.companyAddress}>
+                          {branch?.udyam || ""}
+                        </Text>
+                      </View>
+                      {branch?.contactEmail ? (
                         <Text
-                          style={{ fontSize: 7.5, color: "#555", marginTop: 1 }}
+                          style={{ fontSize: 9.5, color: "#000", marginTop: 1 }}
                         >
-                          {branchData.contactEmail}
-                          {branchData?.contactMobile
-                            ? `  |  ${branchData.contactMobile}`
+                          {branch.contactEmail}
+                          {branch?.contactMobile
+                            ? `  |  ${branch.contactMobile}`
                             : ""}
+                          {branch?.telephone ? `  |  ${branch.telephone}` : ""}
                         </Text>
                       ) : null}
                     </View>
+
                     <View style={{ width: 60 }} />
                   </View>
 
                   {/* TITLE BAND */}
                   <Text style={styles.titleBand}>ORDER ENTRY</Text>
 
+                  {/* INTRO TEXT */}
+                  <View
+                    style={{
+                      marginHorizontal: 8,
+                      marginBottom: 5,
+                      backgroundColor: "#fff",
+                      border: `1 solid ${BORDER_LIGHT}`,
+                      borderRadius: 3,
+                      paddingVertical: 5,
+                      paddingHorizontal: 7,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10.5,
+                        color: "#000",
+                        marginBottom: 2,
+                      }}
+                    >
+                      Herewith we are confirming the order for the following
+                      items. If you have any questions about this order, please
+                      contact us.
+                    </Text>
+                  </View>
+
                   {/* META PILLS */}
                   <View style={styles.metaRow}>
-                    {[
-                      { label: "Order No", value: data?.docId },
-                      {
-                        label: "Order Date",
-                        value: moment(data?.docDate).format("DD-MM-YYYY"),
-                      },
-                      { label: "Order Type", value: data?.orderType },
-                      { label: "Production Type", value: data?.productionType },
-
-                      {
-                        label: "Delivery Date",
-                        value: moment(data?.deliveryDate).format("DD-MM-YYYY"),
-                      },
-                    ].map(({ label, value }) => (
+                    {metaPills.map(({ label, value, valueColor }) => (
                       <View key={label} style={styles.metaPill}>
-                        <Text style={styles.metaLabel}>{label}:</Text>
-                        <Text style={styles.metaValue}>{value}</Text>
+                        <Text
+                          style={[
+                            styles.metaLabel,
+                            valueColor ? { color: valueColor } : {},
+                          ]}
+                        >
+                          {label}:
+                        </Text>
+                        <Text
+                          style={[
+                            styles.metaValue,
+                            valueColor ? { color: valueColor } : {},
+                          ]}
+                        >
+                          {value}
+                        </Text>
                       </View>
                     ))}
                   </View>
 
                   {/* FROM / TO */}
                   <View style={styles.twoCol}>
-                    {/* FROM */}
                     <View
-                      style={[styles.colHalf, { borderRight: "1 solid #ddd" }]}
+                      style={[
+                        styles.colHalf,
+                        { borderRight: `1 solid ${BORDER_LIGHT}` },
+                      ]}
                     >
-                      <Text style={styles.sectionHeader}>FROM</Text>
+                      <Text style={styles.sectionHeader}>Bill TO</Text>
                       <View style={styles.sectionBody}>
                         <Text style={styles.partyName}>
-                          {branchData?.branchName || "BANNARI AMMAN"}
+                          {customer?.name || "N/A"}
                         </Text>
                         <Text style={styles.partyAddr}>
-                          {branchData?.address || ""}
+                          {customer?.address || ""}
                         </Text>
                         {[
                           {
-                            label: "Mobile No",
-                            value: branchData?.contactMobile,
+                            label: "Contact Person",
+                            value: customer?.contactPersonName,
                           },
-                          { label: "GST No", value: branchData?.gstNo },
-                          { label: "Email", value: branchData?.contactEmail },
+                          {
+                            label: "Mobile No",
+                            value: customer?.contactNumber,
+                          },
+                          { label: "GST No", value: customer?.gstNo },
+                          {
+                            label: "Email",
+                            value: customer?.contactPersonEmail,
+                          },
                         ].map(({ label, value }) =>
                           value ? (
                             <View key={label} style={styles.partyRow}>
@@ -667,26 +778,29 @@ const OrderEntryPrintFormat = ({
                         )}
                       </View>
                     </View>
-                    {/* TO */}
                     <View style={styles.colHalf}>
-                      <Text style={styles.sectionHeader}>CUSTOMER DETAILS</Text>
+                      <Text style={styles.sectionHeader}>Ship To</Text>
                       <View style={styles.sectionBody}>
                         <Text style={styles.partyName}>
-                          {customerDetails?.name || "N/A"}
+                          {customer?.name || "N/A"}
                         </Text>
                         <Text style={styles.partyAddr}>
-                          {customerDetails?.address || ""}
+                          {customer?.address || ""}
                         </Text>
                         {[
                           {
                             label: "Contact Person",
-                            value: customerDetails?.contactPersonName,
+                            value: customer?.contactPersonName,
                           },
                           {
                             label: "Mobile No",
-                            value: customerDetails?.contactNumber,
+                            value: customer?.contactNumber,
                           },
-                          { label: "GST No", value: customerDetails?.gstNo },
+                          { label: "GST No", value: customer?.gstNo },
+                          {
+                            label: "Email",
+                            value: customer?.contactPersonEmail,
+                          },
                         ].map(({ label, value }) =>
                           value ? (
                             <View key={label} style={styles.partyRow}>
@@ -699,6 +813,7 @@ const OrderEntryPrintFormat = ({
                     </View>
                   </View>
 
+                  {/* EXPORT DETAILS GRID */}
                   {isExport && (
                     <View style={styles.exportGrid}>
                       <View style={styles.exportCol}>
@@ -726,15 +841,6 @@ const OrderEntryPrintFormat = ({
                             : {deliveryPort || "—"}
                           </Text>
                         </View>
-                        <View style={styles.exportItem}>
-                          <Text style={styles.exportLabel}>Weight (KG)</Text>
-                          <Text style={styles.exportValue}>
-                            :{" "}
-                            {data?.weightInKg
-                              ? parseFloat(data.weightInKg).toFixed(3)
-                              : "—"}
-                          </Text>
-                        </View>
                       </View>
                     </View>
                   )}
@@ -742,14 +848,14 @@ const OrderEntryPrintFormat = ({
               ) : (
                 <ContinuationBar
                   docId={data?.docId}
-                  branchName={branchData?.branchName || ""}
+                  branchName={branch?.branchName || ""}
                 />
               )}
 
-              {/* ── TABLE ── */}
+              {/* ── TABLE (CONDITIONALLY RENDER FABRIC OR YARN) ── */}
               <View style={styles.tableWrap}>
                 <TableHeader
-                  isExport={isExport}
+                  isFabric={isFabric}
                   currencySymbol={currencySymbol}
                 />
 
@@ -757,305 +863,682 @@ const OrderEntryPrintFormat = ({
                 {chunkRows.map((row, index) => {
                   const rowStyle =
                     index % 2 === 0 ? styles.trOdd : styles.trEven;
-                  return (
-                    <View
-                      key={globalOffset + index}
-                      style={rowStyle}
-                      wrap={false}
-                    >
-                      {/* S.No */}
-                      <Text style={[styles.td, { flex: 0.4 }]}>
-                        {globalOffset + index + 1}
-                      </Text>
+                  const gross = parseFloat(row.amount) || 0;
+                  const colorName = findFromList(
+                    row?.colorId,
+                    colorList?.data,
+                    "name",
+                  );
 
-                      {/* Description + size breakup inline */}
+                  if (isFabric) {
+                    const designName = findFromList(
+                      row?.designId,
+                      designList?.data,
+                      "name",
+                    );
+                    const gaugeName = findFromList(
+                      row?.gaugeId,
+                      gaugeList?.data,
+                      "name",
+                    );
+                    const loopLengthName = findFromList(
+                      row?.loopLengthId,
+                      loopLengthList?.data,
+                      "name",
+                    );
+                    const gsm = findFromList(row?.gsmId, gsmList?.data, "name");
+
+                    return (
+                      <View key={globalOffset + index} style={rowStyle}>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 0.5, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "center",
+                              width: "100%",
+                            }}
+                          >
+                            {globalOffset + index + 1}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            {
+                              flex: 3.5,
+                              flexDirection: "column",
+                              alignItems: "flex-start",
+                              justifyContent: "center",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              textAlign: "left",
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                            }}
+                          >
+                            {findFromList(
+                              row?.fabricId,
+                              fabricList?.data,
+                              "name",
+                            )}
+                          </Text>
+                          {colorName || designName ? (
+                            <Text
+                              style={{
+                                textAlign: "left",
+                                marginTop: 2,
+                                fontFamily: "Helvetica-Bold",
+                                fontSize: 10.5,
+                                color: "#000",
+                              }}
+                            >
+                              Color: {colorName || "—"} | Design :{" "}
+                              {designName || "—"}
+                            </Text>
+                          ) : null}
+                          {gaugeName || loopLengthName || gsm ? (
+                            <Text
+                              style={{
+                                textAlign: "left",
+                                marginTop: 2,
+                                fontFamily: "Helvetica-Bold",
+                                fontSize: 10.5,
+                                color: "#000",
+                              }}
+                            >
+                              Gauge: {gaugeName || "—"} | Loop Length :{" "}
+                              {loopLengthName || "—"} | Gsm : {gsm || "—"}
+                            </Text>
+                          ) : null}
+                        </View>
+
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.1, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "center",
+                              width: "100%",
+                            }}
+                          >
+                            {findFromList(row?.hsnId, hsnList?.data, "name")}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.0, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "left",
+                              width: "100%",
+                            }}
+                          >
+                            {findFromList(row?.kDiaId, kDiaList, "name")}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.0, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "left",
+                              width: "100%",
+                            }}
+                          >
+                            {findFromList(row?.fDiaId, fDiaList, "name")}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.0, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {row?.numberOfRolls || ""}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.2, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {row.qty ? parseFloat(row.qty).toFixed(3) : ""}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            { flex: 1.4, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {row.price
+                              ? `${currencySymbol} ${formatCurrencyAmount(row.price, currencyCode || currencySymbol)}`
+                              : ""}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
+                            {
+                              flex: 1.7,
+                              justifyContent: "center",
+                              borderRight: "none",
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {gross
+                              ? `${currencySymbol} ${formatCurrencyAmount(gross, currencyCode || currencySymbol)}`
+                              : ""}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
+
+                  // Yarn row
+                  return (
+                    <View key={globalOffset + index} style={rowStyle}>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 0.4, justifyContent: "center" },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "center",
+                            width: "100%",
+                          }}
+                        >
+                          {globalOffset + index + 1}
+                        </Text>
+                      </View>
                       <View
                         style={[
                           styles.td,
                           {
-                            flex: 2.5,
-                            textAlign: "left",
+                            flex: 3.2,
                             flexDirection: "column",
+                            alignItems: "flex-start",
                             justifyContent: "center",
                           },
                         ]}
                       >
                         <Text
                           style={{
-                            fontSize: 7.5,
-                            fontWeight: "bold",
-                            color: "#1a1a2e",
-                            marginBottom: 2,
+                            textAlign: "left",
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
                           }}
                         >
-                          {forceWrap(
-                            row?.StyleItem?.name ||
-                              findFromList(
-                                row.styleItemId,
-                                styleItemList?.data,
-                                "name",
-                              ),
-                          )}
+                          {findFromList(row?.yarnId, yarnList?.data, "name")}
                         </Text>
-                        {renderStyleBreakups(row)}
+                        {colorName ? (
+                          <Text
+                            style={{
+                              textAlign: "left",
+                              marginTop: 2,
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                            }}
+                          >
+                            Color: {colorName}
+                          </Text>
+                        ) : null}
                       </View>
-
-                      {/* Item Sub Group */}
-                      <Text
-                        style={[styles.td, { flex: 1.2, textAlign: "left" }]}
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
                       >
-                        {forceWrap(
-                          row?.ItemSubGroup?.name ||
-                            findFromList(
-                              row.itemSubGroupId,
-                              itemSubGroupList?.data,
-                              "name",
-                            ),
-                        )}
-                      </Text>
-                      {/* Item Group */}
-                      <Text
-                        style={[styles.td, { flex: 1.2, textAlign: "left" }]}
-                      >
-                        {forceWrap(
-                          row?.ItemGroup?.name ||
-                            findFromList(
-                              row.itemGroupId,
-                              itemGroupList?.data,
-                              "name",
-                            ),
-                        )}
-                      </Text>
-
-                      {/* HSN */}
-                      <Text style={[styles.td, { flex: 0.8 }]}>
-                        {row?.Hsn?.name ||
-                          findFromList(row.hsnId, hsnList?.data, "name")}
-                      </Text>
-                      {/* UOM */}
-                      <Text
-                        style={[styles.td, { flex: 0.7, textAlign: "left" }]}
-                      >
-                        {row?.Uom?.name ||
-                          findFromList(row.uomId, uomList?.data, "name")}
-                      </Text>
-                      {/* Order Qty */}
-                      <Text
-                        style={[styles.td, { flex: 0.9, textAlign: "right" }]}
-                      >
-                        {row?.orderQty
-                          ? parseFloat(row.orderQty).toFixed(2)
-                          : ""}
-                      </Text>
-                      {/* Price */}
-                      <Text
-                        style={[styles.td, { flex: 0.9, textAlign: "right" }]}
-                      >
-                        {row?.price
-                          ? `${currencySymbol} ${formatCurrencyAmount(row.price)}`
-                          : ""}
-                      </Text>
-
-                      {!isExport && (
                         <Text
-                          style={[styles.td, { flex: 0.7, textAlign: "right" }]}
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "center",
+                            width: "100%",
+                          }}
                         >
-                          {row?.taxPercent
-                            ? `${parseFloat(row.taxPercent).toFixed(1)}%`
+                          {findFromList(row?.hsnId, hsnList?.data, "name")}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 0.8, justifyContent: "center" },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row?.noOfbags || ""}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row.weightPerBag
+                            ? parseFloat(row.weightPerBag).toFixed(3)
                             : ""}
                         </Text>
-                      )}
-
-                      {/* Gross */}
-                      <Text
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.0, justifyContent: "center" },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row.qty ? parseFloat(row.qty).toFixed(3) : ""}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.td,
+                          { flex: 1.1, justifyContent: "center" },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {row.price
+                            ? `${currencySymbol} ${formatCurrencyAmount(row.price, currencyCode || currencySymbol)}`
+                            : ""}
+                        </Text>
+                      </View>
+                      <View
                         style={[
                           styles.td,
                           {
-                            flex: 1.2,
-                            textAlign: "right",
+                            flex: 1.3,
+                            justifyContent: "center",
                             borderRight: "none",
                           },
                         ]}
                       >
-                        {row?.amount
-                          ? `${currencySymbol} ${formatCurrencyAmount(row.amount)}`
-                          : ""}
-                      </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Helvetica-Bold",
+                            fontSize: 10.5,
+                            color: "#000",
+                            textAlign: "right",
+                            width: "100%",
+                          }}
+                        >
+                          {gross
+                            ? `${currencySymbol} ${formatCurrencyAmount(gross, currencyCode || currencySymbol)}`
+                            : ""}
+                        </Text>
+                      </View>
                     </View>
                   );
                 })}
               </View>
 
-              {/* ── GRAND TOTAL — last page only ── */}
+              {/* ── TOTALS ROW (LAST PAGE ONLY) ── */}
               {isLastPage && (
                 <>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      marginHorizontal: 20,
-                      backgroundColor: "#e8e8ec",
-                      borderLeft: "1 solid #b0b0b8",
-                      borderRight: "1 solid #b0b0b8",
-                      borderBottom: "1 solid #b0b0b8",
-                    }}
-                  >
-                    <Text
-                      style={[styles.td, { flex: 0.4, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 2.5,
-                          fontWeight: "bold",
-                          color: "#1a1a2e",
-                          textAlign: "right",
-                          paddingRight: 1,
-                        },
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                    <Text
-                      style={[styles.td, { flex: 1.2, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text>
-                    <Text
-                      style={[styles.td, { flex: 1.2, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text>
-                    <Text
-                      style={[styles.td, { flex: 0.8, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text>
-                    <Text
-                      style={[styles.td, { flex: 0.7, color: "transparent" }]}
-                    >
-                      {" "}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 0.9,
-                          fontWeight: "bold",
-                          color: "#1a1a2e",
-                          textAlign: "right",
-                        },
-                      ]}
-                    >
-                      {totalOrderQty.toFixed(2)}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 0.9,
-                          fontWeight: "bold",
-                          color: "#1a1a2e",
-                          textAlign: "right",
-                        },
-                      ]}
-                    >
-                      {totalPrice > 0
-                        ? `${currencySymbol} ${formatCurrencyAmount(totalPrice)}`
-                        : ""}
-                    </Text>
-                    {!isExport && (
+                  {isFabric ? (
+                    <View style={styles.totalRow}>
                       <Text
-                        style={[styles.td, { flex: 0.7, color: "transparent" }]}
+                        style={[styles.td, { flex: 0.5, color: "transparent" }]}
                       >
                         {" "}
                       </Text>
-                    )}
-                    <Text
-                      style={[
-                        styles.td,
-                        {
-                          flex: 1.2,
-                          fontWeight: "bold",
-                          color: "#1a1a2e",
-                          textAlign: "right",
-                          borderRight: "none",
-                        },
-                      ]}
-                    >
-                      {totals?.gross
-                        ? `${currencySymbol} ${formatCurrencyAmount(totals.gross, currencyCode)}`
-                        : ""}
-                    </Text>
-                  </View>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 3.5,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        TOTAL
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.1, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.0,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalRolls > 0 ? totalRolls : ""}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.2,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalQty > 0 ? totalQty.toFixed(3) : ""}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.4,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalPrice > 0
+                          ? `${currencySymbol} ${formatCurrencyAmount(
+                              totalPrice,
+                              currencyCode || currencySymbol,
+                            )}`
+                          : ""}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.7,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                            borderRight: "none",
+                          },
+                        ]}
+                      >
+                        {currencySymbol}{" "}
+                        {formatCurrencyAmount(
+                          totalGross,
+                          currencyCode || currencySymbol,
+                        )}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.totalRow}>
+                      <Text
+                        style={[styles.td, { flex: 0.4, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 3.2,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        TOTAL
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 0.8,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalBags > 0 ? totalBags : ""}
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.0,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalQty > 0 ? totalQty.toFixed(3) : ""}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.1,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                          },
+                        ]}
+                      >
+                        {totalPrice > 0
+                          ? `${currencySymbol} ${formatCurrencyAmount(
+                              totalPrice,
+                              currencyCode || currencySymbol,
+                            )}`
+                          : ""}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.td,
+                          {
+                            flex: 1.3,
+                            fontFamily: "Helvetica-Bold",
+                            color: "#000",
+                            textAlign: "right",
+                            borderRight: "none",
+                          },
+                        ]}
+                      >
+                        {currencySymbol}{" "}
+                        {formatCurrencyAmount(
+                          totalGross,
+                          currencyCode || currencySymbol,
+                        )}
+                      </Text>
+                    </View>
+                  )}
 
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      marginHorizontal: 20,
-                      marginTop: 8,
-                      gap: 8,
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    {/* CUSTOMER REQUIREMENTS & REMARKS */}
-                    <View style={{ flex: 1, gap: 5 }}>
+                  {/* ── BOTTOM SECTION: REQUIREMENTS, TERMS, REMARKS, SUMMARY ── */}
+                  <View style={styles.bankSummaryRow} wrap={false}>
+                    {/* LEFT SIDE: REQUIREMENTS, TERMS & REMARKS */}
+                    <View style={{ flex: 1, flexDirection: "column", gap: 8 }}>
+                      {/* CUSTOMER REQUIREMENTS */}
                       {data?.requirements ? (
                         <View
-                          style={{ border: "1 solid #ddd", borderRadius: 3 }}
+                          style={{
+                            border: `1 solid ${BORDER_LIGHT}`,
+                            borderRadius: 3,
+                          }}
                         >
-                          <View
-                            style={{
-                              backgroundColor: "#2d2d44",
-                              paddingHorizontal: 10,
-                              paddingVertical: 5,
-                            }}
-                          >
+                          <Text style={styles.sectionHeader}>
+                            CUSTOMER REQUIREMENTS
+                          </Text>
+                          <View style={styles.sectionBody}>
                             <Text
                               style={{
-                                color: "#e8e8f0",
-                                fontSize: 7.5,
-                                fontWeight: "bold",
+                                fontSize: 9.5,
+                                color: "#000",
+                                lineHeight: 1.5,
                               }}
                             >
-                              CUSTOMER REQUIREMENTS
+                              {data.requirements}
                             </Text>
-                          </View>
-                          <View style={styles.requirementsBody}>
-                            <Text>{data.requirements}</Text>
                           </View>
                         </View>
                       ) : null}
 
+                      {/* TERMS & CONDITIONS */}
+                      {data?.termsAndCondition ? (
+                        <View
+                          style={{
+                            border: `1 solid ${BORDER_LIGHT}`,
+                            borderRadius: 3,
+                          }}
+                        >
+                          <Text style={styles.sectionHeader}>
+                            TERMS &amp; CONDITIONS
+                          </Text>
+                          <View style={styles.sectionBody}>
+                            <Text
+                              style={{
+                                fontSize: 9.5,
+                                color: "#000",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {data.termsAndCondition}
+                            </Text>
+                          </View>
+                        </View>
+                      ) : null}
+
+                      {/* REMARKS */}
                       {data?.remarks ? (
                         <View
                           style={{
-                            border: "1 solid #ddd",
+                            border: `1 solid ${BORDER_LIGHT}`,
                             borderRadius: 3,
-                            backgroundColor: "#f8f8f9",
                           }}
                         >
-                          <View
-                            style={{
-                              backgroundColor: "#2d2d44",
-                              paddingHorizontal: 10,
-                              paddingVertical: 5,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: "#e8e8f0",
-                                fontSize: 7.5,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              REMARKS
-                            </Text>
-                          </View>
+                          <Text style={styles.sectionHeader}>REMARKS</Text>
                           <View style={styles.sectionBody}>
-                            <Text style={{ fontSize: 7.5, color: "#555" }}>
+                            <Text style={{ fontSize: 9.5, color: "#000" }}>
                               {data.remarks}
                             </Text>
                           </View>
@@ -1063,212 +1546,210 @@ const OrderEntryPrintFormat = ({
                       ) : null}
                     </View>
 
-                    {/* SUMMARY */}
+                    {/* RIGHT SIDE: SUMMARY */}
                     <View
                       style={{
                         width: "45%",
-                        border: "1 solid #ddd",
+                        border: `1 solid ${BORDER_LIGHT}`,
                         borderRadius: 3,
+                        display: "flex",
+                        flexDirection: "column",
                       }}
                     >
                       <Text
-                        style={[styles.sectionHeader, { textAlign: "center" }]}
+                        style={[
+                          styles.sectionHeader,
+                          { textAlign: "center", fontSize: 9.5 },
+                        ]}
                       >
                         SUMMARY
                       </Text>
-                      <View style={{ padding: 8 }}>
-                        {(totals?.itemDiscount > 0 ||
-                          totals?.overallDiscount > 0) && (
-                          <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>
-                              Total Discount
-                            </Text>
-                            <Text style={styles.summaryColon}>:</Text>
-                            <Text style={styles.summaryValue}>
-                              {currencySymbol}{" "}
-                              {formatCurrencyAmount(
-                                (totals?.itemDiscount || 0) +
-                                  (totals?.overallDiscount || 0),
-                                currencyCode,
-                              )}
-                            </Text>
-                          </View>
-                        )}
+
+                      {(resolvedTaxDetails?.itemDiscount > 0 ||
+                        resolvedTaxDetails?.overallDiscount > 0) && (
                         <View style={styles.summaryRow}>
                           <Text style={styles.summaryLabel}>
-                            {isExport ? "Net Amount" : "Taxable Amount"}
+                            Total Discount
                           </Text>
                           <Text style={styles.summaryColon}>:</Text>
                           <Text style={styles.summaryValue}>
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
-                              taxableTotal,
+                              (resolvedTaxDetails?.itemDiscount || 0) +
+                                (resolvedTaxDetails?.overallDiscount || 0),
                               currencyCode || currencySymbol,
                             )}
                           </Text>
                         </View>
-                        {!isExport &&
-                          consolidatedTaxSlabs.map((slab) => (
-                            <View key={slab.tax} style={styles.summaryRow}>
-                              <Text style={styles.summaryLabel}>
-                                {slab.tax}
-                              </Text>
-                              <Text style={styles.summaryColon}>:</Text>
-                              <Text style={styles.summaryValue}>
-                                {currencySymbol}{" "}
-                                {formatCurrencyAmount(
-                                  slab.amount || 0,
-                                  currencyCode || currencySymbol,
-                                )}
-                              </Text>
-                            </View>
-                          ))}
-                        {!isExport &&
-                          totals?.roundOff !== 0 &&
-                          totals?.roundOff !== undefined && (
-                            <View style={styles.summaryRow}>
-                              <Text style={styles.summaryLabel}>Round Off</Text>
-                              <Text style={styles.summaryColon}>:</Text>
-                              <Text style={styles.summaryValue}>
-                                {totals?.roundOff > 0 ? "+" : ""}{" "}
-                                {currencySymbol}{" "}
-                                {formatCurrencyAmount(
-                                  Math.abs(totals?.roundOff || 0),
-                                  currencyCode || currencySymbol,
-                                )}
-                              </Text>
-                            </View>
+                      )}
+
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Taxable Amount</Text>
+                        <Text style={styles.summaryColon}>:</Text>
+                        <Text style={styles.summaryValue}>
+                          {currencySymbol}{" "}
+                          {formatCurrencyAmount(
+                            taxableTotal,
+                            currencyCode || currencySymbol,
                           )}
-                        {!isExport && (
-                          <View style={styles.summaryRow}>
-                            <Text
-                              style={[
-                                styles.summaryLabel,
-                                { fontFamily: "Helvetica-Bold" },
-                              ]}
-                            >
-                              Net Amount
-                            </Text>
-                            <Text style={styles.summaryColon}>:</Text>
-                            <Text
-                              style={[
-                                styles.summaryValue,
-                                { fontFamily: "Helvetica-Bold" },
-                              ]}
-                            >
-                              {currencySymbol}{" "}
-                              {formatCurrencyAmount(
-                                netAmountDomestic - carriageCharge,
-                                currencyCode || currencySymbol,
-                              )}
-                            </Text>
-                          </View>
-                        )}
-                        {carriageCharge > 0 && (
-                          <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>
-                              Carriage & Air Freight
-                            </Text>
+                        </Text>
+                      </View>
+
+                      {!isExport &&
+                        consolidatedTaxSlabs.map((slab) => (
+                          <View key={slab.tax} style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>{slab.tax}</Text>
                             <Text style={styles.summaryColon}>:</Text>
                             <Text style={styles.summaryValue}>
                               {currencySymbol}{" "}
                               {formatCurrencyAmount(
-                                carriageCharge,
+                                slab.amount || 0,
+                                currencyCode || currencySymbol,
+                              )}
+                            </Text>
+                          </View>
+                        ))}
+                      {!isExport &&
+                        resolvedTaxDetails?.roundOff !== 0 &&
+                        resolvedTaxDetails?.roundOff !== undefined && (
+                          <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Round Off</Text>
+                            <Text style={styles.summaryColon}>:</Text>
+                            <Text style={styles.summaryValue}>
+                              {resolvedTaxDetails?.roundOff > 0 ? "+" : ""}
+                              {currencySymbol}{" "}
+                              {formatCurrencyAmount(
+                                Math.abs(resolvedTaxDetails?.roundOff || 0),
                                 currencyCode || currencySymbol,
                               )}
                             </Text>
                           </View>
                         )}
-                        <View
-                          style={[
-                            styles.summaryRow,
-                            {
-                              backgroundColor: "#1a1a2e",
-                              borderBottom: "none",
-                              borderRadius: 2,
-                              marginTop: "auto",
-                              paddingTop: 4,
-                              paddingBottom: 4,
-                            },
-                          ]}
-                        >
+
+                      {!isExport && (
+                        <View style={styles.summaryRow}>
                           <Text
                             style={[
                               styles.summaryLabel,
-                              {
-                                fontFamily: "Helvetica-Bold",
-                                color: "#ccc",
-                                marginLeft: 4,
-                              },
+                              { fontFamily: "Helvetica-Bold" },
                             ]}
                           >
-                            Grand Total
+                            Total Amount
                           </Text>
-                          <Text
-                            style={[
-                              styles.summaryColon,
-                              { color: "#ccc", fontFamily: "Helvetica-Bold" },
-                            ]}
-                          >
-                            :
-                          </Text>
+                          <Text style={styles.summaryColon}>:</Text>
                           <Text
                             style={[
                               styles.summaryValue,
-                              {
-                                fontSize: 9,
-                                color: "#fff",
-                                fontFamily: "Helvetica-Bold",
-                              },
+                              { fontFamily: "Helvetica-Bold" },
                             ]}
                           >
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
-                              isExport ? grandTotalExport : netAmountDomestic,
+                              netAmount,
                               currencyCode || currencySymbol,
                             )}
                           </Text>
                         </View>
+                      )}
+
+                      {carriageCharge > 0 && (
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>
+                            Carriage Charges
+                          </Text>
+                          <Text style={styles.summaryColon}>:</Text>
+                          <Text style={styles.summaryValue}>
+                            {currencySymbol}{" "}
+                            {formatCurrencyAmount(
+                              carriageCharge,
+                              currencyCode || currencySymbol,
+                            )}
+                          </Text>
+                        </View>
+                      )}
+
+                      <View
+                        style={[
+                          styles.summaryRow,
+                          {
+                            backgroundColor: DARK,
+                            borderBottom: "none",
+                            borderRadius: 2,
+                            marginTop: "auto",
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.summaryLabel,
+                            { color: "#fff", fontFamily: "Helvetica-Bold" },
+                          ]}
+                        >
+                          Net Amount
+                        </Text>
+                        <Text
+                          style={[
+                            styles.summaryColon,
+                            { color: "#fff", fontFamily: "Helvetica-Bold" },
+                          ]}
+                        >
+                          :
+                        </Text>
+                        <Text style={[styles.summaryValue, { color: "#fff" }]}>
+                          {currencySymbol}{" "}
+                          {formatCurrencyAmount(
+                            isExport ? grandTotal : netAmount + carriageCharge,
+                            currencyCode || currencySymbol,
+                          )}
+                        </Text>
                       </View>
                     </View>
                   </View>
 
-                  {(isExport ? grandTotalExport : netAmountDomestic) > 0 && (
-                    <View style={styles.wordsBar}>
-                      <Text style={styles.wordsText}>
-                        Amount in Words (
-                        {(currencyCode || currencySymbol || "").trim()}
-                        ): <Text style={styles.wordsValue}>{amountWords}</Text>
-                      </Text>
-                    </View>
-                  )}
+                  {/* ── AMOUNT IN WORDS ── */}
+                  <View style={styles.wordsBar}>
+                    <Text style={styles.wordsText}>
+                      Amount in Words ({(currencyCode || currencySymbol).trim()}
+                      ): <Text style={styles.wordsValue}>{amountWords}</Text>
+                    </Text>
+                  </View>
+
+                  {/* ── BANK DETAILS ── */}
                   <View
                     style={{
-                      marginHorizontal: 20,
-                      marginTop: 8,
+                      marginHorizontal: 8,
+                      marginTop: 5,
                       border: `1 solid ${BORDER_LIGHT}`,
                       borderRadius: 3,
-                      padding: 8,
+                      padding: 5,
+                      backgroundColor: "#fff",
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 8,
+                        fontSize: 10.5,
                         fontFamily: "Helvetica-Bold",
-                        color: DARK,
+                        color: "#000",
                         marginBottom: 4,
                       }}
                     >
                       Bank Details
                     </Text>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Account Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1276,13 +1757,20 @@ const OrderEntryPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Bank Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1290,13 +1778,20 @@ const OrderEntryPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Account No.
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1304,13 +1799,20 @@ const OrderEntryPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         Branch Name
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1318,13 +1820,20 @@ const OrderEntryPrintFormat = ({
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row" }}>
-                      <Text style={{ width: 80, fontSize: 7.5, color: "#555" }}>
+                      <Text
+                        style={{
+                          width: 95,
+                          fontSize: 10.5,
+                          color: "#000",
+                          fontFamily: "Helvetica-Bold",
+                        }}
+                      >
                         IFSC Code
                       </Text>
                       <Text
                         style={{
-                          fontSize: 7.5,
-                          color: "#333",
+                          fontSize: 10.5,
+                          color: "#000",
                           fontFamily: "Helvetica-Bold",
                         }}
                       >
@@ -1332,67 +1841,87 @@ const OrderEntryPrintFormat = ({
                       </Text>
                     </View>
                   </View>
-                  {/* Spacer to reserve space for the fixed absolute signature block at the bottom */}
-                  <View style={{ height: 80 }} />
+
+                  <View style={{ height: 18 }} />
                 </>
+              )}
+
+              {/* ── SUB-TOTAL (non-last pages) ── */}
+              {!isLastPage && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    marginHorizontal: 8,
+                    backgroundColor: "#f4f4f6",
+                    borderLeft: `1 solid ${BORDER}`,
+                    borderRight: `1 solid ${BORDER}`,
+                    borderBottom: `1 solid ${BORDER}`,
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.td,
+                      {
+                        flex: isFabric ? 10.7 : 9.5,
+                        color: "#000",
+                        fontStyle: "italic",
+                        textAlign: "right",
+                      },
+                    ]}
+                  >
+                    Sub Total (Continued on next page...)
+                  </Text>
+                  <Text
+                    style={[
+                      styles.td,
+                      {
+                        flex: isFabric ? 1.7 : 1.3,
+                        fontFamily: "Helvetica-Bold",
+                        color: "#000",
+                        textAlign: "right",
+                        borderRight: "none",
+                      },
+                    ]}
+                  >
+                    {currencySymbol}{" "}
+                    {formatCurrencyAmount(
+                      chunkRows.reduce(
+                        (s, r) => s + (parseFloat(r.amount) || 0),
+                        0,
+                      ),
+                      currencyCode || currencySymbol,
+                    )}
+                  </Text>
+                </View>
               )}
             </View>
 
-            {/* ── FOOTER: SIGNATURES (ABSOLUTE BOTTOM) ── */}
-            <View
-              style={{ position: "absolute", bottom: 40, left: 20, right: 20 }}
-              fixed
-              render={({ pageNumber, totalPages }) => {
-                if (pageNumber === totalPages) {
-                  return (
-                    <View>
-                      <Text
-                        style={{
-                          textAlign: "right",
-                          fontSize: 8,
-                          fontWeight: "bold",
-                          color: "#1a1a2e",
-                          marginBottom: 30,
-                        }}
-                      >
-                        For {branchData?.branchName || ""}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          borderTop: "1 solid #ddd",
-                          paddingTop: 4,
-                        }}
-                      >
+            {/* SIGNATURES — pinned cleanly above footer bar on the LAST page */}
+            <View style={styles.signaturesContainer} fixed>
+              <View
+                render={({ pageNumber, totalPages }) => {
+                  if (pageNumber === totalPages) {
+                    return (
+                      <View style={styles.signaturesRow}>
                         {[
                           "Prepared By",
                           "Checked By",
                           "Approved By",
                           "Customer Sign",
                         ].map((role) => (
-                          <Text
-                            key={role}
-                            style={{
-                              flex: 1,
-                              textAlign: "center",
-                              fontSize: 7.5,
-                              color: "#555",
-                              fontWeight: "bold",
-                            }}
-                          >
+                          <Text key={role} style={styles.signatureRole}>
                             {role}
                           </Text>
                         ))}
                       </View>
-                    </View>
-                  );
-                }
-                return null;
-              }}
-            />
+                    );
+                  }
+                  return null;
+                }}
+              />
+            </View>
 
-            {/* FOOTER BAR — all pages */}
+            {/* FOOTER BAR */}
             <View style={styles.footerBar} fixed>
               <Text
                 style={styles.footerRight}
