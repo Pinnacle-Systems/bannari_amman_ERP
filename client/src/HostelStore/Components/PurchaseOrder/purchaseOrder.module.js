@@ -153,13 +153,29 @@ export const validatePurchaseOrderData = ({
   colorList,
   gsmList,
 }) => {
-  const filledItems = (data?.poItems || []).filter((item) => item.styleItemId);
-  const duplicates = findPurchaseOrderDuplicates({
-    items: filledItems,
-    id,
-    isNewVersion,
-    quoteVersion,
-  });
+  const isFabric = data?.orderGridType === "FABRIC";
+  const isYarn = data?.orderGridType === "YARN";
+
+  const fabricItems =
+    data?.poFabricItems || data?.orderFabricItems || [];
+  const yarnItems =
+    data?.poYarnItems || data?.orderYarnItems || [];
+
+  const filledItems = isFabric
+    ? fabricItems.filter((item) => item.fabricId)
+    : isYarn
+      ? yarnItems.filter((item) => item.yarnId)
+      : (data?.poItems || []).filter((item) => item.styleItemId);
+
+  const duplicates =
+    isFabric || isYarn
+      ? []
+      : findPurchaseOrderDuplicates({
+          items: filledItems,
+          id,
+          isNewVersion,
+          quoteVersion,
+        });
   const dup = duplicates[0];
 
   const checks = [
@@ -210,17 +226,31 @@ export const validatePurchaseOrderData = ({
     },
     {
       severity: "block",
-      condition: !isGridDatasValid(data?.poItems, false, [
-        "styleItemId",
-        "uomId",
-        "qty",
-        "price",
-      ]),
+      condition: isFabric
+        ? !isGridDatasValid(fabricItems, false, [
+            "fabricId",
+            "uomId",
+            "qty",
+            "price",
+          ])
+        : isYarn
+          ? !isGridDatasValid(yarnItems, false, [
+              "yarnId",
+              "uomId",
+              "qty",
+              "price",
+            ])
+          : !isGridDatasValid(data?.poItems, false, [
+              "styleItemId",
+              "uomId",
+              "qty",
+              "price",
+            ]),
       message: "Please fill all required item fields!",
     },
     {
       severity: "block",
-      condition: duplicates.length > 0,
+      condition: !isFabric && !isYarn && duplicates.length > 0,
       message: "Duplicate Item Found!",
       html: dup
         ? `Item - ${findFromList(dup?.styleItemId, styleItemList?.data, "name")}, Size - ${findFromList(dup?.sizeId, sizeList?.data, "name")}, Color - ${findFromList(dup?.colorId, colorList?.data, "name")}, GSM - ${findFromList(dup?.gsmId, gsmList?.data, "name")}`
@@ -323,6 +353,11 @@ export const getPurchaseOrderPayload = ({
   userId,
   remarks,
   poItems,
+  orderGridType,
+  poFabricItems,
+  poYarnItems,
+  orderFabricItems,
+  orderYarnItems,
   deliveryType,
   deliveryToId,
   discountType,
@@ -340,30 +375,44 @@ export const getPurchaseOrderPayload = ({
   totalNetAmount,
   submitApproval,
   orderEntryId,
-}) => ({
-  supplierId,
-  dueDate,
-  docDate,
-  branchId,
-  id,
-  userId,
-  remarks,
-  poItems: (poItems || []).filter((po) => po.styleItemId),
-  deliveryType,
-  deliveryToId,
-  discountType,
-  discountValue,
-  taxPercent,
-  finYearId,
-  poType,
-  taxTemplateId,
-  termsAndCondtion,
-  termsId,
-  isNewVersion,
-  quoteVersion,
-  payTermId,
-  pageId,
-  totalNetAmount,
-  submitApproval,
-  orderEntryId,
-});
+}) => {
+  const resolvedFabricItems = (poFabricItems || orderFabricItems || []).filter(
+    (i) => i.fabricId,
+  );
+  const resolvedYarnItems = (poYarnItems || orderYarnItems || []).filter(
+    (i) => i.yarnId,
+  );
+
+  return {
+    supplierId,
+    dueDate,
+    docDate,
+    branchId,
+    id,
+    userId,
+    remarks,
+    poItems: (poItems || []).filter((po) => po.styleItemId),
+    orderGridType: orderGridType || "GENERAL",
+    poFabricItems: resolvedFabricItems,
+    poYarnItems: resolvedYarnItems,
+    orderFabricItems: resolvedFabricItems,
+    orderYarnItems: resolvedYarnItems,
+    deliveryType,
+    deliveryToId,
+    discountType,
+    discountValue,
+    taxPercent,
+    finYearId,
+    poType,
+    taxTemplateId,
+    termsAndCondtion,
+    termsId,
+    isNewVersion,
+    quoteVersion,
+    payTermId,
+    pageId,
+    totalNetAmount,
+    submitApproval,
+    orderEntryId,
+  };
+};

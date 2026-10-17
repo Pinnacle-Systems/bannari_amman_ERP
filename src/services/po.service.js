@@ -404,6 +404,7 @@ async function getOne(id) {
         select: {
           docId: true,
           id: true,
+          orderGridType: true,
         },
       },
     },

@@ -8,8 +8,13 @@ import {
   ReusableSearchableInput,
   TextInput,
 } from "../../../Inputs";
-import { deliveryTypes, gridTypes, poTypes } from "../../../Utils/DropdownData";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  deliveryTypes,
+  gridTypes,
+  gridTypesPo,
+  poTypes,
+} from "../../../Utils/DropdownData";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import moment from "moment";
 import { findFromList, getCommonParams, ModeChip } from "../../../Utils/helper";
 import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService";
@@ -38,6 +43,9 @@ import PoSummary from "./PoSummary";
 import { useGetBranchByIdQuery } from "../../../redux/services/BranchMasterService";
 import { groupBy } from "lodash";
 import PoItems from "./PoItems";
+import FabricItems from "./fabricItems.jsx";
+import YarnItems from "./yarnItems.jsx";
+import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
 import PurchaseOrderPrintFormat from "./PrintFormat-PO";
 import { invalidatePurchaseModule } from "../../../redux/Dispatch/PurchaseInvalidateTags";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
@@ -60,7 +68,92 @@ import {
   validatePurchaseOrderData,
 } from "./purchaseOrder.module";
 import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
-import { useGetOrderEntryQuery } from "../../../redux/uniformService/OrderEntryService";
+import {
+  useGetOrderEntryQuery,
+  useLazyGetOrderEntryByIdQuery,
+} from "../../../redux/uniformService/OrderEntryService";
+import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService";
+import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
+import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterService";
+import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
+import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
+import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
+
+const EMPTY_FABRIC_ROW = {
+  fabricId: "",
+  hsnId: "",
+  colorId: "",
+  designId: "",
+  gaugeId: "",
+  loopLengthId: "",
+  gsmId: "",
+  kDiaId: "",
+  fDiaId: "",
+  uomId: "",
+  width: "",
+  numberOfRolls: "",
+  weightPerRoll: "",
+  totalKgs: "",
+  pricePerKg: "",
+  totalPrice: "",
+  qty: "",
+  price: "",
+  amount: "",
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
+};
+
+const EMPTY_YARN_ROW = {
+  yarnId: "",
+  hsnId: "",
+  colorId: "",
+  uomId: "",
+  noOfbags: "",
+  weightPerBag: "",
+  qty: "",
+  price: "",
+  amount: "",
+  taxPercent: "",
+  discountvalue: "",
+  discounttype: "",
+};
+
+const padFabricItems = (itemsArray = [], minLength = 14) => {
+  const currentLength = itemsArray.length;
+  const formattedItems = itemsArray.map((item) =>
+    item.rowId
+      ? item
+      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
+  );
+
+  if (currentLength < minLength) {
+    const padding = Array.from({ length: minLength - currentLength }, () => ({
+      ...EMPTY_FABRIC_ROW,
+      rowId: Math.random().toString(36).substring(2, 9),
+    }));
+    return [...formattedItems, ...padding];
+  }
+  return formattedItems;
+};
+
+const padYarnItems = (itemsArray = [], minLength = 14) => {
+  const currentLength = itemsArray.length;
+  const formattedItems = itemsArray.map((item) =>
+    item.rowId
+      ? item
+      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
+  );
+
+  if (currentLength < minLength) {
+    const padding = Array.from({ length: minLength - currentLength }, () => ({
+      ...EMPTY_YARN_ROW,
+      rowId: Math.random().toString(36).substring(2, 9),
+    }));
+    return [...formattedItems, ...padding];
+  }
+  return formattedItems;
+};
 
 const PurchaseOrderForm = ({
   onClose,
@@ -70,7 +163,6 @@ const PurchaseOrderForm = ({
   setReadOnly,
   taxTypeList,
   supplierList,
-  yarnList,
   uomList,
   styleItemList,
   termsData,
@@ -93,7 +185,7 @@ const PurchaseOrderForm = ({
   const [payTermId, setPayTermId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [poType, setPoType] = useState("GENERAL");
-  const [orderGridType, setOrderGridType] = useState("FABRIC");
+  const [orderGridType, setOrderGridType] = useState("GENERAL");
   const [supplierId, setSupplierId] = useState("");
   const [termsAndCondtion, setTermsAndCondtion] = useState("");
   const [termsId, setTermsId] = useState("");
@@ -119,11 +211,13 @@ const PurchaseOrderForm = ({
   const [isDeliveryThresholdPassed, setIsDeliveryThresholdPassed] =
     useState(false);
   const [orderEntryId, setOrderEntryId] = useState("");
+  const [selectedOrderGridType, setSelectedOrderGridType] = useState("");
   const supplierRef = useRef(null);
   const termsRef = useRef(null);
   const [dispatchInvalidate] = useInvalidateTags();
-
-  const { branchId, userId, finYearId } = getCommonParams();
+  const [poFabricItems, setPoFabricItems] = useState(padFabricItems([]));
+  const [poYarnItems, setPoYarnItems] = useState(padYarnItems([]));
+  const { branchId, userId, finYearId, companyId } = getCommonParams();
   const params = { branchId, userId, finYearId };
   const { data: supplierDetails } = useGetPartyByIdQuery(supplierId, {
     skip: !supplierId,
@@ -133,6 +227,24 @@ const PurchaseOrderForm = ({
   const activeTab = openTabs.tabs.find((tab) => tab.active);
   const { data: pageData } = useGetPagesQuery({});
 
+  const { data: yarnList } = useGetYarnMasterQuery({ params });
+  const { data: fabricList } = useGetFabricMasterQuery({
+    params: { companyId },
+  });
+  const { data: designList } = useGetDesignMasterQuery({
+    params: { companyId },
+  });
+  const { data: loopLengthList } = useGetLoopLengthMasterQuery({
+    params: { companyId },
+  });
+  const { data: diaList } = useGetDiaMasterQuery({
+    params: { companyId },
+  });
+  const { data: gaugeList } = useGetGaugeMasterQuery({
+    params: { companyId },
+  });
+  const kDiaList = diaList?.data?.filter((val) => val?.kDia);
+  const fDiaList = diaList?.data?.filter((val) => val?.fDia);
   const currentPageId =
     (pageData?.data || []).find((i) => i.name === activeTab.name)?.id || "";
 
@@ -150,6 +262,7 @@ const PurchaseOrderForm = ({
   const [addApprovalStatus] = useAddApprovalStausMutation();
   const [addData] = useAddPoMutation();
   const [updateData] = useUpdatePoMutation();
+  const [getOrderEntryById] = useLazyGetOrderEntryByIdQuery();
   const status = singleData?.data?.approvalStatus?.status;
 
   const syncFormWithDb = useCallback(
@@ -170,13 +283,23 @@ const PurchaseOrderForm = ({
           readOnly,
       );
       setPoType(data?.poType ? data?.poType : "GENERAL");
-      setOrderGridType(data?.orderGridType || "FABRIC");
+      setOrderGridType(data?.orderGridType || "GENERAL");
       setDocDate(
         data?.docDate
           ? moment.utc(data.docDate).format("YYYY-MM-DD")
           : moment.utc(new Date()).format("YYYY-MM-DD"),
       );
       setOrderEntryId(data?.orderEntryId || "");
+      const matchedOrder = (orderData?.data || []).find(
+        (o) => o.id === data?.orderEntryId,
+      );
+      const resolvedOrderGridType =
+        data?.OrderEntry?.orderGridType ||
+        matchedOrder?.orderGridType ||
+        (data?.poType === "ORDER" && data?.orderGridType === "FABRIC"
+          ? "FABRIC"
+          : "");
+      setSelectedOrderGridType(resolvedOrderGridType || "");
       setDocId(data?.docId ? data?.docId : "New");
       setDiscountType(data?.discountType || "");
       setTaxPercent(data?.taxPercent ? data?.taxPercent : "");
@@ -240,6 +363,18 @@ const PurchaseOrderForm = ({
         );
       }
       setPoItems(finalPoItems);
+      if (data?.poFabricItems?.length || data?.orderFabricItems?.length) {
+        setPoFabricItems(
+          padFabricItems(data.poFabricItems || data.orderFabricItems),
+        );
+      } else {
+        setPoFabricItems(padFabricItems([]));
+      }
+      if (data?.poYarnItems?.length || data?.orderYarnItems?.length) {
+        setPoYarnItems(padYarnItems(data.poYarnItems || data.orderYarnItems));
+      } else {
+        setPoYarnItems(padYarnItems([]));
+      }
       setPayTermId(data?.payTermId ? data?.payTermId : "");
     },
     [id],
@@ -252,6 +387,121 @@ const PurchaseOrderForm = ({
       syncFormWithDb(undefined);
     }
   }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
+
+  useEffect(() => {
+    if (
+      poType === "ORDER" &&
+      orderEntryId &&
+      !selectedOrderGridType &&
+      orderData?.data?.length
+    ) {
+      const matched = orderData.data.find((o) => o.id === orderEntryId);
+      if (matched?.orderGridType) {
+        setSelectedOrderGridType(matched.orderGridType);
+      }
+    }
+  }, [poType, orderEntryId, selectedOrderGridType, orderData]);
+
+  const handleOrderNoChange = async (selectedOrderEntryId) => {
+    setOrderEntryId(selectedOrderEntryId);
+    if (!selectedOrderEntryId) {
+      setSelectedOrderGridType("");
+      setPoFabricItems(padFabricItems([]));
+      setPoYarnItems(padYarnItems([]));
+      setPoItems(
+        createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
+      );
+      return;
+    }
+    try {
+      const res = await getOrderEntryById(selectedOrderEntryId).unwrap();
+      const order = res?.data;
+      if (!order) return;
+
+      const gridType = order?.orderGridType || "GENERAL";
+      setSelectedOrderGridType(gridType);
+      setOrderGridType(gridType);
+
+      // if (order.taxTemplateId) setTaxTemplateId(order.taxTemplateId);
+      // if (order.termsId) setTermsId(order.termsId);
+      // if (order.termsAndCondition) setTermsAndCondtion(order.termsAndCondition);
+      // if (order.remarks) setRemarks(order.remarks);
+      // if (order.deliveryDate) {
+      //   setDueDate(moment.utc(order.deliveryDate).format("YYYY-MM-DD"));
+      // }
+      // if (order.payTermId) setPayTermId(order.payTermId);
+      // if (order.discountType) setDiscountType(order.discountType);
+      // if (order.discountValue != null) setDiscountValue(order.discountValue);
+
+      if (gridType === "FABRIC") {
+        const itemsArr = order?.orderFabricItems || [];
+        const mapped = itemsArr.map((item) => ({
+          ...EMPTY_FABRIC_ROW,
+          ...item,
+          weightPerRoll: item?.weightPerRoll
+            ? Number(item?.weightPerRoll)?.toFixed(3)
+            : "",
+          totalKgs: item?.totalKgs ? Number(item?.totalKgs)?.toFixed(3) : "",
+          pricePerKg: item?.pricePerKg
+            ? Number(item?.pricePerKg)?.toFixed(2)
+            : "",
+          totalPrice: item?.totalPrice
+            ? Number(item?.totalPrice)?.toFixed(2)
+            : "",
+          qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+          price: item?.price ? Number(item?.price)?.toFixed(2) : "",
+          amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+          taxPercent: item?.taxPercent ?? "",
+          discountValue: item?.discountValue ?? "",
+          discountType: item?.discountType ?? "",
+          rowId: Math.random().toString(36).substring(2, 9),
+        }));
+        setPoFabricItems(padFabricItems(mapped));
+
+        if (order?.orderYarnItems?.length) {
+          const yarnMapped = order.orderYarnItems.map((item) => ({
+            ...EMPTY_YARN_ROW,
+            ...item,
+            noOfbags: item?.noOfbags ?? "",
+            weightPerBag: item?.weightPerBag
+              ? Number(item?.weightPerBag)?.toFixed(3)
+              : "",
+            qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+            price: item?.price ? Number(item?.price)?.toFixed(2) : "",
+            amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+            taxPercent: item?.taxPercent ?? "",
+            discountValue: item?.discountValue ?? "",
+            discountType: item?.discountType ?? "",
+            rowId: Math.random().toString(36).substring(2, 9),
+          }));
+          setPoYarnItems(padYarnItems(yarnMapped));
+        } else {
+          setPoYarnItems(padYarnItems([]));
+        }
+      } else if (gridType === "YARN") {
+        const itemsArr = order?.orderYarnItems || [];
+        const mapped = itemsArr.map((item) => ({
+          ...EMPTY_YARN_ROW,
+          ...item,
+          noOfbags: item?.noOfbags ?? "",
+          weightPerBag: item?.weightPerBag
+            ? Number(item?.weightPerBag)?.toFixed(3)
+            : "",
+          qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+          price: item?.price ? Number(item?.price)?.toFixed(2) : "",
+          amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+          taxPercent: item?.taxPercent ?? "",
+          discountValue: item?.discountValue ?? "",
+          discountType: item?.discountType ?? "",
+          rowId: Math.random().toString(36).substring(2, 9),
+        }));
+        setPoYarnItems(padYarnItems(mapped));
+      }
+    } catch (err) {
+      console.error("Failed to fetch order entry details:", err);
+      toast.error("Failed to fetch order details");
+    }
+  };
 
   // PurchaseOrderForm.jsx — handleSubmitCustom
   const handleSubmitCustom = async (callback, data, text, nextProcess) => {
@@ -390,6 +640,9 @@ const PurchaseOrderForm = ({
       userId,
       remarks,
       poItems,
+      orderGridType,
+      poFabricItems,
+      poYarnItems,
       deliveryType,
       deliveryToId,
       discountType,
@@ -404,7 +657,7 @@ const PurchaseOrderForm = ({
       quoteVersion,
       payTermId,
       pageId: currentPageId,
-      totalNetAmount: totals?.net,
+      totalNetAmount: activeTotals?.net,
       submitApproval: submitApprovalFlag,
       orderEntryId,
     });
@@ -516,9 +769,76 @@ const PurchaseOrderForm = ({
       quoteVersion,
     });
 
-  const taxGroupWise = groupBy(poItems, "taxPercent");
+  const activeTotals = useMemo(() => {
+    if (orderGridType === "FABRIC") {
+      const filtered = (poFabricItems || [])
+        .filter((i) => i.fabricId)
+        .map((i) => ({ ...i, qty: i.qty }));
+      if (!filtered.length) {
+        return {
+          items: [],
+          gross: 0,
+          itemDiscount: 0,
+          overallDiscount: 0,
+          taxable: 0,
+          roundOff: 0,
+          net: 0,
+          slabBreakup: [],
+          hsnBreakup: {},
+        };
+      }
+      return calculateTaxWithHSNBreakupAndInsertIntoPoItems(
+        filtered,
+        isSupplierOutside,
+        discountType,
+        discountValue,
+      );
+    }
+    if (orderGridType === "YARN") {
+      const filtered = (poYarnItems || [])
+        .filter((i) => i.yarnId)
+        .map((i) => ({ ...i, qty: i.qty }));
+      if (!filtered.length) {
+        return {
+          items: [],
+          gross: 0,
+          itemDiscount: 0,
+          overallDiscount: 0,
+          taxable: 0,
+          roundOff: 0,
+          net: 0,
+          slabBreakup: [],
+          hsnBreakup: {},
+        };
+      }
+      return calculateTaxWithHSNBreakupAndInsertIntoPoItems(
+        filtered,
+        isSupplierOutside,
+        discountType,
+        discountValue,
+      );
+    }
+    return totals;
+  }, [
+    orderGridType,
+    poFabricItems,
+    poYarnItems,
+    isSupplierOutside,
+    discountType,
+    discountValue,
+    totals,
+  ]);
 
-  const taxBreakdownSummaryRaw = totals?.slabBreakup || [];
+  const taxGroupWise = groupBy(
+    orderGridType === "FABRIC"
+      ? poFabricItems
+      : orderGridType === "YARN"
+        ? poYarnItems
+        : poItems,
+    "taxPercent",
+  );
+
+  const taxBreakdownSummaryRaw = activeTotals?.slabBreakup || [];
   const aggregatedTaxBreakdown = taxBreakdownSummaryRaw?.reduce((acc, row) => {
     const taxType = row?.tax?.split(" ")[0];
     if (!acc[taxType]) {
@@ -652,6 +972,30 @@ const PurchaseOrderForm = ({
   const isFullyLocked =
     effectiveReadOnly || (isPostApprovalLock && isDeliveryThresholdPassed);
   const isCoreLocked = isFullyLocked || isPostApprovalLock;
+
+  const itemTypeOptions = useMemo(() => {
+    if (poType === "ORDER" && selectedOrderGridType === "FABRIC") {
+      return gridTypes;
+    }
+    return gridTypesPo;
+  }, [poType, selectedOrderGridType]);
+
+  const isItemTypeDisabled = useMemo(() => {
+    if (orderId || childRecordCount > 0 || isCoreLocked || readOnly) {
+      return true;
+    }
+    if (poType === "ORDER") {
+      return selectedOrderGridType !== "FABRIC";
+    }
+    return false;
+  }, [
+    orderId,
+    childRecordCount,
+    isCoreLocked,
+    readOnly,
+    poType,
+    selectedOrderGridType,
+  ]);
 
   const actionButtonClass =
     "px-2 py-1 rounded flex items-center justify-center text-xs text-white transition";
@@ -900,6 +1244,7 @@ const PurchaseOrderForm = ({
             setPoType(value);
             if (value !== "ORDER") {
               setOrderEntryId("");
+              setSelectedOrderGridType("");
             }
           }}
           required={true}
@@ -919,7 +1264,7 @@ const PurchaseOrderForm = ({
             "id",
           )}
           value={orderEntryId}
-          setValue={setOrderEntryId}
+          setValue={handleOrderNoChange}
           readOnly={isCoreLocked || poType !== "ORDER"}
           className={`${compactFieldClass} w-full max-w-none`}
         />
@@ -927,16 +1272,14 @@ const PurchaseOrderForm = ({
       <div className={narrowFieldWrap}>
         <DropdownInput
           name="Item Type"
-          options={gridTypes}
+          options={itemTypeOptions}
           value={orderGridType}
           setValue={(value) => {
             setOrderGridType(value);
           }}
           required={true}
           readOnly={isCoreLocked}
-          disabled={
-            orderId || childRecordCount > 0 || isCoreLocked || poType == "ORDER"
-          }
+          disabled={isItemTypeDisabled}
           className={`${compactFieldClass} w-full max-w-none`}
           autoFocus={true}
         />
@@ -1366,13 +1709,13 @@ const PurchaseOrderForm = ({
           {
             key: "totalDiscount",
             label: "Total Discount",
-            value: `Rs.${parseFloat((totals?.itemDiscount || 0) + (totals?.overallDiscount || 0)).toFixed(2)}`,
+            value: `Rs.${parseFloat((activeTotals?.itemDiscount || 0) + (activeTotals?.overallDiscount || 0)).toFixed(2)}`,
             summaryColumn: "right",
           },
           {
             key: "taxableAmount",
             label: "Taxable Amount",
-            value: `Rs.${parseFloat(totals?.taxable || 0).toFixed(2)}`,
+            value: `Rs.${parseFloat(activeTotals?.taxable || 0).toFixed(2)}`,
             summaryColumn: "right",
           },
           ...taxBreakdownSummary.map((row, index) => ({
@@ -1387,7 +1730,7 @@ const PurchaseOrderForm = ({
           {
             key: "roundOff",
             label: "Round Off",
-            value: `Rs.${parseFloat(totals?.roundOff || 0).toFixed(2)}`,
+            value: `Rs.${parseFloat(activeTotals?.roundOff || 0).toFixed(2)}`,
             summaryColumn: "right",
             labelClassName: "!text-slate-500 font-normal",
             valueClassName: "text-slate-700",
@@ -1395,7 +1738,7 @@ const PurchaseOrderForm = ({
           {
             key: "netAmount",
             label: "Net Amount",
-            value: `Rs.${parseFloat(totals?.net || 0).toFixed(2)}`,
+            value: `Rs.${parseFloat(activeTotals?.net || 0).toFixed(2)}`,
             summaryColumn: "right",
             emphasized: true,
           },
@@ -1436,13 +1779,13 @@ const PurchaseOrderForm = ({
           {
             key: "taxableAmount",
             label: "Taxable Amount",
-            value: `Rs.${parseFloat(totals?.taxable || 0).toFixed(2)}`,
+            value: `Rs.${parseFloat(activeTotals?.taxable || 0).toFixed(2)}`,
             summaryColumn: "right",
           },
           {
             key: "netAmount",
             label: "Net Amount",
-            value: `Rs.${parseFloat(totals?.net || 0).toFixed(2)}`,
+            value: `Rs.${parseFloat(activeTotals?.net || 0).toFixed(2)}`,
             summaryColumn: "right",
             emphasized: true,
           },
@@ -1699,13 +2042,19 @@ const PurchaseOrderForm = ({
           setDiscountType={setDiscountType}
           discountValue={discountValue}
           setDiscountValue={setDiscountValue}
-          poItems={poItems}
+          poItems={
+            orderGridType === "FABRIC"
+              ? poFabricItems
+              : orderGridType === "YARN"
+                ? poYarnItems
+                : poItems
+          }
           taxTypeId={taxTemplateId}
           readOnly={readOnly}
           // isSupplierOutside={isSupplierOutside()}
           isNewVersion={isNewVersion}
           quoteVersion={quoteVersion}
-          totals={totals}
+          totals={activeTotals}
           id={id}
           setSummary={setSummary}
         />
@@ -1764,25 +2113,73 @@ const PurchaseOrderForm = ({
         sidebarWidthClass="w-[300px]"
         sidebarFooter={sidebarFooterContent}
         gridItems={
-          <PoItems
-            id={id}
-            poItems={poItems}
-            enrichedPoItems={enrichedPoItems}
-            setPoItems={setPoItems}
-            uomList={uomList}
-            hsnList={hsnList}
-            readOnly={effectiveReadOnly}
-            styleItemList={styleItemList}
-            taxTemplateId={taxTemplateId}
-            isNewVersion={isNewVersion}
-            quoteVersion={quoteVersion}
-            itemGroupList={itemGroupList}
-            sizeList={sizeList}
-            colorList={colorList}
-            termsRef={termsRef}
-            gsmList={gsmList}
-            isSupplierOutside={isSupplierOutside}
-          />
+          orderGridType === "FABRIC" ? (
+            <FabricItems
+              poFabricItems={poFabricItems}
+              setPoFabricItems={setPoFabricItems}
+              orderFabricItems={poFabricItems}
+              setFabricItems={setPoFabricItems}
+              readOnly={effectiveReadOnly}
+              uomList={uomList}
+              hsnList={hsnList}
+              colorList={colorList}
+              gsmList={gsmList}
+              designList={designList}
+              kDiaList={kDiaList}
+              fDiaList={fDiaList}
+              loopLengthList={loopLengthList}
+              gaugeList={gaugeList}
+              fabricList={fabricList}
+              id={id}
+              termsRef={termsRef}
+              enrichedItems={activeTotals}
+              taxTemplateId={taxTemplateId}
+              isSupplierOutside={isSupplierOutside}
+              isCustomerExport={false}
+              currencyCode={"INR"}
+              isCurrencySymbol={"₹"}
+            />
+          ) : orderGridType === "YARN" ? (
+            <YarnItems
+              poYarnItems={poYarnItems}
+              setPoYarnItems={setPoYarnItems}
+              orderYarnItems={poYarnItems}
+              setYarnItems={setPoYarnItems}
+              readOnly={effectiveReadOnly}
+              uomList={uomList}
+              hsnList={hsnList}
+              colorList={colorList}
+              yarnList={yarnList}
+              id={id}
+              termsRef={termsRef}
+              enrichedItems={activeTotals}
+              taxTemplateId={taxTemplateId}
+              isSupplierOutside={isSupplierOutside}
+              isCustomerExport={false}
+              currencyCode={"INR"}
+              isCurrencySymbol={"₹"}
+            />
+          ) : (
+            <PoItems
+              id={id}
+              poItems={poItems}
+              enrichedPoItems={enrichedPoItems}
+              setPoItems={setPoItems}
+              uomList={uomList}
+              hsnList={hsnList}
+              readOnly={effectiveReadOnly}
+              styleItemList={styleItemList}
+              taxTemplateId={taxTemplateId}
+              isNewVersion={isNewVersion}
+              quoteVersion={quoteVersion}
+              itemGroupList={itemGroupList}
+              sizeList={sizeList}
+              colorList={colorList}
+              termsRef={termsRef}
+              gsmList={gsmList}
+              isSupplierOutside={isSupplierOutside}
+            />
+          )
         }
         footer={footerContent}
         versionDropdown={
