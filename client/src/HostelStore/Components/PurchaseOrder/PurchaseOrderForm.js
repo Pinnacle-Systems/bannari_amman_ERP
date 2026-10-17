@@ -151,6 +151,7 @@ const PurchaseOrderForm = ({
   const [addData] = useAddPoMutation();
   const [updateData] = useUpdatePoMutation();
   const status = singleData?.data?.approvalStatus?.status;
+
   const syncFormWithDb = useCallback(
     (data) => {
       const status = data?.approvalStatus?.status;
@@ -169,6 +170,7 @@ const PurchaseOrderForm = ({
           readOnly,
       );
       setPoType(data?.poType ? data?.poType : "GENERAL");
+      setOrderGridType(data?.orderGridType || "FABRIC");
       setDocDate(
         data?.docDate
           ? moment.utc(data.docDate).format("YYYY-MM-DD")
@@ -246,7 +248,6 @@ const PurchaseOrderForm = ({
   useEffect(() => {
     if (id) {
       syncFormWithDb(singleData?.data);
-      console.log(readOnly, "readOnly");
     } else {
       syncFormWithDb(undefined);
     }
@@ -407,7 +408,6 @@ const PurchaseOrderForm = ({
       submitApproval: submitApprovalFlag,
       orderEntryId,
     });
-    console.log(orderEntryId, "orderEntryId");
 
     if (!validateData(payload)) {
       return;
@@ -797,7 +797,11 @@ const PurchaseOrderForm = ({
   ];
 
   const rightActions = [
-    ...(!id || !readOnly || status === "PENDING" || status === "SUPERSEDED" || isOldVersion
+    ...(!id ||
+    !readOnly ||
+    status === "PENDING" ||
+    status === "SUPERSEDED" ||
+    isOldVersion
       ? []
       : [
           {
@@ -830,7 +834,6 @@ const PurchaseOrderForm = ({
 
   const approvalStatusBanner = (() => {
     if (!isPostApprovalLock) return null;
-    console.log(isPostApprovalLock, "isPostApprovalLock");
 
     return (
       <div
@@ -931,7 +934,9 @@ const PurchaseOrderForm = ({
           }}
           required={true}
           readOnly={isCoreLocked}
-          disabled={orderId || childRecordCount > 0 || isCoreLocked}
+          disabled={
+            orderId || childRecordCount > 0 || isCoreLocked || poType == "ORDER"
+          }
           className={`${compactFieldClass} w-full max-w-none`}
           autoFocus={true}
         />
