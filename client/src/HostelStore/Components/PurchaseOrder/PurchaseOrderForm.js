@@ -654,8 +654,7 @@ const PurchaseOrderForm = ({
   const isCoreLocked = isFullyLocked || isPostApprovalLock;
 
   const actionButtonClass =
-    "px-3 py-2 rounded-md flex items-center justify-center text-sm text-white transition";
-  const actionIconPairClass = "flex items-center gap-1";
+    "px-2 py-1 rounded flex items-center justify-center text-xs text-white transition";
 
   const leftActions = [
     ...(isFullyLocked
@@ -663,14 +662,9 @@ const PurchaseOrderForm = ({
       : [
           {
             key: "save-close",
-            icon: (
-              <span className={actionIconPairClass}>
-                <FiSave className="h-4 w-4" />
-                <HiX className="h-4 w-4" />
-              </span>
-            ),
-            hoverLabel: "Save & Close",
-            iconOnly: true,
+            icon: <HiOutlineRefresh className="w-4 h-4 mr-2" />,
+            label: id ? "Update & Close" : "Save & Close",
+            hoverLabel: id ? "Update & Close" : "Save & Close",
             onClick: () => saveData("close"),
             onKeyDown: (e) => {
               if (e.key === "Enter") {
@@ -680,7 +674,7 @@ const PurchaseOrderForm = ({
               }
             },
             disabled: readOnly || status === "APPROVED",
-            className: `bg-indigo-500 hover:bg-indigo-600 ${actionButtonClass} ${
+            className: `bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded flex items-center text-xs transition ${
               readOnly || status === "APPROVED"
                 ? "opacity-50 cursor-not-allowed"
                 : ""
@@ -691,14 +685,9 @@ const PurchaseOrderForm = ({
             : [
                 {
                   key: "save-new",
-                  icon: (
-                    <span className={actionIconPairClass}>
-                      <FiSave className="h-4 w-4" />
-                      <HiOutlineRefresh className="h-4 w-4" />
-                    </span>
-                  ),
-                  hoverLabel: "Save & New",
-                  iconOnly: true,
+                  icon: <FiSave className="w-4 h-4 mr-2" />,
+                  label: id ? "Update & New" : "Save & New",
+                  hoverLabel: id ? "Update & New" : "Save & New",
                   onClick: () => saveData("new"),
                   onKeyDown: (e) => {
                     if (e.key === "Enter") {
@@ -708,10 +697,44 @@ const PurchaseOrderForm = ({
                     }
                   },
                   disabled: readOnly,
-                  className: `bg-indigo-500 hover:bg-indigo-600 ${actionButtonClass}`,
+                  className: `bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded flex items-center text-xs transition ${
+                    readOnly ? "opacity-50 cursor-not-allowed" : ""
+                  }`,
                 },
               ]),
         ]),
+    {
+      key: "summary",
+      icon: <FiEye className="w-4 h-4 mr-2" />,
+      label: "View Summary",
+      hoverLabel: "View PO Summary",
+      onClick: () => {
+        if (!taxTemplateId) {
+          toast.info("Please Select Tax Template !", {
+            position: "top-center",
+          });
+          return;
+        }
+        setSummary(true);
+      },
+      onKeyDown: (e) => {
+        if (!taxTemplateId) {
+          e.preventDefault();
+          e.stopPropagation();
+          toast.info("Please Select Tax Template !", {
+            position: "top-center",
+          });
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          setSummary(true);
+        }
+      },
+      className:
+        "bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded flex items-center text-xs transition",
+    },
     ...(!id ||
     status === "PENDING" ||
     status === "APPROVED" ||
@@ -774,56 +797,23 @@ const PurchaseOrderForm = ({
   ];
 
   const rightActions = [
-    ...(!id || !readOnly || status === "PENDING" || status === "SUPERSEDED"
+    ...(!id || !readOnly || status === "PENDING" || status === "SUPERSEDED" || isOldVersion
       ? []
       : [
           {
             key: "edit",
-            icon: <FiEdit2 className="h-4 w-4" />,
+            icon: <FiEdit2 className="w-4 h-4 mr-2" />,
+            label: "Edit",
             hoverLabel: "Edit",
-            iconOnly: true,
             onClick: () => setReadOnly(false),
-            className: `bg-yellow-600 hover:bg-yellow-700 ${actionButtonClass}`,
-            hidden: !readOnly || !id || isOldVersion,
+            className: `bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1 rounded flex items-center text-xs transition`,
           },
         ]),
     {
-      key: "summary",
-      icon: <FiEye className="h-4 w-4" />,
-      hoverLabel: "View PO Summary",
-      iconOnly: true,
-      onClick: () => {
-        if (!taxTemplateId) {
-          toast.info("Please Select Tax Template !", {
-            position: "top-center",
-          });
-          return;
-        }
-        setSummary(true);
-      },
-      onKeyDown: (e) => {
-        if (!taxTemplateId) {
-          e.preventDefault();
-          e.stopPropagation();
-          toast.info("Please Select Tax Template !", {
-            position: "top-center",
-          });
-          return;
-        }
-        if (e.key === "Enter") {
-          e.preventDefault();
-          e.stopPropagation();
-          setSummary(true);
-        }
-      },
-      className:
-        "bg-blue-600 text-white font-semibold hover:bg-blue-800 rounded-md px-3 py-2 flex items-center justify-center transition",
-    },
-    {
       key: "print",
-      icon: <FiPrinter className="h-4 w-4" />,
+      icon: <FiPrinter className="w-4 h-4 mr-2" />,
+      label: "Print",
       hoverLabel: "Print",
-      iconOnly: true,
       onClick: () => {
         setPrintModalOpen(true);
       },
@@ -834,7 +824,7 @@ const PurchaseOrderForm = ({
           setPrintModalOpen(true);
         }
       },
-      className: `bg-slate-600 hover:bg-slate-700 ${actionButtonClass}`,
+      className: `bg-slate-600 hover:bg-slate-700 text-white px-2 py-1 rounded flex items-center text-xs transition`,
     },
   ];
 
@@ -872,9 +862,8 @@ const PurchaseOrderForm = ({
   const fieldWidthDate = "w-full min-w-0";
   const narrowFieldWrap = "min-w-0";
   const partyDropdownMinWidth = 260;
-  const supplierCompactGridClass = "grid grid-cols-2 gap-x-3";
-  const deliveryCompactGridClass =
-    "grid grid-cols-1 gap-1 items-end md:grid-cols-[100px_minmax(0,1fr)_110px] xl:grid-cols-[100px_minmax(0,1fr)_110px]";
+  const supplierCompactGridClass = "grid grid-cols-3 gap-x-3";
+  const deliveryCompactGridClass = "grid grid-cols-3 gap-x-3";
   const sidebarSectionGridClass = "grid grid-cols-1 gap-1";
   const sidebarTwoColumnGridClass = "grid grid-cols-2 gap-1";
 
@@ -988,7 +977,7 @@ const PurchaseOrderForm = ({
 
   const supplierDetailsFields = (
     <>
-      <div className="min-w-0 md:col-span-2 xl:col-span-1">
+      <div className="min-w-0 md:col-span-2 xl:col-span-2">
         <DropdownWithModal
           name="Supplier"
           options={dropDownListObject(
@@ -1013,7 +1002,7 @@ const PurchaseOrderForm = ({
         />
       </div>
 
-      <div className={narrowFieldWrap}>
+      <div className="col-span-1">
         <TextInput
           name="Contact Person"
           placeholder="Contact name"
@@ -1027,7 +1016,7 @@ const PurchaseOrderForm = ({
         />
       </div>
 
-      <div className={narrowFieldWrap}>
+      <div className="col-span-1">
         <TextInput
           name="Phone"
           placeholder="Contact name"
@@ -1041,7 +1030,7 @@ const PurchaseOrderForm = ({
 
   const deliveryDetailsFields = (
     <>
-      <div className={narrowFieldWrap}>
+      <div className="col-span-1">
         <DropdownInput
           name="Delivery Type"
           options={deliveryTypes}
@@ -1052,7 +1041,7 @@ const PurchaseOrderForm = ({
           className={`${compactFieldClass} ${fieldWidthShort}`}
         />
       </div>
-      <div className="min-w-0">
+      <div className="col-span-2">
         {deliveryType == "ToSelf" ? (
           <DropdownInput
             name="Delivery To"
@@ -1093,7 +1082,7 @@ const PurchaseOrderForm = ({
           />
         )}
       </div>
-      <div className={narrowFieldWrap}>
+      <div className="col-span-1">
         <DateInputNew
           name="Delivery Date"
           value={dueDate}
