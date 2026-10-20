@@ -680,6 +680,8 @@ model Uom {
   yarnItems              YarnItems[]
   orderYarnItems         OrderYarnItems[]
   orderFabricItems       OrderFabricItems[]
+  poFabricItems          PoFabricItems[]
+  poYarnItems            PoYarnItems[]
 }
 
 model ProductUomPriceDetails {
@@ -1129,6 +1131,8 @@ model Color {
   yarnItems              YarnItems[]
   orderYarnItems         OrderYarnItems[]
   orderFabricItems       OrderFabricItems[]
+  poFabricItems          PoFabricItems[]
+  poYarnItems            PoYarnItems[]
 }
 
 model DeliveryInvoice {
@@ -1305,6 +1309,8 @@ model Hsn {
   yarnItems              YarnItems[]
   orderYarnItems         OrderYarnItems[]
   orderFabricItems       OrderFabricItems[]
+  poFabricItems          PoFabricItems[]
+  poYarnItems            PoYarnItems[]
 }
 
 model BranchType {
@@ -1369,18 +1375,21 @@ model Po {
   branchId               Int?
   Supplier               Party?                   @relation("supplier", fields: [supplierId], references: [id])
   supplierId             Int?
-  poItems                PoItems[]
   discountType           String?
   discountValue          Float?
   taxPercent             Float?
   quoteVersion           Int                      @default(1)
-  quoteVersions          QuoteVersion[]
   PayTerm                PayTerm?                 @relation(fields: [payTermId], references: [id])
   payTermId              Int?
+  orderGridType          String?
+  poItems                PoItems[]
+  quoteVersions          QuoteVersion[]
   inwardItems            InwardItems[]
   purchaseCancelItems    PurchaseCancelItems[]
   purchaseReturnItems    PurchaseReturnItems[]
   purchaseBillEntryItems PurchaseBillEntryItems[]
+  poFabricItems          PoFabricItems[]
+  poYarnItems            PoYarnItems[]
 }
 
 model QuoteVersion {
@@ -1388,6 +1397,72 @@ model QuoteVersion {
   Po           Po?  @relation(fields: [poId], references: [id])
   poId         Int?
   quoteVersion Int?
+}
+
+model PoFabricItems {
+  id            Int           @id @default(autoincrement())
+  Po            Po?           @relation(fields: [poId], references: [id], onDelete: Cascade)
+  poId          Int?
+  fabricId      Int?
+  fabric        FabricMaster? @relation(fields: [fabricId], references: [id])
+  hsnId         Int?
+  hsn           Hsn?          @relation(fields: [hsnId], references: [id])
+  colorId       Int?
+  color         Color?        @relation(fields: [colorId], references: [id])
+  designId      Int?
+  design        DesignMaster? @relation(fields: [designId], references: [id])
+  gaugeId       Int?
+  gauge         Gauge?        @relation(fields: [gaugeId], references: [id])
+  loopLengthId  Int?
+  loopLength    LoopLength?   @relation(fields: [loopLengthId], references: [id])
+  gsmId         Int?
+  gsm           Gsm?          @relation(fields: [gsmId], references: [id])
+  kDiaId        Int?
+  kDia          DiaMaster?    @relation("kDia", fields: [kDiaId], references: [id])
+  fDiaId        Int?
+  fDia          DiaMaster?    @relation("fDia", fields: [fDiaId], references: [id])
+  uomId         Int?
+  uom           Uom?          @relation(fields: [uomId], references: [id])
+  width         String?
+  numberOfRolls Float?
+  weightPerRoll Float?
+  totalKgs      Float?
+  pricePerKg    Float?
+  totalPrice    Float?
+  qty           Float?
+  price         Float?
+  amount        Float?
+  taxPercent    Float?
+  discountType  String?
+  discountValue Float?
+  quoteVersion  Int           @default(1)
+}
+
+model PoYarnItems {
+  id            Int            @id @default(autoincrement())
+  Po            Po?            @relation(fields: [poId], references: [id], onDelete: Cascade)
+  poId          Int?
+  yarnId        Int?
+  yarn          YarnMaster?    @relation(fields: [yarnId], references: [id])
+  hsnId         Int?
+  hsn           Hsn?           @relation(fields: [hsnId], references: [id])
+  contentId     Int?
+  content       ContentMaster? @relation(fields: [contentId], references: [id])
+  countsId      Int?
+  counts        CountsMaster?  @relation(fields: [countsId], references: [id])
+  colorId       Int?
+  color         Color?         @relation(fields: [colorId], references: [id])
+  uomId         Int?
+  uom           Uom?           @relation(fields: [uomId], references: [id])
+  noOfbags      Int?
+  weightPerBag  Float?
+  qty           Float?
+  price         Float?
+  amount        Float?
+  taxPercent    Float?
+  discountType  String?
+  discountValue Float?
+  quoteVersion  Int            @default(1)
 }
 
 model PoItems {
@@ -1789,6 +1864,7 @@ model Gsm {
   SalesBillEntryItems    SalesBillEntryItems[]
   fabricItems            FabricItems[]
   orderFabricItems       OrderFabricItems[]
+  poFabricItems          PoFabricItems[]
 }
 
 model ItemGroup {
@@ -2871,6 +2947,7 @@ model ContentMaster {
   YarnMaster     YarnMaster[]
   yarnItems      YarnItems[]
   orderYarnItems OrderYarnItems[]
+  poYarnItems    PoYarnItems[]
 }
 
 model CountsMaster {
@@ -2882,6 +2959,7 @@ model CountsMaster {
   YarnMaster     YarnMaster[]
   yarnItems      YarnItems[]
   orderYarnItems OrderYarnItems[]
+  poYarnItems    PoYarnItems[]
 }
 
 model YarnBlendMaster {
@@ -2909,6 +2987,7 @@ model YarnMaster {
   YarnMasterDetail YarnMasterDetail[]
   yarnItems        YarnItems[]
   orderYarnItems   OrderYarnItems[]
+  poYarnItems      PoYarnItems[]
 }
 
 model YarnMasterDetail {
@@ -2930,6 +3009,7 @@ model FabricMaster {
   Hsn              Hsn                @relation(fields: [hsnId], references: [id])
   fabricItems      FabricItems[]
   orderFabricItems OrderFabricItems[]
+  poFabricItems    PoFabricItems[]
 }
 
 model Gauge {
@@ -2940,6 +3020,7 @@ model Gauge {
   companyId        Int
   fabricItems      FabricItems[]
   orderFabricItems OrderFabricItems[]
+  poFabricItems    PoFabricItems[]
 }
 
 model LoopLength {
@@ -2950,6 +3031,7 @@ model LoopLength {
   companyId        Int
   fabricItems      FabricItems[]
   orderFabricItems OrderFabricItems[]
+  poFabricItems    PoFabricItems[]
 }
 
 model DesignMaster {
@@ -2960,6 +3042,7 @@ model DesignMaster {
   companyId        Int
   fabricItems      FabricItems[]
   orderFabricItems OrderFabricItems[]
+  poFabricItems    PoFabricItems[]
 }
 
 model DiaMaster {
@@ -2975,6 +3058,8 @@ model DiaMaster {
   FabricItemsfDia      FabricItems[]      @relation("fDia")
   OrderFabricItemskDia OrderFabricItems[] @relation("kDia")
   OrderFabricItemsfDia OrderFabricItems[] @relation("fDia")
+  poFabricItemskDia    PoFabricItems[]    @relation("kDia")
+  PoFabricItemsfDia    PoFabricItems[]    @relation("fDia")
 
   @@unique([name, kDia, fDia])
 }

@@ -156,16 +156,26 @@ export const validatePurchaseOrderData = ({
   const isFabric = data?.orderGridType === "FABRIC";
   const isYarn = data?.orderGridType === "YARN";
 
-  const fabricItems =
-    data?.poFabricItems || data?.orderFabricItems || [];
-  const yarnItems =
-    data?.poYarnItems || data?.orderYarnItems || [];
+  const isVisibleRow = (row) => {
+    if (!id) return true;
+    if (isNewVersion) return row.quoteVersion === "New";
+    if (!quoteVersion) return row.quoteVersion !== "New";
+    return parseInt(row.quoteVersion) === parseInt(quoteVersion);
+  };
+
+  const fabricItems = (
+    data?.poFabricItems || data?.orderFabricItems || []
+  ).filter(isVisibleRow);
+  const yarnItems = (
+    data?.poYarnItems || data?.orderYarnItems || []
+  ).filter(isVisibleRow);
+  const poItems = (data?.poItems || []).filter(isVisibleRow);
 
   const filledItems = isFabric
     ? fabricItems.filter((item) => item.fabricId)
     : isYarn
       ? yarnItems.filter((item) => item.yarnId)
-      : (data?.poItems || []).filter((item) => item.styleItemId);
+      : poItems.filter((item) => item.styleItemId);
 
   const duplicates =
     isFabric || isYarn
@@ -227,20 +237,20 @@ export const validatePurchaseOrderData = ({
     {
       severity: "block",
       condition: isFabric
-        ? !isGridDatasValid(fabricItems, false, [
+        ? !isGridDatasValid(filledItems, false, [
             "fabricId",
             "uomId",
             "qty",
             "price",
           ])
         : isYarn
-          ? !isGridDatasValid(yarnItems, false, [
+          ? !isGridDatasValid(filledItems, false, [
               "yarnId",
               "uomId",
               "qty",
               "price",
             ])
-          : !isGridDatasValid(data?.poItems, false, [
+          : !isGridDatasValid(filledItems, false, [
               "styleItemId",
               "uomId",
               "qty",

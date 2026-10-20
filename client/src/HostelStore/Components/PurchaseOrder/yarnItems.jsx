@@ -22,6 +22,8 @@ const YarnItems = ({
   setYarnItems: rawSetYarnItems,
   setPoYarnItems,
   readOnly,
+  quoteVersion,
+  isNewVersion,
   taxTemplateId,
   id,
   isCurrencySymbol,
@@ -53,6 +55,7 @@ const YarnItems = ({
     taxPercent: "",
     discountvalue: "",
     discounttype: "",
+    quoteVersion: "",
   };
 
   const [contextMenu, setContextMenu] = useState(null);
@@ -61,26 +64,94 @@ const YarnItems = ({
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
 
+  const effectiveQuoteVersion =
+    quoteVersion ||
+    Math.max(
+      ...orderYarnItems
+        .map((i) => parseInt(i.quoteVersion))
+        .filter((v) => !isNaN(v) && v > 0),
+      0,
+    ) ||
+    "";
+
+  const isVisibleRow = (row) => {
+    if (!id) return true;
+    if (isNewVersion) return row.quoteVersion === "New";
+    if (!effectiveQuoteVersion) return row.quoteVersion !== "New";
+    return parseInt(row.quoteVersion) === parseInt(effectiveQuoteVersion);
+  };
+
+  const visibleRows = orderYarnItems
+    .map((row, originalIndex) => ({ row, originalIndex }))
+    .filter(({ row }) => isVisibleRow(row));
+
   const addRow = () => {
     setYarnItems([
       ...orderYarnItems,
-      { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
+      {
+        ...EMPTY_ROW,
+        quoteVersion: id
+          ? isNewVersion
+            ? "New"
+            : effectiveQuoteVersion || 1
+          : effectiveQuoteVersion || 1,
+        rowId: Math.random().toString(36).substring(2, 9),
+      },
     ]);
   };
 
-  const deleteRow = (index) => {
-    if (orderYarnItems.length <= 14) {
+  const deleteRow = (targetIndex) => {
+    const originalIndex =
+      typeof targetIndex === "number" && visibleRows[targetIndex]
+        ? visibleRows[targetIndex].originalIndex
+        : targetIndex;
+
+    if (visibleRows.length <= 14) {
       const newItems = [...orderYarnItems];
-      newItems[index] = {
-        ...EMPTY_ROW,
-        rowId:
-          newItems[index].rowId || Math.random().toString(36).substring(2, 9),
-      };
-      setYarnItems(newItems);
+      if (newItems[originalIndex]) {
+        newItems[originalIndex] = {
+          ...EMPTY_ROW,
+          quoteVersion:
+            newItems[originalIndex]?.quoteVersion ||
+            (isNewVersion ? "New" : effectiveQuoteVersion || 1),
+          rowId: Math.random().toString(36).substring(2, 9),
+        };
+        setYarnItems(newItems);
+      }
     } else {
-      setYarnItems(orderYarnItems.filter((_, i) => i !== index));
+      setYarnItems(orderYarnItems.filter((_, i) => i !== originalIndex));
     }
   };
+
+  useEffect(() => {
+    if (!id) return;
+    setYarnItems((prev) => {
+      const localVisibleRows = prev.filter((row) => isVisibleRow(row));
+      const missing = 14 - localVisibleRows.length;
+      if (missing <= 0) return prev;
+      return [
+        ...prev,
+        ...Array.from({ length: missing }, () => ({
+          ...EMPTY_ROW,
+          quoteVersion: isNewVersion ? "New" : effectiveQuoteVersion || 1,
+          rowId: Math.random().toString(36).substring(2, 9),
+        })),
+      ];
+    });
+  }, [id, isNewVersion, effectiveQuoteVersion, setYarnItems]);
+
+  useEffect(() => {
+    if (!isNewVersion) return;
+
+    setYarnItems((prev) => [
+      ...prev.filter((item) => item.quoteVersion !== "New"),
+      ...prev
+        .filter(
+          (item) => parseInt(item.quoteVersion) === parseInt(quoteVersion),
+        )
+        .map((item) => ({ ...item, quoteVersion: "New" })),
+    ]);
+  }, [isNewVersion, quoteVersion, setYarnItems]);
 
   const handleInputChange = async (value, index, field) => {
     const newItems = [...orderYarnItems];
@@ -157,12 +228,16 @@ const YarnItems = ({
   };
 
   const handleDeleteAllRows = () => {
-    setYarnItems(
-      Array.from({ length: 14 }, () => ({
-        ...EMPTY_ROW,
-        rowId: Math.random().toString(36).substring(2, 9),
-      })),
-    );
+    const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
+    const nonVisibleItems = id
+      ? orderYarnItems.filter((r) => !isVisibleRow(r))
+      : [];
+    const newItems = Array.from({ length: 14 }, () => ({
+      ...EMPTY_ROW,
+      quoteVersion: targetVersion,
+      rowId: Math.random().toString(36).substring(2, 9),
+    }));
+    setYarnItems([...nonVisibleItems, ...newItems]);
   };
 
   return (
@@ -321,12 +396,7 @@ const YarnItems = ({
                 "w-16 px-2 py-2 text-center text-xs  border border-gray-300",
             },
           ]}
-          rows={
-            orderYarnItems?.map((item, index) => ({
-              row: item,
-              originalIndex: index,
-            })) || []
-          }
+          rows={visibleRows}
           footer={
             <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
               <td
@@ -336,23 +406,23 @@ const YarnItems = ({
                 Total
               </td>
               <td className="text-right px-1 border border-gray-300">
-                {orderYarnItems
-                  ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
+                {visibleRows
+                  ?.reduce((sum, i) => sum + (parseFloat(i.row?.qty) || 0), 0)
                   .toFixed(3)}
               </td>
               <td className="text-right px-1 border border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
-                {orderYarnItems
-                  ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
+                {visibleRows
+                  ?.reduce((sum, i) => sum + (parseFloat(i.row?.price) || 0), 0)
                   .toFixed(2)}
               </td>
               <td className="text-right px-1 border border-gray-300 text-black">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
-                  orderYarnItems?.reduce(
-                    (sum, i) => sum + (parseFloat(i.amount) || 0),
+                  visibleRows?.reduce(
+                    (sum, i) => sum + (parseFloat(i.row?.amount) || 0),
                     0,
-                  ),
+                  ) || 0,
                   currencyCode || isCurrencySymbol,
                 )}
               </td>

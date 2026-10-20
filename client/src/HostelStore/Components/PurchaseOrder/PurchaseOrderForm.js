@@ -102,6 +102,7 @@ const EMPTY_FABRIC_ROW = {
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
+  quoteVersion: "",
 };
 
 const EMPTY_YARN_ROW = {
@@ -117,19 +118,21 @@ const EMPTY_YARN_ROW = {
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
+  quoteVersion: "",
 };
 
-const padFabricItems = (itemsArray = [], minLength = 14) => {
+const padFabricItems = (itemsArray = [], minLength = 14, quoteVersion = "") => {
   const currentLength = itemsArray.length;
-  const formattedItems = itemsArray.map((item) =>
-    item.rowId
-      ? item
-      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
-  );
+  const formattedItems = (itemsArray || []).map((item) => ({
+    ...item,
+    quoteVersion: item.quoteVersion ?? (quoteVersion || 1),
+    rowId: item.rowId || Math.random().toString(36).substring(2, 9),
+  }));
 
   if (currentLength < minLength) {
     const padding = Array.from({ length: minLength - currentLength }, () => ({
       ...EMPTY_FABRIC_ROW,
+      quoteVersion: quoteVersion || 1,
       rowId: Math.random().toString(36).substring(2, 9),
     }));
     return [...formattedItems, ...padding];
@@ -137,17 +140,18 @@ const padFabricItems = (itemsArray = [], minLength = 14) => {
   return formattedItems;
 };
 
-const padYarnItems = (itemsArray = [], minLength = 14) => {
+const padYarnItems = (itemsArray = [], minLength = 14, quoteVersion = "") => {
   const currentLength = itemsArray.length;
-  const formattedItems = itemsArray.map((item) =>
-    item.rowId
-      ? item
-      : { ...item, rowId: Math.random().toString(36).substring(2, 9) },
-  );
+  const formattedItems = (itemsArray || []).map((item) => ({
+    ...item,
+    quoteVersion: item.quoteVersion ?? (quoteVersion || 1),
+    rowId: item.rowId || Math.random().toString(36).substring(2, 9),
+  }));
 
   if (currentLength < minLength) {
     const padding = Array.from({ length: minLength - currentLength }, () => ({
       ...EMPTY_YARN_ROW,
+      quoteVersion: quoteVersion || 1,
       rowId: Math.random().toString(36).substring(2, 9),
     }));
     return [...formattedItems, ...padding];
@@ -324,9 +328,15 @@ const PurchaseOrderForm = ({
       // ✅ Set quoteVersion BEFORE poItems so isVisibleRow works correctly on first render
       let resolvedQuoteVersion = data?.quoteVersion || "";
 
-      // ✅ Find the maximum quoteVersion from poItems to ensure we always default to the latest version
-      if (data?.poItems?.length) {
-        const validVersions = data.poItems
+      // ✅ Find the maximum quoteVersion from poItems, poFabricItems, or poYarnItems to ensure we always default to the latest version
+      const allItemsWithVersion = [
+        ...(data?.poItems || []),
+        ...(data?.poFabricItems || data?.orderFabricItems || []),
+        ...(data?.poYarnItems || data?.orderYarnItems || []),
+      ];
+
+      if (allItemsWithVersion.length) {
+        const validVersions = allItemsWithVersion
           .filter((i) => i.quoteVersion && i.quoteVersion !== "New")
           .map((i) => Number(i.quoteVersion))
           .filter((n) => !isNaN(n) && n > 0);
@@ -345,11 +355,11 @@ const PurchaseOrderForm = ({
       let finalPoItems = [];
       if (data?.poItems) {
         finalPoItems = [...data.poItems];
-        const visibleItems = finalPoItems.filter((i) => {
-          if (!resolvedQuoteVersion) return i.quoteVersion !== "New";
-          return parseInt(i.quoteVersion) === parseInt(resolvedQuoteVersion);
+        const visibleItems = finalPoItems?.filter((i) => {
+          if (!resolvedQuoteVersion) return i?.quoteVersion !== "New";
+          return parseInt(i?.quoteVersion) === parseInt(resolvedQuoteVersion);
         });
-        const missing = DEFAULT_PURCHASE_ORDER_ROWS - visibleItems.length;
+        const missing = DEFAULT_PURCHASE_ORDER_ROWS - visibleItems?.length;
         if (missing > 0) {
           finalPoItems = [
             ...finalPoItems,
@@ -363,18 +373,71 @@ const PurchaseOrderForm = ({
         );
       }
       setPoItems(finalPoItems);
-      if (data?.poFabricItems?.length || data?.orderFabricItems?.length) {
-        setPoFabricItems(
-          padFabricItems(data.poFabricItems || data.orderFabricItems),
-        );
+      // ✅ Fabric Items with versioning logic
+      let finalFabricItems = [];
+      const rawFabricItems = data?.poFabricItems || data?.orderFabricItems;
+      if (rawFabricItems?.length) {
+        finalFabricItems = rawFabricItems.map((item) => ({
+          ...item,
+          quoteVersion: item.quoteVersion ?? (resolvedQuoteVersion || 1),
+          rowId: item.rowId || Math.random().toString(36).substring(2, 9),
+        }));
+        const visibleFabricItems = finalFabricItems.filter((i) => {
+          if (!resolvedQuoteVersion) return i?.quoteVersion !== "New";
+          return parseInt(i?.quoteVersion) === parseInt(resolvedQuoteVersion);
+        });
+        const missing = 14 - (visibleFabricItems?.length || 0);
+        if (missing > 0) {
+          finalFabricItems = [
+            ...finalFabricItems,
+            ...Array.from({ length: missing }, () => ({
+              ...EMPTY_FABRIC_ROW,
+              quoteVersion: resolvedQuoteVersion || 1,
+              rowId: Math.random().toString(36).substring(2, 9),
+            })),
+          ];
+        }
       } else {
-        setPoFabricItems(padFabricItems([]));
+        finalFabricItems = Array.from({ length: 14 }, () => ({
+          ...EMPTY_FABRIC_ROW,
+          quoteVersion: resolvedQuoteVersion || 1,
+          rowId: Math.random().toString(36).substring(2, 9),
+        }));
       }
-      if (data?.poYarnItems?.length || data?.orderYarnItems?.length) {
-        setPoYarnItems(padYarnItems(data.poYarnItems || data.orderYarnItems));
+      setPoFabricItems(finalFabricItems);
+
+      // ✅ Yarn Items with versioning logic
+      let finalYarnItems = [];
+      const rawYarnItems = data?.poYarnItems || data?.orderYarnItems;
+      if (rawYarnItems?.length) {
+        finalYarnItems = rawYarnItems.map((item) => ({
+          ...item,
+          quoteVersion: item.quoteVersion ?? (resolvedQuoteVersion || 1),
+          rowId: item.rowId || Math.random().toString(36).substring(2, 9),
+        }));
+        const visibleYarnItems = finalYarnItems.filter((i) => {
+          if (!resolvedQuoteVersion) return i?.quoteVersion !== "New";
+          return parseInt(i?.quoteVersion) === parseInt(resolvedQuoteVersion);
+        });
+        const missing = 14 - (visibleYarnItems?.length || 0);
+        if (missing > 0) {
+          finalYarnItems = [
+            ...finalYarnItems,
+            ...Array.from({ length: missing }, () => ({
+              ...EMPTY_YARN_ROW,
+              quoteVersion: resolvedQuoteVersion || 1,
+              rowId: Math.random().toString(36).substring(2, 9),
+            })),
+          ];
+        }
       } else {
-        setPoYarnItems(padYarnItems([]));
+        finalYarnItems = Array.from({ length: 14 }, () => ({
+          ...EMPTY_YARN_ROW,
+          quoteVersion: resolvedQuoteVersion || 1,
+          rowId: Math.random().toString(36).substring(2, 9),
+        }));
       }
+      setPoYarnItems(finalYarnItems);
       setPayTermId(data?.payTermId ? data?.payTermId : "");
     },
     [id],
@@ -406,8 +469,8 @@ const PurchaseOrderForm = ({
     setOrderEntryId(selectedOrderEntryId);
     if (!selectedOrderEntryId) {
       setSelectedOrderGridType("");
-      setPoFabricItems(padFabricItems([]));
-      setPoYarnItems(padYarnItems([]));
+      setPoFabricItems(padFabricItems([], 14, quoteVersion));
+      setPoYarnItems(padYarnItems([], 14, quoteVersion));
       setPoItems(
         createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
       );
@@ -421,6 +484,9 @@ const PurchaseOrderForm = ({
       const gridType = order?.orderGridType || "GENERAL";
       setSelectedOrderGridType(gridType);
       setOrderGridType(gridType);
+      if (!quoteVersion) {
+        setQuoteVersion(1);
+      }
 
       // if (order.taxTemplateId) setTaxTemplateId(order.taxTemplateId);
       // if (order.termsId) setTermsId(order.termsId);
@@ -438,6 +504,7 @@ const PurchaseOrderForm = ({
         const mapped = itemsArr.map((item) => ({
           ...EMPTY_FABRIC_ROW,
           ...item,
+          quoteVersion: quoteVersion || 1,
           weightPerRoll: item?.weightPerRoll
             ? Number(item?.weightPerRoll)?.toFixed(3)
             : "",
@@ -456,12 +523,13 @@ const PurchaseOrderForm = ({
           discountType: item?.discountType ?? "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
-        setPoFabricItems(padFabricItems(mapped));
+        setPoFabricItems(padFabricItems(mapped, 14, quoteVersion));
 
         if (order?.orderYarnItems?.length) {
           const yarnMapped = order.orderYarnItems.map((item) => ({
             ...EMPTY_YARN_ROW,
             ...item,
+            quoteVersion: quoteVersion || 1,
             noOfbags: item?.noOfbags ?? "",
             weightPerBag: item?.weightPerBag
               ? Number(item?.weightPerBag)?.toFixed(3)
@@ -474,15 +542,16 @@ const PurchaseOrderForm = ({
             discountType: item?.discountType ?? "",
             rowId: Math.random().toString(36).substring(2, 9),
           }));
-          setPoYarnItems(padYarnItems(yarnMapped));
+          setPoYarnItems(padYarnItems(yarnMapped, 14, quoteVersion));
         } else {
-          setPoYarnItems(padYarnItems([]));
+          setPoYarnItems(padYarnItems([], 14, quoteVersion));
         }
       } else if (gridType === "YARN") {
         const itemsArr = order?.orderYarnItems || [];
         const mapped = itemsArr.map((item) => ({
           ...EMPTY_YARN_ROW,
           ...item,
+          quoteVersion: quoteVersion || 1,
           noOfbags: item?.noOfbags ?? "",
           weightPerBag: item?.weightPerBag
             ? Number(item?.weightPerBag)?.toFixed(3)
@@ -495,7 +564,7 @@ const PurchaseOrderForm = ({
           discountType: item?.discountType ?? "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
-        setPoYarnItems(padYarnItems(mapped));
+        setPoYarnItems(padYarnItems(mapped, 14, quoteVersion));
       }
     } catch (err) {
       console.error("Failed to fetch order entry details:", err);
@@ -770,9 +839,16 @@ const PurchaseOrderForm = ({
     });
 
   const activeTotals = useMemo(() => {
+    const isVisibleRow = (row) => {
+      if (!id) return true;
+      if (isNewVersion) return row.quoteVersion === "New";
+      if (!quoteVersion) return row.quoteVersion !== "New";
+      return parseInt(row.quoteVersion) === parseInt(quoteVersion);
+    };
+
     if (orderGridType === "FABRIC") {
       const filtered = (poFabricItems || [])
-        .filter((i) => i.fabricId)
+        .filter((i) => isVisibleRow(i) && i.fabricId)
         .map((i) => ({ ...i, qty: i.qty }));
       if (!filtered.length) {
         return {
@@ -796,7 +872,7 @@ const PurchaseOrderForm = ({
     }
     if (orderGridType === "YARN") {
       const filtered = (poYarnItems || [])
-        .filter((i) => i.yarnId)
+        .filter((i) => isVisibleRow(i) && i.yarnId)
         .map((i) => ({ ...i, qty: i.qty }));
       if (!filtered.length) {
         return {
@@ -827,6 +903,9 @@ const PurchaseOrderForm = ({
     discountType,
     discountValue,
     totals,
+    id,
+    isNewVersion,
+    quoteVersion,
   ]);
 
   const taxGroupWise = groupBy(
@@ -867,11 +946,21 @@ const PurchaseOrderForm = ({
       </div>
     ) : null;
 
+  const currentActiveItems =
+    orderGridType === "FABRIC"
+      ? poFabricItems
+      : orderGridType === "YARN"
+        ? poYarnItems
+        : poItems;
+
   const quoteVersionOptions = [
     ...new Set(
-      poItems
+      currentActiveItems
         .filter(
-          (i) => i?.styleItemId && i?.quoteVersion && i?.quoteVersion !== "New",
+          (i) =>
+            (i?.styleItemId || i?.fabricId || i?.yarnId) &&
+            i?.quoteVersion &&
+            i?.quoteVersion !== "New",
         )
         .map((i) => Number(i.quoteVersion))
         .filter((n) => n > 0),
@@ -884,8 +973,10 @@ const PurchaseOrderForm = ({
       : 0;
 
   const isOldVersion =
+    Boolean(id) &&
     !isNewVersion &&
     maxQuoteVersion > 0 &&
+    Boolean(quoteVersion) &&
     Number(quoteVersion) < maxQuoteVersion;
   const effectiveReadOnly = readOnly || isOldVersion;
 
@@ -981,21 +1072,14 @@ const PurchaseOrderForm = ({
   }, [poType, selectedOrderGridType]);
 
   const isItemTypeDisabled = useMemo(() => {
-    if (orderId || childRecordCount > 0 || isCoreLocked || readOnly) {
+    if (childRecordCount > 0 || readOnly) {
       return true;
     }
     if (poType === "ORDER") {
       return selectedOrderGridType !== "FABRIC";
     }
     return false;
-  }, [
-    orderId,
-    childRecordCount,
-    isCoreLocked,
-    readOnly,
-    poType,
-    selectedOrderGridType,
-  ]);
+  }, [childRecordCount, readOnly, poType, selectedOrderGridType]);
 
   const actionButtonClass =
     "px-2 py-1 rounded flex items-center justify-center text-xs text-white transition";
@@ -2120,6 +2204,8 @@ const PurchaseOrderForm = ({
               orderFabricItems={poFabricItems}
               setFabricItems={setPoFabricItems}
               readOnly={effectiveReadOnly}
+              quoteVersion={quoteVersion}
+              isNewVersion={isNewVersion}
               uomList={uomList}
               hsnList={hsnList}
               colorList={colorList}
@@ -2146,6 +2232,8 @@ const PurchaseOrderForm = ({
               orderYarnItems={poYarnItems}
               setYarnItems={setPoYarnItems}
               readOnly={effectiveReadOnly}
+              quoteVersion={quoteVersion}
+              isNewVersion={isNewVersion}
               uomList={uomList}
               hsnList={hsnList}
               colorList={colorList}
