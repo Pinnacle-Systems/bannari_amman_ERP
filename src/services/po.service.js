@@ -80,12 +80,16 @@ function manualFilterSearchDataPoItems(
 
 // ── PO Status ─────────────────────────────────────────────────────────────────
 function getPOStatus(po) {
-  const poItems = po.poItems || [];
+  const allItems = [
+    ...(po.poItems || []),
+    ...(po.poFabricItems || []),
+    ...(po.poYarnItems || []),
+  ];
 
   // Find the latest quote version to only sum active items
   let latestQuoteVersion = 1;
-  if (poItems.length > 0) {
-    const validVersions = poItems
+  if (allItems.length > 0) {
+    const validVersions = allItems
       .filter((i) => i.quoteVersion && i.quoteVersion !== "New")
       .map((i) => Number(i.quoteVersion))
       .filter((n) => !isNaN(n) && n > 0);
@@ -94,7 +98,7 @@ function getPOStatus(po) {
     }
   }
 
-  const activePoItems = poItems.filter(
+  const activePoItems = allItems.filter(
     (i) => (Number(i.quoteVersion) || 1) === latestQuoteVersion,
   );
 
@@ -277,6 +281,8 @@ async function get(req) {
     include: {
       Supplier: { select: { aliasName: true, name: true } },
       poItems: true,
+      poFabricItems: true,
+      poYarnItems: true,
       _count: { select: { inwardItems: true, purchaseCancelItems: true } },
       inwardItems: { select: { inwardQty: true } },
       purchaseCancelItems: { select: { cancelQty: true } },
@@ -384,6 +390,8 @@ async function getOne(id) {
     where: { id: parseInt(id) },
     include: {
       poItems: true,
+      poFabricItems: true,
+      poYarnItems: true,
       Supplier: {
         select: {
           aliasName: true,
@@ -417,6 +425,8 @@ async function getOne(id) {
       const req = parseFloat(item?.RequirementPlanningItems?.requiredQty) || 0;
       return { ...item, balanceQty: Math.max(0, req - qty), requiredQty: req };
     }) || [];
+  po.poFabricItems = po.poFabricItems || [];
+  po.poYarnItems = po.poYarnItems || [];
 
   // ✅ Universal setup check
   const { hasApproval, module } = await getModuleApprovalSetup(
@@ -589,13 +599,16 @@ async function create(body) {
       termsAndCondtion,
       remarks,
       supplierId,
-      poItems,
+      poItems = [],
+      poFabricItems = [],
+      poYarnItems = [],
       discountType,
       discountValue,
       taxPercent,
       termsId,
       payTermId,
       orderEntryId,
+      orderGridType,
     } = await body;
 
     let finYearDate = await getFinYearStartTimeEndTime(finYearId);
@@ -627,8 +640,9 @@ async function create(body) {
           dueDate: dueDate ? new Date(dueDate) : null,
           poType,
           branchId: parseInt(branchId),
+          finYearId: finYearId ? parseInt(finYearId) : null,
           createdById: parseInt(userId),
-          taxTemplateId: parseInt(taxTemplateId),
+          taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
           orderEntryId: orderEntryId ? parseInt(orderEntryId) : null,
 
           deliveryType,
@@ -648,19 +662,34 @@ async function create(body) {
           remarks,
           supplierId: parseInt(supplierId),
           discountType,
+          orderGridType: orderGridType || "GENERAL",
           discountValue:
             discountValue === "" || discountValue == null
               ? null
-              : Number(discountValue),
+              : parseFloat(discountValue),
           taxPercent:
-            taxPercent === "" || taxPercent == null ? null : Number(taxPercent),
+            taxPercent === "" || taxPercent == null
+              ? null
+              : parseFloat(taxPercent),
           quoteVersions: { create: { quoteVersion: 1 } },
           termsId: termsId ? parseInt(termsId) : null,
           payTermId: payTermId ? parseInt(payTermId) : null,
         },
       });
 
-      await createPoItems(tx, poItems, data);
+      if (poItems && Array.isArray(poItems) && poItems.length > 0) {
+        await createPoItems(tx, poItems, data);
+      }
+      if (
+        poFabricItems &&
+        Array.isArray(poFabricItems) &&
+        poFabricItems.length > 0
+      ) {
+        await createPoFabricItems(tx, poFabricItems, data);
+      }
+      if (poYarnItems && Array.isArray(poYarnItems) && poYarnItems.length > 0) {
+        await createPoYarnItems(tx, poYarnItems, data);
+      }
 
       // ✅ Only runs if: module exists AND active config exists for this branch
       // If PO has no rules configured → hasApproval=false → skipped, form saves normally
@@ -670,7 +699,12 @@ async function create(body) {
 
         const fullRecord = await tx.po.findUnique({
           where: { id: data.id },
-          include: includeClause, // ← { Supplier: true, poItems: true, inwardItems: true, ... }
+          include: {
+            ...includeClause,
+            poItems: true,
+            poFabricItems: true,
+            poYarnItems: true,
+          },
         });
 
         await createApprovalLog(
@@ -693,8 +727,10 @@ async function create(body) {
 }
 
 async function createPoItems(tx, poItems, po) {
+  if (!poItems || !Array.isArray(poItems) || poItems.length === 0) return [];
+  const validItems = poItems.filter((i) => i && i.styleItemId);
   return Promise.all(
-    poItems.map(async (itemDetails) => {
+    validItems.map(async (itemDetails) => {
       const qty = itemDetails?.qty
         ? Math.round(parseFloat(itemDetails.qty))
         : null;
@@ -715,6 +751,9 @@ async function createPoItems(tx, poItems, po) {
           taxPercent: itemDetails?.taxPercent
             ? parseFloat(itemDetails.taxPercent)
             : null,
+          quoteVersion: itemDetails?.quoteVersion
+            ? parseInt(itemDetails.quoteVersion)
+            : 1,
           itemGroupId: itemDetails?.itemGroupId
             ? parseInt(itemDetails.itemGroupId)
             : null,
@@ -739,6 +778,155 @@ async function createPoItems(tx, poItems, po) {
   );
 }
 
+async function createPoFabricItems(tx, poFabricItems, po) {
+  if (
+    !poFabricItems ||
+    !Array.isArray(poFabricItems) ||
+    poFabricItems.length === 0
+  )
+    return [];
+  const validItems = poFabricItems.filter((i) => i && i.fabricId);
+  return Promise.all(
+    validItems.map(async (itemDetails) => {
+      return await tx.poFabricItems.create({
+        data: {
+          poId: parseInt(po.id),
+          fabricId: itemDetails?.fabricId
+            ? parseInt(itemDetails.fabricId)
+            : null,
+          hsnId: itemDetails?.hsnId ? parseInt(itemDetails.hsnId) : null,
+          colorId: itemDetails?.colorId ? parseInt(itemDetails.colorId) : null,
+          designId: itemDetails?.designId
+            ? parseInt(itemDetails.designId)
+            : null,
+          gaugeId: itemDetails?.gaugeId ? parseInt(itemDetails.gaugeId) : null,
+          loopLengthId: itemDetails?.loopLengthId
+            ? parseInt(itemDetails.loopLengthId)
+            : null,
+          gsmId: itemDetails?.gsmId ? parseInt(itemDetails.gsmId) : null,
+          kDiaId: itemDetails?.kDiaId ? parseInt(itemDetails.kDiaId) : null,
+          fDiaId: itemDetails?.fDiaId ? parseInt(itemDetails.fDiaId) : null,
+          uomId: itemDetails?.uomId ? parseInt(itemDetails.uomId) : null,
+          width: itemDetails?.width ? String(itemDetails.width) : null,
+          numberOfRolls:
+            itemDetails?.numberOfRolls !== "" &&
+            itemDetails?.numberOfRolls != null
+              ? parseFloat(itemDetails.numberOfRolls)
+              : null,
+          weightPerRoll:
+            itemDetails?.weightPerRoll !== "" &&
+            itemDetails?.weightPerRoll != null
+              ? parseFloat(itemDetails.weightPerRoll)
+              : null,
+          totalKgs:
+            itemDetails?.totalKgs !== "" && itemDetails?.totalKgs != null
+              ? parseFloat(itemDetails.totalKgs)
+              : null,
+          pricePerKg:
+            itemDetails?.pricePerKg !== "" && itemDetails?.pricePerKg != null
+              ? parseFloat(itemDetails.pricePerKg)
+              : null,
+          totalPrice:
+            itemDetails?.totalPrice !== "" && itemDetails?.totalPrice != null
+              ? parseFloat(itemDetails.totalPrice)
+              : null,
+          qty:
+            itemDetails?.qty !== "" && itemDetails?.qty != null
+              ? parseFloat(itemDetails.qty)
+              : null,
+          price:
+            itemDetails?.price !== "" && itemDetails?.price != null
+              ? parseFloat(itemDetails.price)
+              : null,
+          amount:
+            itemDetails?.amount !== "" && itemDetails?.amount != null
+              ? parseFloat(itemDetails.amount)
+              : null,
+          taxPercent:
+            itemDetails?.taxPercent !== "" && itemDetails?.taxPercent != null
+              ? parseFloat(itemDetails.taxPercent)
+              : null,
+          discountType:
+            itemDetails?.discountType ?? itemDetails?.discounttype ?? null,
+          discountValue:
+            (itemDetails?.discountValue ?? itemDetails?.discountvalue) !== "" &&
+            (itemDetails?.discountValue ?? itemDetails?.discountvalue) != null
+              ? parseFloat(
+                  itemDetails?.discountValue ?? itemDetails?.discountvalue,
+                )
+              : null,
+          quoteVersion: itemDetails?.quoteVersion
+            ? parseInt(itemDetails.quoteVersion)
+            : 1,
+        },
+      });
+    }),
+  );
+}
+
+async function createPoYarnItems(tx, poYarnItems, po) {
+  if (!poYarnItems || !Array.isArray(poYarnItems) || poYarnItems.length === 0)
+    return [];
+  const validItems = poYarnItems.filter((i) => i && i.yarnId);
+  return Promise.all(
+    validItems.map(async (itemDetails) => {
+      const rawNoOfBags = itemDetails?.noOfbags ?? itemDetails?.noOfBags;
+      return await tx.poYarnItems.create({
+        data: {
+          poId: parseInt(po.id),
+          yarnId: itemDetails?.yarnId ? parseInt(itemDetails.yarnId) : null,
+          hsnId: itemDetails?.hsnId ? parseInt(itemDetails.hsnId) : null,
+          contentId: itemDetails?.contentId
+            ? parseInt(itemDetails.contentId)
+            : null,
+          countsId: itemDetails?.countsId
+            ? parseInt(itemDetails.countsId)
+            : null,
+          colorId: itemDetails?.colorId ? parseInt(itemDetails.colorId) : null,
+          uomId: itemDetails?.uomId ? parseInt(itemDetails.uomId) : null,
+          noOfbags:
+            rawNoOfBags !== "" && rawNoOfBags != null
+              ? parseInt(rawNoOfBags)
+              : null,
+          weightPerBag:
+            itemDetails?.weightPerBag !== "" &&
+            itemDetails?.weightPerBag != null
+              ? parseFloat(itemDetails.weightPerBag)
+              : null,
+          qty:
+            itemDetails?.qty !== "" && itemDetails?.qty != null
+              ? parseFloat(itemDetails.qty)
+              : null,
+          price:
+            itemDetails?.price !== "" && itemDetails?.price != null
+              ? parseFloat(itemDetails.price)
+              : null,
+          amount:
+            itemDetails?.amount !== "" && itemDetails?.amount != null
+              ? parseFloat(itemDetails.amount)
+              : null,
+          taxPercent:
+            itemDetails?.taxPercent !== "" && itemDetails?.taxPercent != null
+              ? parseFloat(itemDetails.taxPercent)
+              : null,
+          discountType:
+            itemDetails?.discountType ?? itemDetails?.discounttype ?? null,
+          discountValue:
+            (itemDetails?.discountValue ?? itemDetails?.discountvalue) !== "" &&
+            (itemDetails?.discountValue ?? itemDetails?.discountvalue) != null
+              ? parseFloat(
+                  itemDetails?.discountValue ?? itemDetails?.discountvalue,
+                )
+              : null,
+          quoteVersion: itemDetails?.quoteVersion
+            ? parseInt(itemDetails.quoteVersion)
+            : 1,
+        },
+      });
+    }),
+  );
+}
+
 function findRemovedItems(dataFound, poItems) {
   return dataFound.poItems.filter(
     (oldItem) =>
@@ -751,6 +939,7 @@ async function update(id, body) {
   let {
     userId,
     branchId,
+    finYearId,
     docDate,
     dueDate,
     poType,
@@ -760,7 +949,9 @@ async function update(id, body) {
     termsAndCondtion,
     remarks,
     supplierId,
-    poItems,
+    poItems = [],
+    poFabricItems = [],
+    poYarnItems = [],
     discountType,
     discountValue,
     taxPercent,
@@ -770,6 +961,7 @@ async function update(id, body) {
     quoteVersion,
     submitApproval,
     orderEntryId,
+    orderGridType,
   } = await body;
 
   // ── Always get module setup first to know what fields to include ─────────────
@@ -786,6 +978,8 @@ async function update(id, body) {
     include: {
       ...dynamicInclude,
       poItems: true,
+      poFabricItems: true,
+      poYarnItems: true,
       quoteVersions: true,
       Supplier: true,
       Branch: true,
@@ -793,21 +987,48 @@ async function update(id, body) {
   });
   if (!dataFound) return NoRecordFound("PO");
 
+  const allCurrentItems = [
+    ...(dataFound?.poItems || []),
+    ...(dataFound?.poFabricItems || []),
+    ...(dataFound?.poYarnItems || []),
+  ];
+
   const currentQuoteVersion = Math.max(
     ...new Set(
-      dataFound?.poItems
+      allCurrentItems
         .filter((i) => i.quoteVersion && i.quoteVersion !== "New")
         .map((i) => Number(i.quoteVersion)),
     ),
+    1,
   );
 
-  poItems = poItems.filter((item) => {
+  poItems = (poItems || []).filter((item) => {
     return (
-      !item.quoteVersion ||
-      item.quoteVersion === "New" ||
-      parseInt(item.quoteVersion) === currentQuoteVersion
+      item.styleItemId &&
+      (!item.quoteVersion ||
+        item.quoteVersion === "New" ||
+        parseInt(item.quoteVersion) === currentQuoteVersion)
     );
   });
+
+  poFabricItems = (poFabricItems || []).filter((item) => {
+    return (
+      item.fabricId &&
+      (!item.quoteVersion ||
+        item.quoteVersion === "New" ||
+        parseInt(item.quoteVersion) === currentQuoteVersion)
+    );
+  });
+
+  poYarnItems = (poYarnItems || []).filter((item) => {
+    return (
+      item.yarnId &&
+      (!item.quoteVersion ||
+        item.quoteVersion === "New" ||
+        parseInt(item.quoteVersion) === currentQuoteVersion)
+    );
+  });
+
   // ── Get latest approval log ───────────────────────────────────────────────
   const latestLog = await prisma.approvalLog.findFirst({
     where: { referenceId: parseInt(id), referencePage: REFERENCE_PAGE },
@@ -850,23 +1071,18 @@ async function update(id, body) {
     };
   }
 
-  const latestItems = dataFound.poItems
+  const latestPoItems = (dataFound.poItems || [])
     .filter(
       (i) => i.quoteVersion && parseInt(i.quoteVersion) === currentQuoteVersion,
     )
     .sort((a, b) => (a.id || 0) - (b.id || 0));
 
-  let isTableChanged = false;
-  if (poItems.length !== latestItems.length) {
-    isTableChanged = true;
-    console.log(
-      "Table changed: length mismatch",
-      poItems.length,
-      latestItems.length,
-    );
+  let isPoItemsChanged = false;
+  if (poItems.length !== latestPoItems.length) {
+    isPoItemsChanged = true;
   } else {
-    isTableChanged = poItems.some((newItem, index) => {
-      const oldItem = latestItems[index];
+    isPoItemsChanged = poItems.some((newItem, index) => {
+      const oldItem = latestPoItems[index];
       if (!oldItem) return true;
 
       const styleChanged =
@@ -902,15 +1118,15 @@ async function update(id, body) {
         parseInt(newItem.sheetsPerPacket || 0) !==
         parseInt(oldItem.sheetsPerPacket || 0);
       const weightPerPacket =
-        parseInt(newItem.weightPerPacket || 0) !==
-        parseInt(oldItem.weightPerPacket || 0);
+        parseFloat(newItem.weightPerPacket || 0) !==
+        parseFloat(oldItem.weightPerPacket || 0);
       const totalPackets =
         parseInt(newItem.totalPackets || 0) !==
         parseInt(oldItem.totalPackets || 0);
       const pricePerKg =
         parseInt(newItem.pricePerKg || 0) !== parseInt(oldItem.pricePerKg || 0);
 
-      if (
+      return (
         styleChanged ||
         qtyChanged ||
         priceChanged ||
@@ -927,35 +1143,180 @@ async function update(id, body) {
         weightPerPacket ||
         totalPackets ||
         pricePerKg
-      ) {
-        console.log("Table changed on item", index, {
-          styleChanged,
-          qtyChanged,
-          priceChanged,
-          taxChanged,
-          discTypeChanged,
-          discValChanged,
-          uomChanged,
-          hsnChanged,
-          igChanged,
-          sizeChanged,
-          colorChanged,
-          gsmChanged,
-          sheetsPerPacket,
-          weightPerPacket,
-          totalPackets,
-          pricePerKg,
-        });
-        return true;
-      }
-      return false;
+      );
+    });
+  }
+
+  const latestFabricItems = (dataFound.poFabricItems || [])
+    .filter(
+      (i) => i.quoteVersion && parseInt(i.quoteVersion) === currentQuoteVersion,
+    )
+    .sort((a, b) => (a.id || 0) - (b.id || 0));
+
+  let isFabricItemsChanged = false;
+  if (poFabricItems.length !== latestFabricItems.length) {
+    isFabricItemsChanged = true;
+  } else {
+    isFabricItemsChanged = poFabricItems.some((newItem, index) => {
+      const oldItem = latestFabricItems[index];
+      if (!oldItem) return true;
+
+      const fabricChanged =
+        parseInt(newItem.fabricId || 0) !== parseInt(oldItem.fabricId || 0);
+      const hsnChanged =
+        parseInt(newItem.hsnId || 0) !== parseInt(oldItem.hsnId || 0);
+      const colorChanged =
+        parseInt(newItem.colorId || 0) !== parseInt(oldItem.colorId || 0);
+      const designChanged =
+        parseInt(newItem.designId || 0) !== parseInt(oldItem.designId || 0);
+      const gaugeChanged =
+        parseInt(newItem.gaugeId || 0) !== parseInt(oldItem.gaugeId || 0);
+      const loopLengthChanged =
+        parseInt(newItem.loopLengthId || 0) !==
+        parseInt(oldItem.loopLengthId || 0);
+      const gsmChanged =
+        parseInt(newItem.gsmId || 0) !== parseInt(oldItem.gsmId || 0);
+      const kDiaChanged =
+        parseInt(newItem.kDiaId || 0) !== parseInt(oldItem.kDiaId || 0);
+      const fDiaChanged =
+        parseInt(newItem.fDiaId || 0) !== parseInt(oldItem.fDiaId || 0);
+      const uomChanged =
+        parseInt(newItem.uomId || 0) !== parseInt(oldItem.uomId || 0);
+      const widthChanged =
+        String(newItem.width || "") !== String(oldItem.width || "");
+      const numberOfRollsChanged =
+        parseFloat(newItem.numberOfRolls || 0) !==
+        parseFloat(oldItem.numberOfRolls || 0);
+      const weightPerRollChanged =
+        parseFloat(newItem.weightPerRoll || 0) !==
+        parseFloat(oldItem.weightPerRoll || 0);
+      const totalKgsChanged =
+        parseFloat(newItem.totalKgs || 0) !== parseFloat(oldItem.totalKgs || 0);
+      const pricePerKgChanged =
+        parseFloat(newItem.pricePerKg || 0) !==
+        parseFloat(oldItem.pricePerKg || 0);
+      const totalPriceChanged =
+        parseFloat(newItem.totalPrice || 0) !==
+        parseFloat(oldItem.totalPrice || 0);
+      const qtyChanged =
+        parseFloat(newItem.qty || 0) !== parseFloat(oldItem.qty || 0);
+      const priceChanged =
+        parseFloat(newItem.price || 0) !== parseFloat(oldItem.price || 0);
+      const amountChanged =
+        parseFloat(newItem.amount || 0) !== parseFloat(oldItem.amount || 0);
+      const taxChanged =
+        parseFloat(newItem.taxPercent || 0) !==
+        parseFloat(oldItem.taxPercent || 0);
+      const discTypeChanged =
+        (newItem.discountType ?? newItem.discounttype ?? null) !==
+        (oldItem.discountType || null);
+      const discValChanged =
+        parseFloat(newItem.discountValue ?? newItem.discountvalue ?? 0) !==
+        parseFloat(oldItem.discountValue || 0);
+
+      return (
+        fabricChanged ||
+        hsnChanged ||
+        colorChanged ||
+        designChanged ||
+        gaugeChanged ||
+        loopLengthChanged ||
+        gsmChanged ||
+        kDiaChanged ||
+        fDiaChanged ||
+        uomChanged ||
+        widthChanged ||
+        numberOfRollsChanged ||
+        weightPerRollChanged ||
+        totalKgsChanged ||
+        pricePerKgChanged ||
+        totalPriceChanged ||
+        qtyChanged ||
+        priceChanged ||
+        amountChanged ||
+        taxChanged ||
+        discTypeChanged ||
+        discValChanged
+      );
+    });
+  }
+
+  const latestYarnItems = (dataFound.poYarnItems || [])
+    .filter(
+      (i) => i.quoteVersion && parseInt(i.quoteVersion) === currentQuoteVersion,
+    )
+    .sort((a, b) => (a.id || 0) - (b.id || 0));
+
+  let isYarnItemsChanged = false;
+  if (poYarnItems.length !== latestYarnItems.length) {
+    isYarnItemsChanged = true;
+  } else {
+    isYarnItemsChanged = poYarnItems.some((newItem, index) => {
+      const oldItem = latestYarnItems[index];
+      if (!oldItem) return true;
+
+      const yarnChanged =
+        parseInt(newItem.yarnId || 0) !== parseInt(oldItem.yarnId || 0);
+      const hsnChanged =
+        parseInt(newItem.hsnId || 0) !== parseInt(oldItem.hsnId || 0);
+      const contentChanged =
+        parseInt(newItem.contentId || 0) !== parseInt(oldItem.contentId || 0);
+      const countsChanged =
+        parseInt(newItem.countsId || 0) !== parseInt(oldItem.countsId || 0);
+      const colorChanged =
+        parseInt(newItem.colorId || 0) !== parseInt(oldItem.colorId || 0);
+      const uomChanged =
+        parseInt(newItem.uomId || 0) !== parseInt(oldItem.uomId || 0);
+      const noOfbagsChanged =
+        parseInt(newItem.noOfbags ?? newItem.noOfBags ?? 0) !==
+        parseInt(oldItem.noOfbags || 0);
+      const weightPerBagChanged =
+        parseFloat(newItem.weightPerBag || 0) !==
+        parseFloat(oldItem.weightPerBag || 0);
+      const qtyChanged =
+        parseFloat(newItem.qty || 0) !== parseFloat(oldItem.qty || 0);
+      const priceChanged =
+        parseFloat(newItem.price || 0) !== parseFloat(oldItem.price || 0);
+      const amountChanged =
+        parseFloat(newItem.amount || 0) !== parseFloat(oldItem.amount || 0);
+      const taxChanged =
+        parseFloat(newItem.taxPercent || 0) !==
+        parseFloat(oldItem.taxPercent || 0);
+      const discTypeChanged =
+        (newItem.discountType ?? newItem.discounttype ?? null) !==
+        (oldItem.discountType || null);
+      const discValChanged =
+        parseFloat(newItem.discountValue ?? newItem.discountvalue ?? 0) !==
+        parseFloat(oldItem.discountValue || 0);
+
+      return (
+        yarnChanged ||
+        hsnChanged ||
+        contentChanged ||
+        countsChanged ||
+        colorChanged ||
+        uomChanged ||
+        noOfbagsChanged ||
+        weightPerBagChanged ||
+        qtyChanged ||
+        priceChanged ||
+        amountChanged ||
+        taxChanged ||
+        discTypeChanged ||
+        discValChanged
+      );
     });
   }
 
   // Auto-detect version change
+  let isTableChanged =
+    isPoItemsChanged || isFabricItemsChanged || isYarnItemsChanged;
   isNewVersion = isTableChanged;
   console.log(isNewVersion, "isNewVersion", {
     isTableChanged,
+    isPoItemsChanged,
+    isFabricItemsChanged,
+    isYarnItemsChanged,
   });
 
   const nextQuoteVersion = isNewVersion
@@ -963,17 +1324,19 @@ async function update(id, body) {
     : parseInt(quoteVersion || currentQuoteVersion);
 
   // ── Determine what approval action to take ────────────────────────────────
-  let needsFirstApproval = false; // Add this back
+  let needsFirstApproval = false;
 
   let data;
   await prisma.$transaction(async (tx) => {
     data = await tx.po.update({
       where: { id: parseInt(id) },
       data: {
+        docDate: docDate ? new Date(docDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : null,
-        branchId: parseInt(branchId),
+        branchId: branchId ? parseInt(branchId) : undefined,
+        finYearId: finYearId ? parseInt(finYearId) : undefined,
         poType,
-        taxTemplateId: parseInt(taxTemplateId),
+        taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
         deliveryType,
         deliveryBranchId:
           deliveryType === "ToSelf"
@@ -989,21 +1352,23 @@ async function update(id, body) {
             : null,
         termsAndCondtion,
         orderEntryId: orderEntryId ? parseInt(orderEntryId) : null,
-
+        orderGridType: orderGridType || undefined,
         remarks,
-        supplierId: parseInt(supplierId),
-        updatedById: parseInt(userId),
+        supplierId: supplierId ? parseInt(supplierId) : undefined,
+        updatedById: userId ? parseInt(userId) : undefined,
         discountType,
         discountValue:
           discountValue === "" || discountValue == null
             ? null
-            : Number(discountValue),
+            : parseFloat(discountValue),
         taxPercent:
-          taxPercent === "" || taxPercent == null ? null : Number(taxPercent),
+          taxPercent === "" || taxPercent == null
+            ? null
+            : parseFloat(taxPercent),
         quoteVersion:
           isNewVersion && !isRemarksOnlyUpdate
             ? currentQuoteVersion + 1
-            : parseInt(quoteVersion),
+            : parseInt(quoteVersion || currentQuoteVersion),
         quoteVersions:
           isNewVersion && !isRemarksOnlyUpdate
             ? { create: { quoteVersion: currentQuoteVersion + 1 } }
@@ -1014,13 +1379,25 @@ async function update(id, body) {
     });
 
     if (isNewVersion && !isRemarksOnlyUpdate) {
-      await createNewVersionItems(
-        tx,
-        poItems,
-        data.id,
-        nextQuoteVersion,
-        currentQuoteVersion,
-      );
+      if (poItems && poItems.length > 0) {
+        await createNewVersionItems(tx, poItems, data.id, nextQuoteVersion);
+      }
+      if (poFabricItems && poFabricItems.length > 0) {
+        await createNewVersionFabricItems(
+          tx,
+          poFabricItems,
+          data.id,
+          nextQuoteVersion,
+        );
+      }
+      if (poYarnItems && poYarnItems.length > 0) {
+        await createNewVersionYarnItems(
+          tx,
+          poYarnItems,
+          data.id,
+          nextQuoteVersion,
+        );
+      }
     }
 
     // ✅ CASE 2: No log before OR was superseded → check if updated record matches config
@@ -1029,9 +1406,15 @@ async function update(id, body) {
       hasApproval &&
       module
     ) {
+      const includeClause = (await buildIncludeForModule(module.id)) || {};
       const fullRecord = await tx.po.findUnique({
         where: { id: parseInt(id) },
-        include: await buildIncludeForModule(module.id),
+        include: {
+          ...includeClause,
+          poItems: true,
+          poFabricItems: true,
+          poYarnItems: true,
+        },
       });
 
       // ✅ Re-check if this record now meets any approval criteria
@@ -1070,9 +1453,15 @@ async function update(id, body) {
         },
       });
 
+      const includeClause = (await buildIncludeForModule(module.id)) || {};
       const fullRecord = await tx.po.findUnique({
         where: { id: parseInt(id) },
-        include: await buildIncludeForModule(module.id),
+        include: {
+          ...includeClause,
+          poItems: true,
+          poFabricItems: true,
+          poYarnItems: true,
+        },
       });
 
       await createApprovalLog(
@@ -1123,13 +1512,13 @@ async function updatePoItems(
             uomId: itemDetails?.uomId ? parseInt(itemDetails.uomId) : null,
             hsnId: itemDetails?.hsnId ? parseInt(itemDetails.hsnId) : null,
             qty,
-            price: itemDetails?.price ? parseInt(itemDetails.price) : null,
+            price: itemDetails?.price ? parseFloat(itemDetails.price) : null,
             discountType: itemDetails?.discountType ?? undefined,
             discountValue: itemDetails?.discountValue
-              ? parseInt(itemDetails.discountValue)
+              ? parseFloat(itemDetails.discountValue)
               : null,
             taxPercent: itemDetails?.taxPercent
-              ? parseInt(itemDetails.taxPercent)
+              ? parseFloat(itemDetails.taxPercent)
               : null,
             itemGroupId: itemDetails?.itemGroupId
               ? parseInt(itemDetails.itemGroupId)
@@ -1166,13 +1555,13 @@ async function updatePoItems(
             uomId: itemDetails?.uomId ? parseInt(itemDetails.uomId) : null,
             hsnId: itemDetails?.hsnId ? parseInt(itemDetails.hsnId) : null,
             qty,
-            price: itemDetails?.price ? parseInt(itemDetails.price) : null,
+            price: itemDetails?.price ? parseFloat(itemDetails.price) : null,
             discountType: itemDetails?.discountType ?? undefined,
             discountValue: itemDetails?.discountValue
-              ? parseInt(itemDetails.discountValue)
+              ? parseFloat(itemDetails.discountValue)
               : null,
             taxPercent: itemDetails?.taxPercent
-              ? parseInt(itemDetails.taxPercent)
+              ? parseFloat(itemDetails.taxPercent)
               : null,
             quoteVersion: isNewVersion
               ? currentQuoteVersion + 1
@@ -1204,40 +1593,147 @@ async function updatePoItems(
   );
 }
 
-async function createNewVersionItems(
-  tx,
-  poItems,
-  poId,
-  version,
-  currentQuoteVersion,
-) {
+async function createNewVersionItems(tx, poItems, poId, version) {
+  const validItems = (poItems || []).filter((i) => i && i.styleItemId);
+  if (!validItems.length) return;
   return await tx.poItems.createMany({
-    data: poItems
-      .filter((i) => i["quoteVersion"] === currentQuoteVersion)
-      .map((temp) => ({
+    data: validItems.map((temp) => ({
+      poId,
+      styleItemId: temp.styleItemId ? parseInt(temp.styleItemId) : null,
+      uomId: temp.uomId ? parseInt(temp.uomId) : null,
+      hsnId: temp.hsnId ? parseInt(temp.hsnId) : null,
+      qty: temp.qty != null && temp.qty !== "" ? parseFloat(temp.qty) : null,
+      price:
+        temp.price != null && temp.price !== "" ? parseFloat(temp.price) : null,
+      discountType: temp.discountType ?? undefined,
+      discountValue:
+        temp.discountValue != null && temp.discountValue !== ""
+          ? parseFloat(temp.discountValue)
+          : null,
+      taxPercent:
+        temp.taxPercent != null && temp.taxPercent !== ""
+          ? parseFloat(temp.taxPercent)
+          : null,
+      quoteVersion: version,
+      itemGroupId: temp.itemGroupId ? parseInt(temp.itemGroupId) : null,
+      sizeId: temp.sizeId ? parseInt(temp.sizeId) : null,
+      colorId: temp.colorId ? parseInt(temp.colorId) : null,
+      gsmId: temp.gsmId ? parseInt(temp.gsmId) : null,
+      sheetsPerPacket: temp.sheetsPerPacket
+        ? parseInt(temp.sheetsPerPacket)
+        : null,
+      weightPerPacket: temp.weightPerPacket
+        ? parseFloat(temp.weightPerPacket)
+        : null,
+      totalPackets: temp.totalPackets ? parseInt(temp.totalPackets) : null,
+      pricePerKg: temp.pricePerKg ? parseInt(temp.pricePerKg) : null,
+    })),
+  });
+}
+
+async function createNewVersionFabricItems(tx, poFabricItems, poId, version) {
+  const validItems = (poFabricItems || []).filter((i) => i && i.fabricId);
+  if (!validItems.length) return;
+  return await tx.poFabricItems.createMany({
+    data: validItems.map((temp) => ({
+      poId,
+      fabricId: temp.fabricId ? parseInt(temp.fabricId) : null,
+      hsnId: temp.hsnId ? parseInt(temp.hsnId) : null,
+      colorId: temp.colorId ? parseInt(temp.colorId) : null,
+      designId: temp.designId ? parseInt(temp.designId) : null,
+      gaugeId: temp.gaugeId ? parseInt(temp.gaugeId) : null,
+      loopLengthId: temp.loopLengthId ? parseInt(temp.loopLengthId) : null,
+      gsmId: temp.gsmId ? parseInt(temp.gsmId) : null,
+      kDiaId: temp.kDiaId ? parseInt(temp.kDiaId) : null,
+      fDiaId: temp.fDiaId ? parseInt(temp.fDiaId) : null,
+      uomId: temp.uomId ? parseInt(temp.uomId) : null,
+      width: temp.width ? String(temp.width) : null,
+      numberOfRolls:
+        temp.numberOfRolls !== "" && temp.numberOfRolls != null
+          ? parseFloat(temp.numberOfRolls)
+          : null,
+      weightPerRoll:
+        temp.weightPerRoll !== "" && temp.weightPerRoll != null
+          ? parseFloat(temp.weightPerRoll)
+          : null,
+      totalKgs:
+        temp.totalKgs !== "" && temp.totalKgs != null
+          ? parseFloat(temp.totalKgs)
+          : null,
+      pricePerKg:
+        temp.pricePerKg !== "" && temp.pricePerKg != null
+          ? parseFloat(temp.pricePerKg)
+          : null,
+      totalPrice:
+        temp.totalPrice !== "" && temp.totalPrice != null
+          ? parseFloat(temp.totalPrice)
+          : null,
+      qty: temp.qty !== "" && temp.qty != null ? parseFloat(temp.qty) : null,
+      price:
+        temp.price !== "" && temp.price != null ? parseFloat(temp.price) : null,
+      amount:
+        temp.amount !== "" && temp.amount != null
+          ? parseFloat(temp.amount)
+          : null,
+      taxPercent:
+        temp.taxPercent !== "" && temp.taxPercent != null
+          ? parseFloat(temp.taxPercent)
+          : null,
+      discountType: temp.discountType ?? temp.discounttype ?? null,
+      discountValue:
+        (temp.discountValue ?? temp.discountvalue) !== "" &&
+        (temp.discountValue ?? temp.discountvalue) != null
+          ? parseFloat(temp.discountValue ?? temp.discountvalue)
+          : null,
+      quoteVersion: version,
+    })),
+  });
+}
+
+async function createNewVersionYarnItems(tx, poYarnItems, poId, version) {
+  const validItems = (poYarnItems || []).filter((i) => i && i.yarnId);
+  if (!validItems.length) return;
+  return await tx.poYarnItems.createMany({
+    data: validItems.map((temp) => {
+      const rawNoOfBags = temp.noOfbags ?? temp.noOfBags;
+      return {
         poId,
-        styleItemId: temp.styleItemId ? parseInt(temp.styleItemId) : null,
-        uomId: temp.uomId ? parseInt(temp.uomId) : null,
+        yarnId: temp.yarnId ? parseInt(temp.yarnId) : null,
         hsnId: temp.hsnId ? parseInt(temp.hsnId) : null,
-        qty: parseFloat(temp.qty),
-        price: parseFloat(temp.price),
-        discountType: temp.discountType,
-        discountValue: parseFloat(temp.discountValue || 0),
-        taxPercent: parseFloat(temp.taxPercent || 0),
-        quoteVersion: version,
-        itemGroupId: temp.itemGroupId ? parseInt(temp.itemGroupId) : null,
-        sizeId: temp.sizeId ? parseInt(temp.sizeId) : null,
+        contentId: temp.contentId ? parseInt(temp.contentId) : null,
+        countsId: temp.countsId ? parseInt(temp.countsId) : null,
         colorId: temp.colorId ? parseInt(temp.colorId) : null,
-        gsmId: temp.gsmId ? parseInt(temp.gsmId) : null,
-        sheetsPerPacket: temp.sheetsPerPacket
-          ? parseInt(temp.sheetsPerPacket)
-          : null,
-        weightPerPacket: temp.weightPerPacket
-          ? parseFloat(temp.weightPerPacket)
-          : null,
-        totalPackets: temp.totalPackets ? parseInt(temp.totalPackets) : null,
-        pricePerKg: temp.pricePerKg ? parseInt(temp.pricePerKg) : null,
-      })),
+        uomId: temp.uomId ? parseInt(temp.uomId) : null,
+        noOfbags:
+          rawNoOfBags !== "" && rawNoOfBags != null
+            ? parseInt(rawNoOfBags)
+            : null,
+        weightPerBag:
+          temp.weightPerBag !== "" && temp.weightPerBag != null
+            ? parseFloat(temp.weightPerBag)
+            : null,
+        qty: temp.qty !== "" && temp.qty != null ? parseFloat(temp.qty) : null,
+        price:
+          temp.price !== "" && temp.price != null
+            ? parseFloat(temp.price)
+            : null,
+        amount:
+          temp.amount !== "" && temp.amount != null
+            ? parseFloat(temp.amount)
+            : null,
+        taxPercent:
+          temp.taxPercent !== "" && temp.taxPercent != null
+            ? parseFloat(temp.taxPercent)
+            : null,
+        discountType: temp.discountType ?? temp.discounttype ?? null,
+        discountValue:
+          (temp.discountValue ?? temp.discountvalue) !== "" &&
+          (temp.discountValue ?? temp.discountvalue) != null
+            ? parseFloat(temp.discountValue ?? temp.discountvalue)
+            : null,
+        quoteVersion: version,
+      };
+    }),
   });
 }
 

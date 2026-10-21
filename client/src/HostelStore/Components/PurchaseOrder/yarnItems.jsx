@@ -16,11 +16,11 @@ import { TransactionGrid } from "../../../Basic/components/Reuseable/index.js";
 import { Plus } from "lucide-react";
 
 const YarnItems = ({
-  orderYarnItems: rawOrderYarnItems,
+  poType,
+  selectedOrderGridType,
   poYarnItems,
-  enrichedItems,
-  setYarnItems: rawSetYarnItems,
   setPoYarnItems,
+  enrichedItems,
   readOnly,
   quoteVersion,
   isNewVersion,
@@ -36,8 +36,8 @@ const YarnItems = ({
   colorList,
   yarnList,
 }) => {
-  const orderYarnItems = poYarnItems || rawOrderYarnItems;
-  const setYarnItems = setPoYarnItems || rawSetYarnItems;
+  const isOrderYarnLocked =
+    poType === "ORDER" && selectedOrderGridType === "YARN";
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
 
@@ -67,7 +67,7 @@ const YarnItems = ({
   const effectiveQuoteVersion =
     quoteVersion ||
     Math.max(
-      ...orderYarnItems
+      ...poYarnItems
         .map((i) => parseInt(i.quoteVersion))
         .filter((v) => !isNaN(v) && v > 0),
       0,
@@ -81,13 +81,14 @@ const YarnItems = ({
     return parseInt(row.quoteVersion) === parseInt(effectiveQuoteVersion);
   };
 
-  const visibleRows = orderYarnItems
+  const visibleRows = poYarnItems
     .map((row, originalIndex) => ({ row, originalIndex }))
     .filter(({ row }) => isVisibleRow(row));
 
   const addRow = () => {
-    setYarnItems([
-      ...orderYarnItems,
+    if (isOrderYarnLocked) return;
+    setPoYarnItems([
+      ...poYarnItems,
       {
         ...EMPTY_ROW,
         quoteVersion: id
@@ -107,7 +108,7 @@ const YarnItems = ({
         : targetIndex;
 
     if (visibleRows.length <= 14) {
-      const newItems = [...orderYarnItems];
+      const newItems = [...poYarnItems];
       if (newItems[originalIndex]) {
         newItems[originalIndex] = {
           ...EMPTY_ROW,
@@ -116,16 +117,16 @@ const YarnItems = ({
             (isNewVersion ? "New" : effectiveQuoteVersion || 1),
           rowId: Math.random().toString(36).substring(2, 9),
         };
-        setYarnItems(newItems);
+        setPoYarnItems(newItems);
       }
     } else {
-      setYarnItems(orderYarnItems.filter((_, i) => i !== originalIndex));
+      setPoYarnItems(poYarnItems.filter((_, i) => i !== originalIndex));
     }
   };
 
   useEffect(() => {
     if (!id) return;
-    setYarnItems((prev) => {
+    setPoYarnItems((prev) => {
       const localVisibleRows = prev.filter((row) => isVisibleRow(row));
       const missing = 14 - localVisibleRows.length;
       if (missing <= 0) return prev;
@@ -138,12 +139,12 @@ const YarnItems = ({
         })),
       ];
     });
-  }, [id, isNewVersion, effectiveQuoteVersion, setYarnItems]);
+  }, [id, isNewVersion, effectiveQuoteVersion, setPoYarnItems]);
 
   useEffect(() => {
     if (!isNewVersion) return;
 
-    setYarnItems((prev) => [
+    setPoYarnItems((prev) => [
       ...prev.filter((item) => item.quoteVersion !== "New"),
       ...prev
         .filter(
@@ -151,10 +152,10 @@ const YarnItems = ({
         )
         .map((item) => ({ ...item, quoteVersion: "New" })),
     ]);
-  }, [isNewVersion, quoteVersion, setYarnItems]);
+  }, [isNewVersion, quoteVersion, setPoYarnItems]);
 
   const handleInputChange = async (value, index, field) => {
-    const newItems = [...orderYarnItems];
+    const newItems = [...poYarnItems];
     newItems[index] = {
       ...newItems[index],
       [field]: value,
@@ -180,19 +181,33 @@ const YarnItems = ({
       }
     }
     if (field === "noOfbags" || field === "weightPerBag") {
-      const noOfbags = parseFloat(newItems[index].noOfbags) || 0;
-      const weightPerBag = parseFloat(newItems[index].weightPerBag) || 0;
-      newItems[index].qty = (noOfbags * weightPerBag).toFixed(3);
+      const noOfbagsVal = newItems[index].noOfbags;
+      const weightPerBagVal = newItems[index].weightPerBag;
+      if (noOfbagsVal !== "" || weightPerBagVal !== "") {
+        const noOfbags = parseFloat(noOfbagsVal) || 0;
+        const weightPerBag = parseFloat(weightPerBagVal) || 0;
+        const qty = noOfbags * weightPerBag;
+        newItems[index].qty = qty ? qty.toFixed(3) : "";
+        const price = parseFloat(newItems[index].price) || 0;
+        newItems[index].amount = price && qty ? (qty * price).toFixed(2) : "";
+      }
     }
     if (field === "qty" || field === "price") {
-      const qty = parseFloat(newItems[index].qty) || 0;
-      const price = parseFloat(newItems[index].price) || 0;
-      newItems[index].amount = (qty * price).toFixed(2);
+      const qtyVal = newItems[index].qty;
+      const priceVal = newItems[index].price;
+      if (qtyVal === "" || priceVal === "") {
+        newItems[index].amount = "";
+      } else {
+        const qty = parseFloat(qtyVal) || 0;
+        const price = parseFloat(priceVal) || 0;
+        newItems[index].amount = (qty * price).toFixed(2);
+      }
     }
-    setYarnItems(newItems);
+    setPoYarnItems(newItems);
   };
 
   const handleRightClick = (event, rowIndex) => {
+    if (isOrderYarnLocked) return;
     event.preventDefault();
     setContextMenu({
       mouseX: event.clientX,
@@ -207,14 +222,16 @@ const YarnItems = ({
 
   const handleFocusNextRow = (index) => {
     const nextIndex = index + 1;
-    if (!orderYarnItems[nextIndex]) {
-      setYarnItems((prev) => [
-        ...prev,
-        { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
-      ]);
-      setTimeout(() => {
-        styleItemRefs.current[nextIndex]?.focus?.();
-      }, 300);
+    if (!poYarnItems[nextIndex]) {
+      if (!isOrderYarnLocked) {
+        setPoYarnItems((prev) => [
+          ...prev,
+          { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
+        ]);
+        setTimeout(() => {
+          styleItemRefs.current[nextIndex]?.focus?.();
+        }, 300);
+      }
     } else {
       setTimeout(() => {
         styleItemRefs.current[nextIndex]?.focus?.();
@@ -223,22 +240,31 @@ const YarnItems = ({
   };
 
   const deleteSelectedRows = () => {
-    setYarnItems((rows) => rows.filter((r) => !r.selected));
+    setPoYarnItems((rows) => rows.filter((r) => !r.selected));
     setContextMenu(null);
   };
 
   const handleDeleteAllRows = () => {
     const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
     const nonVisibleItems = id
-      ? orderYarnItems.filter((r) => !isVisibleRow(r))
+      ? poYarnItems.filter((r) => !isVisibleRow(r))
       : [];
     const newItems = Array.from({ length: 14 }, () => ({
       ...EMPTY_ROW,
       quoteVersion: targetVersion,
       rowId: Math.random().toString(36).substring(2, 9),
     }));
-    setYarnItems([...nonVisibleItems, ...newItems]);
+    setPoYarnItems([...nonVisibleItems, ...newItems]);
   };
+
+  const enrichedYarnItems = poYarnItems.map((row) => {
+    const matched = enrichedItems?.items?.find((item) =>
+      row.rowId
+        ? item.rowId === row.rowId
+        : item.yarnId && item.yarnId === row.yarnId,
+    );
+    return matched || row;
+  });
 
   return (
     <>
@@ -256,7 +282,7 @@ const YarnItems = ({
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
-          poItems={enrichedItems?.items || orderYarnItems}
+          poItems={enrichedYarnItems}
           handleInputChange={handleInputChange}
           id={id}
           isNewVersion={false}
@@ -280,7 +306,7 @@ const YarnItems = ({
         }}
         onContextMenu={(e) => {
           const td = e.target.closest("td[data-grid-row]");
-          if (td && !readOnly) {
+          if (td && !readOnly && !isOrderYarnLocked) {
             e.preventDefault();
             const rowIndex = parseInt(td.getAttribute("data-grid-row"), 10);
             handleRightClick(e, rowIndex);
@@ -437,6 +463,7 @@ const YarnItems = ({
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
+            const isFilledRow = Boolean(rowItem.yarnId);
             return (
               <>
                 <td
@@ -460,9 +487,10 @@ const YarnItems = ({
                     options={(yarnList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
+                    readOnly={readOnly || isOrderYarnLocked}
+                    disabled={readOnly || isOrderYarnLocked}
                     placeholder=""
-                    addNew={true}
+                    addNew={!isOrderYarnLocked}
                     childComponent={YarnMaster}
                     addNewModalWidth="w-[65vw] h-[60vh]"
                     ref={(el) => (styleItemRefs.current[originalIndex] = el)}
@@ -541,8 +569,9 @@ const YarnItems = ({
                     options={(colorList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderYarnLocked}
+                    disabled={readOnly || isOrderYarnLocked}
+                    addNew={!isOrderYarnLocked}
                     placeholder=""
                     childComponent={ColorMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -563,8 +592,9 @@ const YarnItems = ({
                     options={(uomList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderYarnLocked}
+                    disabled={readOnly || isOrderYarnLocked}
+                    addNew={!isOrderYarnLocked}
                     placeholder=""
                     childComponent={UomMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -579,6 +609,7 @@ const YarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.noOfbags}
@@ -589,7 +620,8 @@ const YarnItems = ({
                         "noOfbags",
                       )
                     }
-                    readOnly={readOnly}
+                    readOnly={readOnly || (isOrderYarnLocked && !isFilledRow)}
+                    disabled={readOnly || (isOrderYarnLocked && !isFilledRow)}
                   />
                 </td>
                 <td
@@ -600,6 +632,7 @@ const YarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.weightPerBag}
@@ -620,7 +653,8 @@ const YarnItems = ({
                         );
                       }
                     }}
-                    readOnly={readOnly}
+                    readOnly={readOnly || (isOrderYarnLocked && !isFilledRow)}
+                    disabled={readOnly || (isOrderYarnLocked && !isFilledRow)}
                   />
                 </td>
                 <td
@@ -631,14 +665,23 @@ const YarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.qty}
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
-                    readOnly={true}
-                    disabled={true}
+                    readOnly={
+                      readOnly ||
+                      (isOrderYarnLocked && !isFilledRow) ||
+                      Boolean(rowItem.noOfbags && rowItem.weightPerBag)
+                    }
+                    disabled={
+                      readOnly ||
+                      (isOrderYarnLocked && !isFilledRow) ||
+                      Boolean(rowItem.noOfbags && rowItem.weightPerBag)
+                    }
                   />
                 </td>
                 <td
@@ -654,6 +697,7 @@ const YarnItems = ({
                           ? "number"
                           : "text"
                       }
+                      min="0"
                       step="0.01"
                       className="text-right px-3 w-full table-data-input bg-transparent"
                       value={
@@ -673,24 +717,32 @@ const YarnItems = ({
                           "price",
                         )
                       }
-                      readOnly={readOnly}
+                      readOnly={readOnly || (isOrderYarnLocked && !isFilledRow)}
+                      disabled={readOnly || (isOrderYarnLocked && !isFilledRow)}
                       onFocus={(e) => {
+                        if (isOrderYarnLocked && !isFilledRow) return;
                         e.target.select();
                         setFocusedField(`price-${originalIndex}`);
                       }}
                       onBlur={(e) => {
-                        const num = parseFloat(e.target.value);
-                        handleInputChange(
-                          num ? Number(num).toFixed(2) : "",
-                          originalIndex,
-                          "price",
-                        );
+                        const val = e.target.value ? e.target.value.trim() : "";
+                        if (val === "") {
+                          handleInputChange("", originalIndex, "price");
+                        } else {
+                          const num = parseFloat(val);
+                          handleInputChange(
+                            !isNaN(num) ? Number(num).toFixed(2) : "",
+                            originalIndex,
+                            "price",
+                          );
+                        }
                         setFocusedField(null);
                       }}
                       onKeyDown={(e) => {
                         if (
                           e.key === "Enter" &&
-                          index === orderYarnItems.length - 1
+                          index === poYarnItems.length - 1 &&
+                          !isOrderYarnLocked
                         ) {
                           addRow();
                         }
@@ -743,7 +795,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
                 >
-                  {!readOnly && (
+                  {!readOnly && !isOrderYarnLocked && (
                     <div className="flex items-center justify-center">
                       <button
                         onClick={addRow}
@@ -762,7 +814,7 @@ const YarnItems = ({
         />
       </div>
 
-      {contextMenu && (
+      {!isOrderYarnLocked && contextMenu && (
         <div
           style={{
             position: "fixed",

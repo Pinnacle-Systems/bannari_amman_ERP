@@ -22,11 +22,11 @@ import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
 
 const FabricItems = ({
-  orderFabricItems: rawOrderFabricItems,
+  poType,
+  selectedOrderGridType,
   poFabricItems,
-  enrichedItems,
-  setFabricItems: rawSetFabricItems,
   setPoFabricItems,
+  enrichedItems,
   readOnly,
   quoteVersion,
   isNewVersion,
@@ -48,8 +48,9 @@ const FabricItems = ({
   gaugeList,
   fabricList,
 }) => {
-  const orderFabricItems = poFabricItems || rawOrderFabricItems;
-  const setFabricItems = setPoFabricItems || rawSetFabricItems;
+  const isOrderFabricLocked =
+    poType === "ORDER" &&
+    (!selectedOrderGridType || selectedOrderGridType === "FABRIC");
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
 
@@ -89,7 +90,7 @@ const FabricItems = ({
   const effectiveQuoteVersion =
     quoteVersion ||
     Math.max(
-      ...orderFabricItems
+      ...poFabricItems
         .map((i) => parseInt(i.quoteVersion))
         .filter((v) => !isNaN(v) && v > 0),
       0,
@@ -103,13 +104,14 @@ const FabricItems = ({
     return parseInt(row.quoteVersion) === parseInt(effectiveQuoteVersion);
   };
 
-  const visibleRows = orderFabricItems
+  const visibleRows = poFabricItems
     .map((row, originalIndex) => ({ row, originalIndex }))
     .filter(({ row }) => isVisibleRow(row));
 
   const addRow = () => {
-    setFabricItems([
-      ...orderFabricItems,
+    if (isOrderFabricLocked) return;
+    setPoFabricItems([
+      ...poFabricItems,
       {
         ...EMPTY_ROW,
         quoteVersion: id
@@ -129,7 +131,7 @@ const FabricItems = ({
         : targetIndex;
 
     if (visibleRows.length <= 14) {
-      const newItems = [...orderFabricItems];
+      const newItems = [...poFabricItems];
       if (newItems[originalIndex]) {
         newItems[originalIndex] = {
           ...EMPTY_ROW,
@@ -138,16 +140,16 @@ const FabricItems = ({
             (isNewVersion ? "New" : effectiveQuoteVersion || 1),
           rowId: Math.random().toString(36).substring(2, 9),
         };
-        setFabricItems(newItems);
+        setPoFabricItems(newItems);
       }
     } else {
-      setFabricItems(orderFabricItems.filter((_, i) => i !== originalIndex));
+      setPoFabricItems(poFabricItems.filter((_, i) => i !== originalIndex));
     }
   };
 
   useEffect(() => {
     if (!id) return;
-    setFabricItems((prev) => {
+    setPoFabricItems((prev) => {
       const localVisibleRows = prev.filter((row) => isVisibleRow(row));
       const missing = 14 - localVisibleRows.length;
       if (missing <= 0) return prev;
@@ -160,12 +162,12 @@ const FabricItems = ({
         })),
       ];
     });
-  }, [id, isNewVersion, effectiveQuoteVersion, setFabricItems]);
+  }, [id, isNewVersion, effectiveQuoteVersion, setPoFabricItems]);
 
   useEffect(() => {
     if (!isNewVersion) return;
 
-    setFabricItems((prev) => [
+    setPoFabricItems((prev) => [
       ...prev.filter((item) => item.quoteVersion !== "New"),
       ...prev
         .filter(
@@ -173,10 +175,10 @@ const FabricItems = ({
         )
         .map((item) => ({ ...item, quoteVersion: "New" })),
     ]);
-  }, [isNewVersion, quoteVersion, setFabricItems]);
+  }, [isNewVersion, quoteVersion, setPoFabricItems]);
 
   const handleInputChange = async (value, index, field) => {
-    const newItems = [...orderFabricItems];
+    const newItems = [...poFabricItems];
     newItems[index] = {
       ...newItems[index],
       [field]: value,
@@ -205,34 +207,63 @@ const FabricItems = ({
     if (field === "numberOfRolls" || field === "weightPerRoll") {
       const num = parseFloat(newItems[index].numberOfRolls) || 0;
       const weight = parseFloat(newItems[index].weightPerRoll) || 0;
-      newItems[index].totalKgs = (num * weight).toFixed(3);
-      newItems[index].qty = newItems[index].totalKgs;
+      const totalKgs = num && weight ? (num * weight).toFixed(3) : "";
+      newItems[index].totalKgs = totalKgs;
+      if (totalKgs) {
+        newItems[index].qty = totalKgs;
+      }
 
-      const totalKgs = parseFloat(newItems[index].totalKgs) || 0;
-      const pricePerKg = parseFloat(newItems[index].pricePerKg) || 0;
-      newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
-      newItems[index].amount = newItems[index].totalPrice;
+      const totalKgsNum = parseFloat(newItems[index].totalKgs) || 0;
+      const pricePerKg =
+        parseFloat(newItems[index].pricePerKg) ||
+        parseFloat(newItems[index].price) ||
+        0;
+      if (totalKgsNum && pricePerKg) {
+        newItems[index].totalPrice = (totalKgsNum * pricePerKg).toFixed(2);
+        newItems[index].amount = newItems[index].totalPrice;
+      } else {
+        newItems[index].totalPrice = "";
+        const qtyNum = parseFloat(newItems[index].qty) || 0;
+        const priceNum = parseFloat(newItems[index].price) || 0;
+        newItems[index].amount =
+          qtyNum && priceNum ? (qtyNum * priceNum).toFixed(2) : "";
+      }
     }
 
     if (field === "pricePerKg") {
-      newItems[index].price = newItems[index].pricePerKg;
+      newItems[index].price = value;
 
-      const totalKgs = parseFloat(newItems[index].totalKgs) || 0;
-      const pricePerKg = parseFloat(newItems[index].pricePerKg) || 0;
-      newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
-      newItems[index].amount = newItems[index].totalPrice;
+      const totalKgs =
+        parseFloat(newItems[index].totalKgs) ||
+        parseFloat(newItems[index].qty) ||
+        0;
+      const pricePerKg = parseFloat(value) || 0;
+      if (totalKgs && pricePerKg) {
+        newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
+        newItems[index].amount = newItems[index].totalPrice;
+      } else {
+        newItems[index].totalPrice = "";
+        newItems[index].amount = "";
+      }
     }
 
     if (field === "qty" || field === "price") {
-      const qty = parseFloat(newItems[index].qty) || 0;
-      const price = parseFloat(newItems[index].price) || 0;
-      newItems[index].amount = (qty * price).toFixed(2);
+      const qtyVal = newItems[index].qty;
+      const priceVal = newItems[index].price;
+      if (qtyVal === "" || priceVal === "") {
+        newItems[index].amount = "";
+      } else {
+        const qty = parseFloat(qtyVal) || 0;
+        const price = parseFloat(priceVal) || 0;
+        newItems[index].amount = (qty * price).toFixed(2);
+      }
     }
 
-    setFabricItems(newItems);
+    setPoFabricItems(newItems);
   };
 
   const handleRightClick = (event, rowIndex) => {
+    if (isOrderFabricLocked) return;
     event.preventDefault();
     setContextMenu({
       mouseX: event.clientX,
@@ -247,8 +278,9 @@ const FabricItems = ({
 
   const handleFocusNextRow = (index) => {
     const nextIndex = index + 1;
-    if (!orderFabricItems[nextIndex]) {
-      setFabricItems((prev) => [
+    if (!poFabricItems[nextIndex]) {
+      if (isOrderFabricLocked) return;
+      setPoFabricItems((prev) => [
         ...prev,
         { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
       ]);
@@ -263,22 +295,31 @@ const FabricItems = ({
   };
 
   const deleteSelectedRows = () => {
-    setFabricItems((rows) => rows.filter((r) => !r.selected));
+    setPoFabricItems((rows) => rows.filter((r) => !r.selected));
     setContextMenu(null);
   };
 
   const handleDeleteAllRows = () => {
     const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
     const nonVisibleItems = id
-      ? orderFabricItems.filter((r) => !isVisibleRow(r))
+      ? poFabricItems.filter((r) => !isVisibleRow(r))
       : [];
     const newItems = Array.from({ length: 14 }, () => ({
       ...EMPTY_ROW,
       quoteVersion: targetVersion,
       rowId: Math.random().toString(36).substring(2, 9),
     }));
-    setFabricItems([...nonVisibleItems, ...newItems]);
+    setPoFabricItems([...nonVisibleItems, ...newItems]);
   };
+
+  const enrichedFabricItems = poFabricItems.map((row) => {
+    const matched = enrichedItems?.items?.find((item) =>
+      row.rowId
+        ? item.rowId === row.rowId
+        : item.fabricId && item.fabricId === row.fabricId,
+    );
+    return matched || row;
+  });
 
   return (
     <>
@@ -293,7 +334,7 @@ const FabricItems = ({
             Weight Details
           </h2>
           {Number.isInteger(currentWeightSelectedIndex) &&
-            orderFabricItems[currentWeightSelectedIndex] && (
+            poFabricItems[currentWeightSelectedIndex] && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -302,10 +343,11 @@ const FabricItems = ({
                     </label>
                     <input
                       type="number"
+                      min="0"
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        poFabricItems[currentWeightSelectedIndex]
                           .numberOfRolls || ""
                       }
                       onChange={(e) =>
@@ -324,10 +366,11 @@ const FabricItems = ({
                     </label>
                     <input
                       type="number"
+                      min="0"
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        poFabricItems[currentWeightSelectedIndex]
                           .weightPerRoll || ""
                       }
                       onChange={(e) =>
@@ -339,7 +382,7 @@ const FabricItems = ({
                       }
                       onBlur={() => {
                         const val =
-                          orderFabricItems[currentWeightSelectedIndex]
+                          poFabricItems[currentWeightSelectedIndex]
                             .weightPerRoll;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(3) : "",
@@ -358,7 +401,7 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        poFabricItems[currentWeightSelectedIndex]
                           ?.totalKgs || ""
                       }
                       readOnly
@@ -370,10 +413,11 @@ const FabricItems = ({
                     </label>
                     <input
                       type="number"
+                      min="0"
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        poFabricItems[currentWeightSelectedIndex]
                           .pricePerKg || ""
                       }
                       onChange={(e) =>
@@ -385,7 +429,7 @@ const FabricItems = ({
                       }
                       onBlur={() => {
                         const val =
-                          orderFabricItems[currentWeightSelectedIndex]
+                          poFabricItems[currentWeightSelectedIndex]
                             .pricePerKg;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(2) : "",
@@ -404,7 +448,7 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        poFabricItems[currentWeightSelectedIndex]
                           ?.totalPrice || ""
                       }
                       readOnly
@@ -439,7 +483,7 @@ const FabricItems = ({
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
-          poItems={enrichedItems?.items || orderFabricItems}
+          poItems={enrichedFabricItems}
           handleInputChange={handleInputChange}
           id={id}
           isNewVersion={false}
@@ -463,7 +507,7 @@ const FabricItems = ({
         }}
         onContextMenu={(e) => {
           const td = e.target.closest("td[data-grid-row]");
-          if (td && !readOnly) {
+          if (td && !readOnly && !isOrderFabricLocked) {
             e.preventDefault();
             const rowIndex = parseInt(td.getAttribute("data-grid-row"), 10);
             handleRightClick(e, rowIndex);
@@ -644,6 +688,7 @@ const FabricItems = ({
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
+            const isFilledRow = Boolean(rowItem.fabricId);
             return (
               <>
                 <td
@@ -667,9 +712,10 @@ const FabricItems = ({
                     options={(fabricList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
                     placeholder=""
-                    addNew={true}
+                    addNew={!isOrderFabricLocked}
                     childComponent={FabricMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
                     ref={(el) => (styleItemRefs.current[originalIndex] = el)}
@@ -706,8 +752,9 @@ const FabricItems = ({
                     options={(colorList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={ColorMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -725,8 +772,9 @@ const FabricItems = ({
                     options={(designList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={DesignMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -744,8 +792,9 @@ const FabricItems = ({
                     options={(gaugeList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={GaugeMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -763,8 +812,9 @@ const FabricItems = ({
                     options={(loopLengthList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={LoopLengthMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -784,8 +834,9 @@ const FabricItems = ({
                     options={(gsmList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={Gsm}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -806,8 +857,9 @@ const FabricItems = ({
                     options={(kDiaList || [])
                       ?.filter((i) => (id ? true : i.active))
                       ?.map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={DiaMaster}
                     childComponentProps={{ defaultKDia: true }}
@@ -828,8 +880,9 @@ const FabricItems = ({
                     options={(fDiaList || [])
                       ?.filter((i) => (id ? true : i.active))
                       ?.map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={DiaMaster}
                     childComponentProps={{ defaultFDia: true }}
@@ -850,8 +903,9 @@ const FabricItems = ({
                     options={(uomList?.data || [])
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
+                    addNew={!isOrderFabricLocked}
                     placeholder=""
                     childComponent={UomMaster}
                     addNewModalWidth="w-[50%] h-[57%]"
@@ -870,7 +924,8 @@ const FabricItems = ({
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "width")
                     }
-                    readOnly={readOnly}
+                    readOnly={readOnly || isOrderFabricLocked}
+                    disabled={readOnly || isOrderFabricLocked}
                   />
                 </td>
                 <td
@@ -898,17 +953,15 @@ const FabricItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.qty}
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
-                    readOnly={
-                      readOnly ||
-                      rowItem.pricePerKg > 0 ||
-                      rowItem.weightPerRoll > 0
-                    }
+                    readOnly={readOnly || (isOrderFabricLocked && !isFilledRow)}
+                    disabled={readOnly || (isOrderFabricLocked && !isFilledRow)}
                   />
                 </td>
                 <td
@@ -924,6 +977,7 @@ const FabricItems = ({
                           ? "number"
                           : "text"
                       }
+                      min="0"
                       step="0.01"
                       className="text-right px-3 w-full table-data-input bg-transparent"
                       value={
@@ -944,27 +998,35 @@ const FabricItems = ({
                         )
                       }
                       readOnly={
-                        readOnly ||
-                        rowItem.pricePerKg > 0 ||
-                        rowItem.weightPerRoll > 0
+                        readOnly || (isOrderFabricLocked && !isFilledRow)
+                      }
+                      disabled={
+                        readOnly || (isOrderFabricLocked && !isFilledRow)
                       }
                       onFocus={(e) => {
+                        if (isOrderFabricLocked && !isFilledRow) return;
                         e.target.select();
                         setFocusedField(`price-${originalIndex}`);
                       }}
                       onBlur={(e) => {
-                        const num = parseFloat(e.target.value);
-                        handleInputChange(
-                          num ? Number(num).toFixed(2) : "",
-                          originalIndex,
-                          "price",
-                        );
+                        const val = e.target.value ? e.target.value.trim() : "";
+                        if (val === "") {
+                          handleInputChange("", originalIndex, "price");
+                        } else {
+                          const num = parseFloat(val);
+                          handleInputChange(
+                            !isNaN(num) ? Number(num).toFixed(2) : "",
+                            originalIndex,
+                            "price",
+                          );
+                        }
                         setFocusedField(null);
                       }}
                       onKeyDown={(e) => {
                         if (
+                          !isOrderFabricLocked &&
                           e.key === "Enter" &&
-                          index === orderFabricItems.length - 1
+                          index === poFabricItems.length - 1
                         ) {
                           addRow();
                         }
@@ -1017,7 +1079,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
                 >
-                  {!readOnly && (
+                  {!readOnly && !isOrderFabricLocked && (
                     <div className="flex items-center justify-center">
                       <button
                         onClick={addRow}
@@ -1036,7 +1098,7 @@ const FabricItems = ({
         />
       </div>
 
-      {contextMenu && (
+      {!isOrderFabricLocked && contextMenu && (
         <div
           style={{
             position: "fixed",

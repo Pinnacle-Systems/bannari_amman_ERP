@@ -164,11 +164,13 @@ export const validatePurchaseOrderData = ({
   };
 
   const fabricItems = (
-    data?.poFabricItems || data?.orderFabricItems || []
+    data?.poFabricItems ||
+    data?.orderFabricItems ||
+    []
   ).filter(isVisibleRow);
-  const yarnItems = (
-    data?.poYarnItems || data?.orderYarnItems || []
-  ).filter(isVisibleRow);
+  const yarnItems = (data?.poYarnItems || data?.orderYarnItems || []).filter(
+    isVisibleRow,
+  );
   const poItems = (data?.poItems || []).filter(isVisibleRow);
 
   const filledItems = isFabric
@@ -237,26 +239,35 @@ export const validatePurchaseOrderData = ({
     {
       severity: "block",
       condition: isFabric
-        ? !isGridDatasValid(filledItems, false, [
-            "fabricId",
-            "uomId",
-            "qty",
-            "price",
-          ])
+        ? !isGridDatasValid(filledItems, false, ["fabricId", "uomId"])
         : isYarn
-          ? !isGridDatasValid(filledItems, false, [
-              "yarnId",
-              "uomId",
-              "qty",
-              "price",
-            ])
-          : !isGridDatasValid(filledItems, false, [
-              "styleItemId",
-              "uomId",
-              "qty",
-              "price",
-            ]),
+          ? !isGridDatasValid(filledItems, false, ["yarnId", "uomId"])
+          : !isGridDatasValid(filledItems, false, ["styleItemId", "uomId"]),
       message: "Please fill all required item fields!",
+    },
+    {
+      severity: "block",
+      condition: filledItems.some(
+        (item) =>
+          item.qty === "" ||
+          item.qty === null ||
+          item.qty === undefined ||
+          parseFloat(item.qty) <= 0 ||
+          isNaN(parseFloat(item.qty)),
+      ),
+      message: "Quantity is required and must be greater than 0!",
+    },
+    {
+      severity: "block",
+      condition: filledItems.some(
+        (item) =>
+          item.price === "" ||
+          item.price === null ||
+          item.price === undefined ||
+          parseFloat(item.price) <= 0 ||
+          isNaN(parseFloat(item.price)),
+      ),
+      message: "Price is required and must be greater than 0!",
     },
     {
       severity: "block",
@@ -366,8 +377,7 @@ export const getPurchaseOrderPayload = ({
   orderGridType,
   poFabricItems,
   poYarnItems,
-  orderFabricItems,
-  orderYarnItems,
+
   deliveryType,
   deliveryToId,
   discountType,
@@ -386,12 +396,8 @@ export const getPurchaseOrderPayload = ({
   submitApproval,
   orderEntryId,
 }) => {
-  const resolvedFabricItems = (poFabricItems || orderFabricItems || []).filter(
-    (i) => i.fabricId,
-  );
-  const resolvedYarnItems = (poYarnItems || orderYarnItems || []).filter(
-    (i) => i.yarnId,
-  );
+  const resolvedFabricItems = (poFabricItems || []).filter((i) => i.fabricId);
+  const resolvedYarnItems = (poYarnItems || []).filter((i) => i.yarnId);
 
   return {
     supplierId,
@@ -405,8 +411,6 @@ export const getPurchaseOrderPayload = ({
     orderGridType: orderGridType || "GENERAL",
     poFabricItems: resolvedFabricItems,
     poYarnItems: resolvedYarnItems,
-    orderFabricItems: resolvedFabricItems,
-    orderYarnItems: resolvedYarnItems,
     deliveryType,
     deliveryToId,
     discountType,

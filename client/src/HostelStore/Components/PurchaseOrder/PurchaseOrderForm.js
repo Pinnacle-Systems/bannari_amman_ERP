@@ -210,7 +210,6 @@ const PurchaseOrderForm = ({
   const [actionType, setActionType] = useState("");
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [requirementId, setRequirementId] = useState("");
   const [isPostApprovalLock, setIsPostApprovalLock] = useState(false);
   const [isDeliveryThresholdPassed, setIsDeliveryThresholdPassed] =
     useState(false);
@@ -221,6 +220,7 @@ const PurchaseOrderForm = ({
   const [dispatchInvalidate] = useInvalidateTags();
   const [poFabricItems, setPoFabricItems] = useState(padFabricItems([]));
   const [poYarnItems, setPoYarnItems] = useState(padYarnItems([]));
+  const [orderDocId, setOrderDocId] = useState("");
   const { branchId, userId, finYearId, companyId } = getCommonParams();
   const params = { branchId, userId, finYearId };
   const { data: supplierDetails } = useGetPartyByIdQuery(supplierId, {
@@ -320,7 +320,6 @@ const PurchaseOrderForm = ({
       );
       setRemarks(data?.remarks || "");
       setOrderId(data?.orderId ? data?.orderId : "");
-      setRequirementId(data?.requirementId ? data?.requirementId : "");
       setTaxTemplateId(data?.taxTemplateId ? data?.taxTemplateId : "");
       setTermsAndCondtion(data?.termsAndCondtion ? data?.termsAndCondtion : "");
       setTermsId(data?.termsId ? data?.termsId : "");
@@ -439,6 +438,7 @@ const PurchaseOrderForm = ({
       }
       setPoYarnItems(finalYarnItems);
       setPayTermId(data?.payTermId ? data?.payTermId : "");
+      setOrderDocId(data?.OrderEntry?.docId);
     },
     [id],
   );
@@ -464,6 +464,30 @@ const PurchaseOrderForm = ({
       }
     }
   }, [poType, orderEntryId, selectedOrderGridType, orderData]);
+
+  const handlePoTypeChange = (newPoType) => {
+    if (newPoType === poType) return;
+    setPoType(newPoType);
+    setPoItems(
+      createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
+    );
+    setPoFabricItems(padFabricItems([], 14, quoteVersion));
+    setPoYarnItems(padYarnItems([], 14, quoteVersion));
+    if (newPoType !== "ORDER") {
+      setOrderEntryId("");
+      setSelectedOrderGridType("");
+    }
+  };
+
+  const handleItemTypeChange = (newGridType) => {
+    if (newGridType === orderGridType) return;
+    setOrderGridType(newGridType);
+    setPoItems(
+      createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
+    );
+    setPoFabricItems(padFabricItems([], 14, quoteVersion));
+    setPoYarnItems(padYarnItems([], 14, quoteVersion));
+  };
 
   const handleOrderNoChange = async (selectedOrderEntryId) => {
     setOrderEntryId(selectedOrderEntryId);
@@ -505,22 +529,21 @@ const PurchaseOrderForm = ({
           ...EMPTY_FABRIC_ROW,
           ...item,
           quoteVersion: quoteVersion || 1,
+          numberOfRolls: item?.numberOfRolls ?? "",
           weightPerRoll: item?.weightPerRoll
             ? Number(item?.weightPerRoll)?.toFixed(3)
             : "",
           totalKgs: item?.totalKgs ? Number(item?.totalKgs)?.toFixed(3) : "",
-          pricePerKg: item?.pricePerKg
-            ? Number(item?.pricePerKg)?.toFixed(2)
-            : "",
-          totalPrice: item?.totalPrice
-            ? Number(item?.totalPrice)?.toFixed(2)
-            : "",
+          pricePerKg: "",
+          totalPrice: "",
           qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
-          price: item?.price ? Number(item?.price)?.toFixed(2) : "",
-          amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+          price: "",
+          amount: "",
           taxPercent: item?.taxPercent ?? "",
-          discountValue: item?.discountValue ?? "",
-          discountType: item?.discountType ?? "",
+          discountValue: "",
+          discountvalue: "",
+          discountType: "",
+          discounttype: "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
         setPoFabricItems(padFabricItems(mapped, 14, quoteVersion));
@@ -535,11 +558,13 @@ const PurchaseOrderForm = ({
               ? Number(item?.weightPerBag)?.toFixed(3)
               : "",
             qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
-            price: item?.price ? Number(item?.price)?.toFixed(2) : "",
-            amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+            price: "",
+            amount: "",
             taxPercent: item?.taxPercent ?? "",
-            discountValue: item?.discountValue ?? "",
-            discountType: item?.discountType ?? "",
+            discountValue: "",
+            discountvalue: "",
+            discountType: "",
+            discounttype: "",
             rowId: Math.random().toString(36).substring(2, 9),
           }));
           setPoYarnItems(padYarnItems(yarnMapped, 14, quoteVersion));
@@ -557,11 +582,13 @@ const PurchaseOrderForm = ({
             ? Number(item?.weightPerBag)?.toFixed(3)
             : "",
           qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
-          price: item?.price ? Number(item?.price)?.toFixed(2) : "",
-          amount: item?.amount ? Number(item?.amount)?.toFixed(2) : "",
+          price: "",
+          amount: "",
           taxPercent: item?.taxPercent ?? "",
-          discountValue: item?.discountValue ?? "",
-          discountType: item?.discountType ?? "",
+          discountValue: "",
+          discountvalue: "",
+          discountType: "",
+          discounttype: "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
         setPoYarnItems(padYarnItems(mapped, 14, quoteVersion));
@@ -1324,46 +1351,52 @@ const PurchaseOrderForm = ({
           name="Po Type"
           options={poTypes}
           value={poType}
-          setValue={(value) => {
-            setPoType(value);
-            if (value !== "ORDER") {
-              setOrderEntryId("");
-              setSelectedOrderGridType("");
-            }
-          }}
+          setValue={handlePoTypeChange}
           required={true}
           readOnly={isCoreLocked}
-          disabled={orderId || childRecordCount > 0 || isCoreLocked}
+          disabled={id || orderId || childRecordCount > 0 || isCoreLocked}
           ref={supplierRef}
           className={`${compactFieldClass} w-full max-w-none`}
           autoFocus={true}
         />
       </div>
-      <div className={narrowFieldWrap}>
-        <DropdownInput
-          name="Order No"
-          options={dropDownListObject(
-            orderData ? orderData?.data : [],
-            "docId",
-            "id",
-          )}
-          value={orderEntryId}
-          setValue={handleOrderNoChange}
-          readOnly={isCoreLocked || poType !== "ORDER"}
-          className={`${compactFieldClass} w-full max-w-none`}
-        />
-      </div>
+      {id ? (
+        <div className={narrowFieldWrap}>
+          <ReusableInput
+            label="Order No"
+            value={orderDocId}
+            readOnly
+            className={`${compactFieldClass} w-full max-w-none`}
+          />
+        </div>
+      ) : (
+        <>
+          <div className={narrowFieldWrap}>
+            <DropdownInput
+              name="Order No"
+              options={dropDownListObject(
+                orderData ? orderData?.data : [],
+                "docId",
+                "id",
+              )}
+              value={orderEntryId}
+              setValue={handleOrderNoChange}
+              readOnly={isCoreLocked || poType !== "ORDER"}
+              className={`${compactFieldClass} w-full max-w-none`}
+            />
+          </div>
+        </>
+      )}
+
       <div className={narrowFieldWrap}>
         <DropdownInput
           name="Item Type"
           options={itemTypeOptions}
           value={orderGridType}
-          setValue={(value) => {
-            setOrderGridType(value);
-          }}
+          setValue={handleItemTypeChange}
           required={true}
           readOnly={isCoreLocked}
-          disabled={isItemTypeDisabled}
+          disabled={id || isItemTypeDisabled}
           className={`${compactFieldClass} w-full max-w-none`}
           autoFocus={true}
         />
@@ -1581,9 +1614,7 @@ const PurchaseOrderForm = ({
             name="Po Type"
             options={poTypes}
             value={poType}
-            setValue={(value) => {
-              setPoType(value);
-            }}
+            setValue={handlePoTypeChange}
             required={true}
             readOnly={readOnly}
             disabled={orderId || id}
@@ -2199,10 +2230,10 @@ const PurchaseOrderForm = ({
         gridItems={
           orderGridType === "FABRIC" ? (
             <FabricItems
+              poType={poType}
+              selectedOrderGridType={selectedOrderGridType}
               poFabricItems={poFabricItems}
               setPoFabricItems={setPoFabricItems}
-              orderFabricItems={poFabricItems}
-              setFabricItems={setPoFabricItems}
               readOnly={effectiveReadOnly}
               quoteVersion={quoteVersion}
               isNewVersion={isNewVersion}
@@ -2227,10 +2258,10 @@ const PurchaseOrderForm = ({
             />
           ) : orderGridType === "YARN" ? (
             <YarnItems
+              poType={poType}
+              selectedOrderGridType={selectedOrderGridType}
               poYarnItems={poYarnItems}
               setPoYarnItems={setPoYarnItems}
-              orderYarnItems={poYarnItems}
-              setYarnItems={setPoYarnItems}
               readOnly={effectiveReadOnly}
               quoteVersion={quoteVersion}
               isNewVersion={isNewVersion}
