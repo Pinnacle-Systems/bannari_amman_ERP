@@ -45,6 +45,7 @@ const PurchaseOrderFormReport = ({
   const [searchDueDate, setSearchDueDate] = useState("");
   const [supplier, setSupplier] = useState("");
   const [searchPoType, setSearchPoType] = useState("");
+  const [searchGridType, setSearchGridType] = useState("");
 
   const [totalCount, setTotalCount] = useState(0);
   const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -63,11 +64,19 @@ const PurchaseOrderFormReport = ({
     supplier,
     searchPoType,
     searchDueDate,
+    searchGridType,
   };
 
   useEffect(() => {
     setCurrentPageNumber(1);
-  }, [serachDocNo, searchClientName, searchDate, supplier, searchPoType]);
+  }, [
+    serachDocNo,
+    searchClientName,
+    searchDate,
+    supplier,
+    searchPoType,
+    searchGridType,
+  ]);
 
   const companyId = secureLocalStorage.getItem(
     sessionStorage.getItem("sessionId") + "userCompanyId",
@@ -518,9 +527,12 @@ const PurchaseOrderFormReport = ({
                   <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-20">
                     <div>Po Type</div>
                   </th>
+                  <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-24">
+                    <div>Item Type</div>
+                  </th>
 
-                  <th className="w-80  px-3   font-medium text-[13px] text-gray-900  text-center ">
-                    <div>Supplier</div>
+                  <th className="w-[35%]  px-3   font-medium text-[13px] text-gray-900  text-center ">
+                    <div>Supplier Name</div>
                   </th>
                   <th
                     className=" px-3 w-56  font-medium text-[13px]  text-gray-900  text-center "
@@ -610,6 +622,17 @@ const PurchaseOrderFormReport = ({
                       }}
                     />
                   </th>
+                  <th className="  px-1 font-medium text-[13px]  text-gray-900  text-center w-20">
+                    <input
+                      type="text"
+                      className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
+                      placeholder="Search"
+                      value={searchGridType}
+                      onChange={(e) => {
+                        setSearchGridType(e.target.value);
+                      }}
+                    />
+                  </th>
                   <th className="w-80  px-1 font-medium text-[13px]  text-gray-900  text-center ">
                     <input
                       type="text"
@@ -672,6 +695,9 @@ const PurchaseOrderFormReport = ({
                         </td>
                         <td className="py-1.5 text-left  ">
                           {dataObj.poType}{" "}
+                        </td>
+                        <td className="py-1.5 text-left  ">
+                          {dataObj.orderGridType}{" "}
                         </td>
 
                         <td className="py-1.5 text-left">

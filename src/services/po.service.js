@@ -43,6 +43,7 @@ function manualFilterSearchData(
   searchPoDate,
   searchDueDate,
   searchPoType,
+  searchGridType,
   data,
 ) {
   return data.filter(
@@ -55,6 +56,11 @@ function manualFilterSearchData(
         : true) &&
       (searchPoType
         ? item.poType.toLowerCase().includes(searchPoType.toLowerCase())
+        : true) &&
+      (searchGridType
+        ? item.orderGridType
+            .toLowerCase()
+            .includes(searchGridType.toLowerCase())
         : true),
   );
 }
@@ -207,6 +213,7 @@ async function get(req) {
     active,
     finYearId,
     searchPoType,
+    searchGridType,
     searchDueDate,
     supplierId,
     startDate,
@@ -290,7 +297,13 @@ async function get(req) {
     orderBy: { id: "desc" },
   });
 
-  data = manualFilterSearchData(searchDate, searchDueDate, searchPoType, data);
+  data = manualFilterSearchData(
+    searchDate,
+    searchDueDate,
+    searchPoType,
+    searchGridType,
+    data,
+  );
   const poIds = data.map((po) => po.id);
 
   // ✅ Universal setup check — works whether PO has rules or not
