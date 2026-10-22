@@ -1,8 +1,9 @@
 import "./Header.css";
 import dp from "../../../assets/default-dp.png";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, LayoutDashboard } from "lucide-react";
 import Profile from "./Profile";
 import logo from "../../../assets/mplogo.png";
+import bannariLogo from "../../../assets/bannarispintexlogo.jpeg";
 // import { useState } from "react"
 import { LogOut } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
@@ -10,6 +11,8 @@ import Modal from "../../../UiComponents/Modal";
 import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 import { useGetUserByIdQuery } from "../../../redux/services/UsersMasterService";
+import { useGetPageGroupQuery } from "../../../redux/services/PageGroupMasterServices";
+import MultiLevelDropDown from "../../../UiComponents/MultiSelectDropDown";
 import { toast } from "react-toastify";
 // import { useGetProjectQuery } from '../../../redux/services/ProjectService';
 import axios from "axios";
@@ -39,6 +42,8 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
   const [allowedPages, setAllowedPages] = useState([]);
 
   const dispatch = useDispatch();
+
+  const { data: pageGroup } = useGetPageGroupQuery({ searchParams: "" });
 
   const handleOutsideClick = () => {
     sethideNavBar(true);
@@ -140,8 +145,65 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
     sessionStorage.getItem("sessionId") + "username",
   );
 
+  function findElement(id, arr) {
+    if (!arr) return "";
+    let data = arr.find((item) => parseInt(item.id) === parseInt(id));
+    return data ? data.name : "";
+  }
+
+  const masters = allowedPages.filter((page) => page.type === "Masters");
+  const mastersGroup = [...new Set(masters.map((page) => page.pageGroupId))]
+    .map((pageId) => {
+      return {
+        id: pageId,
+        name: findElement(pageId, pageGroup?.data),
+        type: "Masters",
+      };
+    })
+    .filter((g) => g.name)
+    .sort((a, b) => a.id - b.id);
+
+  const transactions = allowedPages.filter(
+    (page) => page.type === "Transactions",
+  );
+  const transactionsGroup = [
+    ...new Set(transactions.map((page) => page.pageGroupId)),
+  ]
+    .map((pageId) => {
+      return {
+        id: pageId,
+        name: findElement(pageId, pageGroup?.data),
+        type: "Modules",
+      };
+    })
+    .filter((g) => g.name);
+
+  const order = [
+    "APPROVAL",
+    "ORDER",
+    "PURCHASE",
+    "PRODUCTION",
+    "OUTSIDE PROCESS",
+    "SALES",
+    "PAYMENT",
+  ];
+
+  const sortedTransactionsGroup = [
+    ...order
+      .map((name) => transactionsGroup?.find((item) => item.name === name))
+      .filter(Boolean),
+    ...transactionsGroup.filter((item) => !order.includes(item.name)),
+  ];
+
+  const reports = allowedPages.filter((page) => page.type === "Reports");
+  const reportGroups = [...new Set(reports.map((page) => page.pageGroupId))]
+    .map((pageId) => {
+      return { id: pageId, name: findElement(pageId, pageGroup?.data) };
+    })
+    .filter((g) => g.name);
+
   return (
-    <div className="py-1   w-full flex justify-between items-center bg-white shadow-sm fixed z-50">
+    <div className="py-1 px-3 w-full flex justify-between items-center bg-white shadow-sm fixed z-50">
       <Modal
         isOpen={logout}
         onClose={() => {
@@ -151,36 +213,81 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
       >
         <Logout setLogout={setLogout} />
       </Modal>
-      <div className="w-32 ms-3">
-        {/* <img className="rounded-lg h-8" src={logo} alt="" /> */}
+
+      {/* Left side: Logo & Navigation Items */}
+      <div className="flex items-center space-x-1 lg:space-x-3">
+        <div className="flex shrink-0 items-center mr-1">
+          <img
+            src={bannariLogo}
+            alt="Bannari Spintex Logo"
+            className="h-8 w-8 object-contain rounded"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => dispatch(push({ active: true, name: "DASHBOARD" }))}
+          className="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded-md transition-colors"
+          title="Dashboard"
+        >
+          <LayoutDashboard size={18} />
+          <span>Dashboard</span>
+        </button>
+
+        <MultiLevelDropDown
+          heading="Masters"
+          groups={mastersGroup}
+          pages={masters}
+          textColor="text-gray-700 hover:text-blue-600"
+        />
+
+        <MultiLevelDropDown
+          heading="Transactions"
+          groups={sortedTransactionsGroup}
+          pages={transactions}
+          textColor="text-gray-700 hover:text-blue-600"
+        />
+
+        <MultiLevelDropDown
+          heading="Reports"
+          groups={reportGroups}
+          pages={reports}
+          textColor="text-gray-700 hover:text-blue-600"
+        />
       </div>
-      <div className="mr-5 flex items-center space-x-5 text-sm">
+
+      {/* Right side: Search, Globe, Profile */}
+      <div className="mr-3 flex items-center space-x-4 text-sm">
         <div className="relative">
           <PageSearch pageList={allowedPages} />
         </div>
         <div
-          className="text-lg cursor-pointer"
+          className="text-lg cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => {
             setIsGlobalOpen(true);
           }}
+          title="Branch & Financial Year"
         >
           {GLOBE_ICON}
         </div>
         {/* <Notification /> */}
-        <p>WELCOME</p> &nbsp;{" "}
-        <div className="text-black">{userName?.toUpperCase()}</div>
+        <p className="hidden md:inline text-gray-500 font-medium">WELCOME</p>
+        <div className="text-black font-semibold hidden md:inline">
+          {userName?.toUpperCase()}
+        </div>
         <div className="relative text-left" ref={ref}>
           <button
             onClick={toggleNavMenu}
             type="button"
-            className="md:bg-transparent inline-flex  text-2xl justify-end"
+            className="md:bg-transparent inline-flex text-2xl justify-end items-center"
             id="menu-button"
             aria-expanded="true"
             aria-haspopup="true"
           >
             <img
-              className="rounded-full cursor-pointer border-2 border-indigo-500"
-              width={"25px"}
+              className="rounded-full cursor-pointer border-2 border-indigo-500 hover:ring-2 hover:ring-indigo-300 transition-all"
+              width={"28px"}
+              height={"28px"}
               src={dp}
               alt="image"
             />
