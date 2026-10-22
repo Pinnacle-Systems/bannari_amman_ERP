@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,6 +11,26 @@ label {
 }
 .table-data {
   font-family: "Roboto", sans-serif;
+}
+
+/* Purchase Order Form - Geist Font Scope (Applies ONLY to Purchase Order form) */
+.po-form-geist,
+.po-form-geist *,
+.po-form-geist input,
+.po-form-geist select,
+.po-form-geist textarea,
+.po-form-geist button,
+.po-form-geist label,
+.po-form-geist table,
+.po-form-geist th,
+.po-form-geist td,
+.po-form-geist span,
+.po-form-geist p,
+.po-form-geist h1,
+.po-form-geist h2,
+.po-form-geist h3,
+.po-form-geist .table-data {
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 .Select {

@@ -16,16 +16,27 @@ import {
 } from "../../../Utils/DropdownData";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import moment from "moment";
-import { findFromList, getCommonParams, ModeChip } from "../../../Utils/helper";
+import {
+  amountInWords,
+  findFromList,
+  formatAmountIN,
+  getCommonParams,
+  ModeChip,
+} from "../../../Utils/helper";
 import { useGetPartyByIdQuery } from "../../../redux/services/PartyMasterService";
 import { toast } from "react-toastify";
 import {
   FiCheck,
+  FiChevronLeft,
+  FiChevronRight,
   FiEdit2,
   FiEye,
+  FiLayers,
   FiPrinter,
   FiSave,
   FiSend,
+  FiTruck,
+  FiUser,
 } from "react-icons/fi";
 import { HiOutlineRefresh, HiX } from "react-icons/hi";
 import {
@@ -181,6 +192,18 @@ const PurchaseOrderForm = ({
   userData,
 }) => {
   const today = new Date();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 150);
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 320);
+  };
+
   const [pendingAction, setPendingAction] = useState(null);
   const [docDate, setDocDate] = useState(
     moment.utc(today).format("YYYY-MM-DD"),
@@ -1109,7 +1132,26 @@ const PurchaseOrderForm = ({
   }, [childRecordCount, readOnly, poType, selectedOrderGridType]);
 
   const actionButtonClass =
-    "px-2 py-1 rounded flex items-center justify-center text-xs text-white transition";
+    "px-2 py-1 rounded-md flex items-center justify-center text-xs font-medium text-white shadow-sm hover:shadow-md active:scale-95 hover:-translate-y-0.5 transition-all duration-150 border border-white/20";
+
+  const handleViewSummary = (e) => {
+    if (e && e.key && e.key !== "Enter") return;
+    if (!taxTemplateId) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      toast.info("Please Select Tax Template !", {
+        position: "top-center",
+      });
+      return;
+    }
+    if (e && e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setSummary(true);
+  };
 
   const leftActions = [
     ...(isFullyLocked
@@ -1117,7 +1159,7 @@ const PurchaseOrderForm = ({
       : [
           {
             key: "save-close",
-            icon: <HiOutlineRefresh className="w-4 h-4 mr-2" />,
+            icon: <HiOutlineRefresh className="w-3.5 h-3.5 mr-1" />,
             label: id ? "Update & Close" : "Save & Close",
             hoverLabel: id ? "Update & Close" : "Save & Close",
             onClick: () => saveData("close"),
@@ -1129,10 +1171,10 @@ const PurchaseOrderForm = ({
               }
             },
             disabled: readOnly || status === "APPROVED",
-            className: `bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded flex items-center text-xs transition ${
+            className: `bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-blue-500/25 active:scale-95 transition-all duration-150 border border-blue-400/25 ${
               readOnly || status === "APPROVED"
-                ? "opacity-50 cursor-not-allowed"
-                : ""
+                ? "opacity-50 cursor-not-allowed hover:shadow-none hover:from-blue-600 hover:to-indigo-600 active:scale-100"
+                : "hover:-translate-y-0.5"
             }`,
           },
           ...(status === "APPROVED"
@@ -1140,7 +1182,7 @@ const PurchaseOrderForm = ({
             : [
                 {
                   key: "save-new",
-                  icon: <FiSave className="w-4 h-4 mr-2" />,
+                  icon: <FiSave className="w-3.5 h-3.5 mr-1" />,
                   label: id ? "Update & New" : "Save & New",
                   hoverLabel: id ? "Update & New" : "Save & New",
                   onClick: () => saveData("new"),
@@ -1152,44 +1194,14 @@ const PurchaseOrderForm = ({
                     }
                   },
                   disabled: readOnly,
-                  className: `bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded flex items-center text-xs transition ${
-                    readOnly ? "opacity-50 cursor-not-allowed" : ""
+                  className: `bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-emerald-500/25 active:scale-95 transition-all duration-150 border border-emerald-400/25 ${
+                    readOnly
+                      ? "opacity-50 cursor-not-allowed hover:shadow-none hover:from-emerald-600 hover:to-teal-600 active:scale-100"
+                      : "hover:-translate-y-0.5"
                   }`,
                 },
               ]),
         ]),
-    {
-      key: "summary",
-      icon: <FiEye className="w-4 h-4 mr-2" />,
-      label: "View Summary",
-      hoverLabel: "View PO Summary",
-      onClick: () => {
-        if (!taxTemplateId) {
-          toast.info("Please Select Tax Template !", {
-            position: "top-center",
-          });
-          return;
-        }
-        setSummary(true);
-      },
-      onKeyDown: (e) => {
-        if (!taxTemplateId) {
-          e.preventDefault();
-          e.stopPropagation();
-          toast.info("Please Select Tax Template !", {
-            position: "top-center",
-          });
-          return;
-        }
-        if (e.key === "Enter") {
-          e.preventDefault();
-          e.stopPropagation();
-          setSummary(true);
-        }
-      },
-      className:
-        "bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded flex items-center text-xs transition",
-    },
     ...(!id ||
     status === "PENDING" ||
     status === "APPROVED" ||
@@ -1212,7 +1224,7 @@ const PurchaseOrderForm = ({
                 saveData("close", { submitApprovalOverride: true });
               }
             },
-            className: `bg-green-700 hover:bg-green-800 ${actionButtonClass}`,
+            className: `bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 hover:shadow-green-500/25 ${actionButtonClass}`,
           },
         ]),
     ...((id && status === "PENDING") || status === "SUPERSEDED"
@@ -1230,7 +1242,7 @@ const PurchaseOrderForm = ({
                 handleApprovalAction("REJECT");
               }
             },
-            className: `bg-blue-600 hover:bg-blue-700 ${actionButtonClass}`,
+            className: `bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/25 ${actionButtonClass}`,
           },
           {
             key: "approve",
@@ -1245,7 +1257,7 @@ const PurchaseOrderForm = ({
                 handleApprovalAction("APPROVE");
               }
             },
-            className: `bg-green-600 hover:bg-green-700 ${actionButtonClass}`,
+            className: `bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 hover:shadow-emerald-500/25 ${actionButtonClass}`,
           },
         ]
       : []),
@@ -1261,31 +1273,68 @@ const PurchaseOrderForm = ({
       : [
           {
             key: "edit",
-            icon: <FiEdit2 className="w-4 h-4 mr-2" />,
+            icon: <FiEdit2 className="w-3.5 h-3.5 mr-1" />,
             label: "Edit",
             hoverLabel: "Edit",
             onClick: () => setReadOnly(false),
-            className: `bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1 rounded flex items-center text-xs transition`,
+            className: `bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-amber-500/25 active:scale-95 hover:-translate-y-0.5 transition-all duration-150 border border-amber-400/25`,
           },
         ]),
-    {
-      key: "print",
-      icon: <FiPrinter className="w-4 h-4 mr-2" />,
-      label: "Print",
-      hoverLabel: "Print",
-      onClick: () => {
-        setPrintModalOpen(true);
-      },
-      onKeyDown: (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          e.stopPropagation();
-          setPrintModalOpen(true);
-        }
-      },
-      className: `bg-slate-600 hover:bg-slate-700 text-white px-2 py-1 rounded flex items-center text-xs transition`,
-    },
+    ...(id
+      ? [
+          {
+            key: "print",
+            icon: <FiPrinter className="w-3.5 h-3.5 mr-1" />,
+            label: "Print",
+            hoverLabel: "Print",
+            onClick: () => {
+              setPrintModalOpen(true);
+            },
+            onKeyDown: (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                setPrintModalOpen(true);
+              }
+            },
+            className: `bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-orange-500/25 active:scale-95 hover:-translate-y-0.5 transition-all duration-150 border border-orange-400/25`,
+          },
+        ]
+      : []),
   ];
+
+  const headerActionsContent = (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {leftActions.map((action, index) => (
+        <button
+          key={action.key || index}
+          type="button"
+          onClick={action.onClick}
+          onKeyDown={action.onKeyDown}
+          disabled={action.disabled}
+          className={action.className}
+          title={action.hoverLabel || action.title}
+        >
+          {action.icon}
+          {!action.iconOnly && action.label}
+        </button>
+      ))}
+      {rightActions.map((action, index) => (
+        <button
+          key={action.key || index}
+          type="button"
+          onClick={action.onClick}
+          onKeyDown={action.onKeyDown}
+          disabled={action.disabled}
+          className={action.className}
+          title={action.hoverLabel || action.title}
+        >
+          {action.icon}
+          {!action.iconOnly && action.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const approvalStatusBanner = (() => {
     if (!isPostApprovalLock) return null;
@@ -1309,8 +1358,9 @@ const PurchaseOrderForm = ({
     );
   })();
 
-  const compactFieldClass = "px-2 py-1 text-[11px]";
-  const compactModalFieldClass = "w-full px-2 py-1 text-[11px]";
+  const compactFieldClass = "px-2 py-1 text-[11px] text-black !text-black";
+  const compactModalFieldClass =
+    "w-full px-2 py-1 text-[11px] text-black !text-black";
   const compactCardClass =
     "border border-slate-200 px-1.5 py-1 bg-white rounded-md shadow-sm";
   const compactSectionTitleClass =
@@ -1320,8 +1370,10 @@ const PurchaseOrderForm = ({
   const fieldWidthDate = "w-full min-w-0";
   const narrowFieldWrap = "min-w-0";
   const partyDropdownMinWidth = 260;
-  const supplierCompactGridClass = "grid grid-cols-3 gap-x-3";
-  const deliveryCompactGridClass = "grid grid-cols-3 gap-x-3";
+  const supplierCompactGridClass =
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end";
+  const deliveryCompactGridClass =
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end";
   const sidebarSectionGridClass = "grid grid-cols-1 gap-1";
   const sidebarTwoColumnGridClass = "grid grid-cols-2 gap-1";
 
@@ -1333,17 +1385,19 @@ const PurchaseOrderForm = ({
           readOnly
           value={docId}
           className={`${compactFieldClass} ${fieldWidthMedium}`}
+          labelClass="!text-[#7098BC]"
         />
       </div>
       <div className={narrowFieldWrap}>
         <ReusableInput
-          label=" Date"
+          label="Date"
           value={docDate}
           type={"date"}
           required={true}
           readOnly={true}
           disabled
           className={`${compactFieldClass} ${fieldWidthDate}`}
+          labelClass="!text-[#7098BC]"
         />
       </div>
       <div className={narrowFieldWrap}>
@@ -1417,7 +1471,7 @@ const PurchaseOrderForm = ({
         />
       </div>
       <div className={narrowFieldWrap}>
-        <DropdownWithModal
+        <DropdownInput
           name="Pay Term"
           options={dropDownListObject(
             id
@@ -1430,11 +1484,7 @@ const PurchaseOrderForm = ({
           setValue={setPayTermId}
           required={true}
           readOnly={isCoreLocked}
-          className={`${compactModalFieldClass} w-full max-w-none`}
-          dropdownMinWidth={240}
-          addNewLabel="+ Add New Pay Term"
-          childComponent={PayTermMaster}
-          addNewModalWidth="w-[40%] h-[66%]"
+          className={`${compactFieldClass} w-full max-w-none`}
         />
       </div>
     </>
@@ -1563,25 +1613,65 @@ const PurchaseOrderForm = ({
   );
 
   const basicDetailsCompactSection = (
-    <div className={compactCardClass}>
-      <h2 className={compactSectionTitleClass}>Basic Details</h2>
-      <div className="grid grid-cols-2 gap-1 gap-x-2 items-end md:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_95px_140px_170px]">
-        {basicDetailsFields}
+    <div
+      style={{
+        backgroundImage:
+          "radial-gradient(120% 70% at 50% 0%, rgba(96, 165, 250, 0.22) 0%, rgba(30, 75, 125, 0.12) 45%, transparent 75%), linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%), linear-gradient(180deg, #16304C 0%, #0d1e30 40%, #050b12 75%, #000000 100%)",
+      }}
+      className="border border-[#20456C] text-white rounded-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col border-l-4 border-l-white
+      [&_label]:!text-[#7098BC] [&_label]:!text-[10px] [&_label]:!font-bold [&_label]:!tracking-[0.1em] [&_label]:!uppercase
+      [&_label_p]:!text-[#7098BC] [&_label_span:not(.text-red-500)]:!text-[#7098BC] [&_.text-red-500]:!text-rose-400
+      [&_input]:!bg-[#102438] [&_input]:!border-[#28496D] [&_input]:!text-white [&_input]:[-webkit-text-fill-color:white] [&_input]:!opacity-100 [&_input]:!rounded-md [&_input]:[color-scheme:dark]
+      [&_select]:!bg-[#102438] [&_select]:!border-[#28496D] [&_select]:!text-white [&_select]:!rounded-md
+      [&_select_option]:!bg-[#102438] [&_select_option]:!text-white
+      [&_.bg-slate-100]:!bg-[#102438] [&_.bg-slate-100]:!border-[#28496D] [&_.bg-slate-100]:!text-white [&_.bg-slate-100]:[-webkit-text-fill-color:white] [&_.bg-slate-100]:!rounded-md
+      [&_.mb-1_button]:!bg-[#102438] [&_.mb-1_button]:!border-[#28496D] [&_.mb-1_button]:!text-white [&_.mb-1_button]:!rounded-md [&_.mb-1_button_span]:!text-white [&_.mb-1_button_svg]:!text-[#7098BC]"
+    >
+      <div className="flex items-center justify-between px-2.5 py-1 border-b border-[#20456C] bg-transparent rounded-t-md flex-none">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <FiLayers className="w-3.5 h-3.5 text-[#7098BC] flex-shrink-0" />
+          <span className="font-bold text-[10px] text-[#7098BC] tracking-[0.12em] uppercase truncate">
+            Basic Details · {docId && docId !== "New" ? docId : "New PO"}
+          </span>
+        </div>
+      </div>
+      <div className="px-2 py-1 flex-1 min-h-0">
+        <div className="grid grid-cols-2 gap-1 gap-x-2 items-end md:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_95px_140px_170px]">
+          {basicDetailsFields}
+        </div>
       </div>
     </div>
   );
 
   const supplierDetailsCompactSection = (
-    <div className={compactCardClass}>
-      <h2 className={compactSectionTitleClass}>Supplier Details</h2>
-      <div className={supplierCompactGridClass}>{supplierDetailsFields}</div>
+    <div className="border border-slate-200 bg-white rounded-md shadow-sm overflow-hidden flex flex-col border-l-4 border-l-blue-600">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200/80 bg-slate-50 rounded-t-md flex-none">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <FiUser className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+          <span className="font-semibold text-[11px] text-slate-800 tracking-wider uppercase truncate">
+            Supplier Details
+          </span>
+        </div>
+      </div>
+      <div className="px-2.5 py-2 flex-1 min-h-0">
+        <div className={supplierCompactGridClass}>{supplierDetailsFields}</div>
+      </div>
     </div>
   );
 
   const deliveryDetailsCompactSection = (
-    <div className={compactCardClass}>
-      <h2 className={compactSectionTitleClass}>Delivery Details</h2>
-      <div className={deliveryCompactGridClass}>{deliveryDetailsFields}</div>
+    <div className="border border-slate-200 bg-white rounded-md shadow-sm overflow-hidden flex flex-col border-l-4 border-l-amber-500">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200/80 bg-slate-50 rounded-t-md flex-none">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <FiTruck className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+          <span className="font-semibold text-[11px] text-slate-800 tracking-wider uppercase truncate">
+            Delivery Details
+          </span>
+        </div>
+      </div>
+      <div className="px-2.5 py-2 flex-1 min-h-0">
+        <div className={deliveryCompactGridClass}>{deliveryDetailsFields}</div>
+      </div>
     </div>
   );
 
@@ -1638,7 +1728,7 @@ const PurchaseOrderForm = ({
         </div>
       </div>
       <div className={narrowFieldWrap}>
-        <DropdownWithModal
+        <DropdownInput
           name="Pay Term"
           options={dropDownListObject(
             id
@@ -1651,11 +1741,7 @@ const PurchaseOrderForm = ({
           setValue={setPayTermId}
           required={true}
           readOnly={readOnly}
-          className={`${compactModalFieldClass} w-full max-w-none`}
-          dropdownMinWidth={240}
-          addNewLabel="+ Add New Pay Term"
-          childComponent={PayTermMaster}
-          addNewModalWidth="w-[40%] h-[66%]"
+          className={`${compactFieldClass} w-full max-w-none`}
         />
       </div>
     </div>
@@ -1786,11 +1872,302 @@ const PurchaseOrderForm = ({
       </div>
     </div>
   );
-  // Add this just before the headerContent definition
+  const basicDetailsSidebar = (
+    <aside
+      style={{
+        backgroundImage:
+          "radial-gradient(120% 70% at 50% 0%, rgba(96, 165, 250, 0.25) 0%, rgba(30, 75, 125, 0.12) 45%, transparent 75%), linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%), linear-gradient(180deg, #16304C 0%, #0d1e30 40%, #050b12 75%, #000000 100%)",
+      }}
+      className={`transition-all duration-300 ease-in-out flex flex-col min-h-0 flex-none self-stretch text-white rounded-md border border-[#20456C] shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] border-l-4 border-l-white overflow-hidden relative ${
+        isSidebarOpen ? "w-[330px] xl:w-[350px]" : "w-[44px]"
+      }`}
+    >
+      {isSidebarOpen ? (
+        <div className="flex flex-col h-full min-h-0 relative">
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-28 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none" />
+          {/* Header of Sidebar */}
+          <div className="px-3.5 pt-2.5 pb-2.5 border-b border-[#20456C] flex-none">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
+                  Basic Details
+                </span>
+                <h2 className="text-xl font-extrabold text-white tracking-tight truncate leading-tight mt-0.5">
+                  {docId && docId !== "New" ? docId : "New PO"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="w-8 h-8 rounded-lg bg-white/15 hover:bg-sky-600 active:bg-sky-700 text-white border border-white/25 hover:border-sky-400 shadow-md flex items-center justify-center transition active:scale-95 flex-shrink-0 cursor-pointer"
+                title="Collapse Basic Details"
+              >
+                <FiChevronLeft
+                  className="w-5 h-5 text-white"
+                  strokeWidth={2.75}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div
+            className="flex-1 min-h-0 overflow-y-auto px-3 py-2.5 space-y-2.5
+            [&_label]:!text-[#7098BC] [&_label]:!text-[10px] [&_label]:!font-bold [&_label]:!tracking-[0.1em] [&_label]:!uppercase [&_label]:!mb-1
+            [&_label_p]:!text-[#7098BC] [&_label_span:not(.text-red-500)]:!text-[#7098BC] [&_.text-red-500]:!text-rose-400
+            [&_input]:!bg-[#102438] [&_input]:!border-[#28496D] [&_input]:!text-white [&_input]:[-webkit-text-fill-color:white] [&_input]:!opacity-100 [&_input]:!rounded-md [&_input]:[color-scheme:dark] [&_input:focus]:!border-sky-400
+            [&_select]:!bg-[#102438] [&_select]:!border-[#28496D] [&_select]:!text-white [&_select]:!rounded-md [&_select:focus]:!border-sky-400
+            [&_select_option]:!bg-[#102438] [&_select_option]:!text-white
+            [&_.bg-slate-100]:!bg-[#102438] [&_.bg-slate-100]:!border-[#28496D] [&_.bg-slate-100]:!text-white [&_.bg-slate-100]:[-webkit-text-fill-color:white] [&_.bg-slate-100]:!rounded-md
+            [&_.mb-1_button]:!bg-[#102438] [&_.mb-1_button]:!border-[#28496D] [&_.mb-1_button]:!text-white [&_.mb-1_button]:!rounded-md [&_.mb-1_button_span]:!text-white [&_.mb-1_button_svg]:!text-[#7098BC]"
+          >
+            {/* PO No and Date */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className={narrowFieldWrap}>
+                <ReusableInput
+                  label="Po No"
+                  readOnly
+                  value={docId}
+                  className={`${compactFieldClass} w-full`}
+                  labelClass="!text-[#7098BC]"
+                />
+              </div>
+              <div className={narrowFieldWrap}>
+                <ReusableInput
+                  label="Date"
+                  value={docDate}
+                  type={"date"}
+                  required={true}
+                  readOnly={true}
+                  disabled
+                  className={`${compactFieldClass} w-full`}
+                  labelClass="!text-[#7098BC]"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: PO Type & Order No */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className={narrowFieldWrap}>
+                <DropdownInput
+                  name="Po Type"
+                  options={poTypes}
+                  value={poType}
+                  setValue={handlePoTypeChange}
+                  required={true}
+                  readOnly={isCoreLocked}
+                  disabled={
+                    id || orderId || childRecordCount > 0 || isCoreLocked
+                  }
+                  ref={supplierRef}
+                  className={`${compactFieldClass} w-full max-w-none`}
+                  autoFocus={true}
+                />
+              </div>
+
+              {id ? (
+                <div className={narrowFieldWrap}>
+                  <ReusableInput
+                    label="Order No"
+                    value={orderDocId}
+                    readOnly
+                    className={`${compactFieldClass} w-full max-w-none`}
+                    labelClass="!text-[#7098BC]"
+                  />
+                </div>
+              ) : (
+                <div className={narrowFieldWrap}>
+                  <DropdownInput
+                    name="Order No"
+                    options={dropDownListObject(
+                      orderData ? orderData?.data : [],
+                      "docId",
+                      "id",
+                    )}
+                    value={orderEntryId}
+                    setValue={handleOrderNoChange}
+                    readOnly={isCoreLocked || poType !== "ORDER"}
+                    className={`${compactFieldClass} w-full max-w-none`}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Row 3: Item Type & Tax Type */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className={narrowFieldWrap}>
+                <DropdownInput
+                  name="Item Type"
+                  options={itemTypeOptions}
+                  value={orderGridType}
+                  setValue={handleItemTypeChange}
+                  required={true}
+                  readOnly={isCoreLocked}
+                  disabled={id || isItemTypeDisabled}
+                  className={`${compactFieldClass} w-full max-w-none`}
+                  autoFocus={true}
+                />
+              </div>
+
+              <div className={narrowFieldWrap}>
+                <DropdownInput
+                  name="Tax Type"
+                  options={dropDownListObject(
+                    taxTypeList ? taxTypeList?.data : [],
+                    "name",
+                    "id",
+                  )}
+                  value={taxTemplateId}
+                  setValue={setTaxTemplateId}
+                  required={true}
+                  readOnly={isCoreLocked}
+                  className={`${compactFieldClass} w-full max-w-none`}
+                />
+              </div>
+            </div>
+
+            {/* Pay Term */}
+            <div className={narrowFieldWrap}>
+              <DropdownInput
+                name="Pay Term"
+                options={dropDownListObject(
+                  id
+                    ? payTermList?.data
+                    : payTermList?.data?.filter((item) => item?.active),
+                  "name",
+                  "id",
+                )}
+                value={payTermId}
+                setValue={setPayTermId}
+                required={true}
+                readOnly={isCoreLocked}
+                className={`${compactFieldClass} w-full max-w-none`}
+              />
+            </div>
+          </div>
+
+          {/* Bottom of Sidebar - Net Amount & View Summary */}
+          <div className="p-3 border-t border-[#20456C] bg-transparent flex-none space-y-2.5">
+            {/* Net Amount Display Card */}
+            <div className="bg-[#102438] rounded-lg border border-[#28496D] p-3 shadow-sm">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7098BC] mb-1">
+                Net Amount
+              </div>
+              <div className="flex items-baseline gap-1.5 my-1">
+                <span className="text-xs font-bold text-[#7098BC] tracking-wider">
+                  INR
+                </span>
+                <span className="text-2xl font-extrabold text-white tracking-tight">
+                  {formatAmountIN(activeTotals?.net || 0)}
+                </span>
+              </div>
+              <div className="text-[11px] font-medium text-[#7098BC] leading-snug break-words mt-1.5">
+                {amountInWords(Number(activeTotals?.net || 0))}
+              </div>
+            </div>
+
+            {/* View Summary Button */}
+            <button
+              type="button"
+              onClick={handleViewSummary}
+              onKeyDown={handleViewSummary}
+              className="w-full bg-[#102438] hover:bg-[#152e47] active:bg-[#0c1c2c] text-white py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold shadow-sm transition border border-[#28496D]"
+              title="View PO Summary"
+            >
+              <FiEye className="w-4 h-4 text-white" />
+              <span>View summary</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col h-full min-h-0 items-center justify-between py-2">
+          {/* Expand Button */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="w-8 h-8 rounded-lg bg-white/15 hover:bg-sky-600 active:bg-sky-700 text-white border border-white/25 hover:border-sky-400 shadow-md flex items-center justify-center transition active:scale-95 flex-shrink-0 mt-1 cursor-pointer"
+            title="Expand Basic Details"
+          >
+            <FiChevronRight
+              className="w-5 h-5 text-white"
+              strokeWidth={2.75}
+            />
+          </button>
+
+          {/* Vertical rotated text label */}
+          <div
+            onClick={toggleSidebar}
+            className="flex-1 flex flex-col items-center justify-center cursor-pointer select-none py-4 w-full hover:bg-white/5 transition"
+            title="Click to expand Basic Details"
+          >
+            <div className="flex flex-col items-center gap-2">
+              <FiLayers className="w-3.5 h-3.5 text-[#7098BC]" />
+              <span
+                className="text-[10px] font-bold text-[#7098BC] tracking-widest uppercase whitespace-nowrap"
+                style={{
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                }}
+              >
+                Basic Details
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom of collapsed sidebar */}
+          <div className="flex flex-col items-center gap-1.5 pb-1">
+            <span
+              className="px-1.5 py-0.5 rounded bg-[#102438] text-white border border-[#28496D] font-bold text-[9px] max-w-[38px] truncate cursor-pointer shadow-xs"
+              title={`Net Amount: ₹ ${formatAmountIN(activeTotals?.net || 0)}\n${amountInWords(Number(activeTotals?.net || 0))}`}
+              onClick={toggleSidebar}
+            >
+              ₹
+              {parseFloat(activeTotals?.net || 0) >= 1000
+                ? `${(parseFloat(activeTotals?.net || 0) / 1000).toFixed(1)}k`
+                : parseFloat(activeTotals?.net || 0).toFixed(0)}
+            </span>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewSummary(e);
+              }}
+              title="View summary"
+              className="p-1.5 rounded-md text-white hover:bg-[#102438] transition border border-transparent hover:border-[#28496D]"
+            >
+              <FiEye className="w-4 h-4" />
+            </button>
+
+            <div
+              onClick={toggleSidebar}
+              className="flex flex-col items-center gap-1.5 cursor-pointer"
+              title="Click to expand Basic Details"
+            >
+              {docId && (
+                <span
+                  className="px-1 py-0.5 rounded bg-white/20 text-white font-bold text-[10px] max-w-[38px] truncate"
+                  title={`PO: ${docId}`}
+                >
+                  #{docId.slice(-4)}
+                </span>
+              )}
+              <span
+                className="px-1 py-0.5 rounded bg-white/10 text-white/90 font-medium text-[9px] uppercase"
+                title={`Type: ${poType}`}
+              >
+                {poType?.slice(0, 3)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </aside>
+  );
 
   const headerContent = (
-    <div className="grid grid-cols-1 gap-1 xl:grid-cols-[minmax(0,5fr)_minmax(0,3.6fr)_minmax(0,3.4fr)]">
-      {basicDetailsCompactSection}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 w-full">
       {supplierDetailsCompactSection}
       {deliveryDetailsCompactSection}
     </div>
@@ -1810,6 +2187,8 @@ const PurchaseOrderForm = ({
         onTermChange={(value) => setTermsId(value)}
         twoColumnRightSummary={true}
         rightSummaryTitle="Summary"
+        sectionColClass="md:col-span-3"
+        summaryColClass="md:col-span-6"
         termOptions={
           (id
             ? termsData?.data
@@ -1861,10 +2240,6 @@ const PurchaseOrderForm = ({
         // extraTotalsContent={taxBreakdownContent}
         // extraTotalsContentColumn="right"
       />
-      <TransactionActions
-        leftActions={leftActions}
-        rightActions={rightActions}
-      />
     </>
   );
 
@@ -1908,10 +2283,6 @@ const PurchaseOrderForm = ({
         extraTotalsContent={taxBreakdownContent}
         extraTotalsContentColumn="right"
         stacked={true}
-      />
-      <TransactionActions
-        leftActions={leftActions}
-        rightActions={rightActions}
       />
     </>
   );
@@ -2014,13 +2385,13 @@ const PurchaseOrderForm = ({
   ];
 
   return (
-    <>
+    <div className="po-form-geist w-full h-full min-h-0 flex flex-col">
       <Modal
         isOpen={approvalModal}
         onClose={() => setApprovalModal(false)}
         widthClass="w-[420px]"
       >
-        <div className="space-y-4">
+        <div className="po-form-geist space-y-4">
           <h2
             className={`text-base font-semibold ${
               actionType === "APPROVE" ? "text-green-700" : "text-blue-700"
@@ -2148,31 +2519,33 @@ const PurchaseOrderForm = ({
       <Modal
         isOpen={summary}
         onClose={() => setSummary(false)}
-        widthClass={"p-10"}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-lg w-full"
       >
-        <PoSummary
-          remarks={remarks}
-          setRemarks={setRemarks}
-          discountType={discountType}
-          setDiscountType={setDiscountType}
-          discountValue={discountValue}
-          setDiscountValue={setDiscountValue}
-          poItems={
-            orderGridType === "FABRIC"
-              ? poFabricItems
-              : orderGridType === "YARN"
-                ? poYarnItems
-                : poItems
-          }
-          taxTypeId={taxTemplateId}
-          readOnly={readOnly}
-          // isSupplierOutside={isSupplierOutside()}
-          isNewVersion={isNewVersion}
-          quoteVersion={quoteVersion}
-          totals={activeTotals}
-          id={id}
-          setSummary={setSummary}
-        />
+        <div className="po-form-geist">
+          <PoSummary
+            remarks={remarks}
+            setRemarks={setRemarks}
+            discountType={discountType}
+            setDiscountType={setDiscountType}
+            discountValue={discountValue}
+            setDiscountValue={setDiscountValue}
+            poItems={
+              orderGridType === "FABRIC"
+                ? poFabricItems
+                : orderGridType === "YARN"
+                  ? poYarnItems
+                  : poItems
+            }
+            taxTypeId={taxTemplateId}
+            readOnly={readOnly}
+            // isSupplierOutside={isSupplierOutside()}
+            isNewVersion={isNewVersion}
+            quoteVersion={quoteVersion}
+            totals={activeTotals}
+            id={id}
+            setSummary={setSummary}
+          />
+        </div>
       </Modal>
       <Modal
         isOpen={printModalOpen}
@@ -2215,11 +2588,14 @@ const PurchaseOrderForm = ({
         </PDFViewer>
       </Modal>
       <TransactionLayout
+        className="po-form-geist"
         title="Purchase Order"
         badge={<ModeChip id={id} readOnly={effectiveReadOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-7 h-7" />}
         onClose={onClose}
         onKeyDown={handleKeyDown}
+        leftSidebar={basicDetailsSidebar}
+        headerActions={headerActionsContent}
         header={headerContent}
         detailsContent={headerContent}
         detailsTitle="Transaction Details"
@@ -2308,7 +2684,7 @@ const PurchaseOrderForm = ({
           </div>
         }
       />
-    </>
+    </div>
   );
 };
 export default PurchaseOrderForm;

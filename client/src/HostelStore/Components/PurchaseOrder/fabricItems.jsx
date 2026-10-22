@@ -401,8 +401,8 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        poFabricItems[currentWeightSelectedIndex]
-                          ?.totalKgs || ""
+                        poFabricItems[currentWeightSelectedIndex]?.totalKgs ||
+                        ""
                       }
                       readOnly
                     />
@@ -417,8 +417,8 @@ const FabricItems = ({
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        poFabricItems[currentWeightSelectedIndex]
-                          .pricePerKg || ""
+                        poFabricItems[currentWeightSelectedIndex].pricePerKg ||
+                        ""
                       }
                       onChange={(e) =>
                         handleInputChange(
@@ -429,8 +429,7 @@ const FabricItems = ({
                       }
                       onBlur={() => {
                         const val =
-                          poFabricItems[currentWeightSelectedIndex]
-                            .pricePerKg;
+                          poFabricItems[currentWeightSelectedIndex].pricePerKg;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(2) : "",
                           currentWeightSelectedIndex,
@@ -448,8 +447,8 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        poFabricItems[currentWeightSelectedIndex]
-                          ?.totalPrice || ""
+                        poFabricItems[currentWeightSelectedIndex]?.totalPrice ||
+                        ""
                       }
                       readOnly
                     />
@@ -477,11 +476,21 @@ const FabricItems = ({
             handleFocusNextRow?.(currentSelectedIndex);
           }, 0);
         }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
       >
         <TaxDetailsFullTemplate
           readOnly={readOnly}
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
+          serialNumber={
+            visibleRows.findIndex(
+              (item) => item.originalIndex === currentSelectedIndex,
+            ) !== -1
+              ? visibleRows.findIndex(
+                  (item) => item.originalIndex === currentSelectedIndex,
+                ) + 1
+              : currentSelectedIndex + 1
+          }
           setCurrentSelectedIndex={setCurrentSelectedIndex}
           poItems={enrichedFabricItems}
           handleInputChange={handleInputChange}
@@ -495,7 +504,7 @@ const FabricItems = ({
 
       <div
         ref={gridWrapperRef}
-        className="h-full overflow-x-auto w-[100vw]"
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -521,12 +530,14 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[2300px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-gray-200 z-[2]",
+                "w-10 px-1 py-2 text-center font-medium text-[11px] sticky left-0 bg-slate-50 z-[20]",
             },
             {
               key: "desc",
@@ -536,75 +547,65 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-72 px-2 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-gray-200 z-[2]",
+                "w-80 px-2 py-2 text-center font-medium text-[11px] sticky left-[40px] bg-slate-50 z-[20]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-28 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[328px] bg-gray-200 z-[2]",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] sticky left-[328px] bg-slate-50 z-[20]",
             },
 
             {
               key: "color",
               label: "Color",
-              className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "design",
               label: "Design",
-              className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gauge",
               label: "Gauge",
-              className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "loop",
               label: "Loop Length",
-              className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gsm",
               label: "GSM",
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "kDia",
               label: "K-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "fDia",
               label: "F-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "uom",
               label: "UOM",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
               key: "width",
               label: "Width",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "weight",
               label: "Weight",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "qty",
@@ -613,8 +614,7 @@ const FabricItems = ({
                   Qty<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -624,34 +624,30 @@ const FabricItems = ({
                   <span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gross",
               label: "Gross",
-              className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-32 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "tax",
               label: "Tax",
-              className:
-                "w-12 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-12 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
               key: "actions",
               label: "Actions",
-              className:
-                "w-16 px-2 py-2 text-center text-xs  border border-gray-300",
+              className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
             },
           ]}
           rows={visibleRows}
           footer={
-            <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
+            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 bg-gray-200"
+                className="text-right px-2 border border-gray-300 bg-slate-50"
                 colSpan={13}
               >
                 Total
@@ -678,13 +674,11 @@ const FabricItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-gray-200" colSpan={3} />
+              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={(_, index) =>
-            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`
-          }
+          getRowClassName={() => `h-6 bg-white hover:bg-gray-50`}
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
@@ -1077,7 +1071,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
+                  className="w-12 border border-gray-300 align-top pt-1 bg-inherit"
                 >
                   {!readOnly && !isOrderFabricLocked && (
                     <div className="flex items-center justify-center">

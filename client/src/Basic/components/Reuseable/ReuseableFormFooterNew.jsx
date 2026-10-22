@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Modal from "../../../UiComponents/Modal";
+import { FiFileText } from "react-icons/fi";
 
 /* ---------------- DEFAULT TOTALS ---------------- */
 const defaultTotalsRows = ({ totalQty, subtotal, taxAmount, netAmount }) => [
@@ -163,13 +164,14 @@ const ReusableFormFooterNew = ({
                                 {sec.hasTemplate && !readOnly && (
                                     <button
                                         type="button"
-                                        className="text-[11px] text-blue-600 underline"
+                                        className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-blue-600 bg-blue-50/80 hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200 border border-blue-200/80 rounded-md shadow-2xs transition-all duration-150 active:scale-95 cursor-pointer"
                                         onClick={() => {
                                             setActiveSectionIndex(index);
                                             setIsTemplateModalOpen(true);
                                         }}
                                     >
-                                        Apply template
+                                        <FiFileText className="w-3 h-3 text-blue-500" />
+                                        <span>Apply Template</span>
                                     </button>
                                 )}
                             </div>

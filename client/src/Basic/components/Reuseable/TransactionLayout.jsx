@@ -3,7 +3,13 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 // ── Hook: exported so forms can use it standalone if needed ──────────────
-export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
+export function useAdaptiveLayout(
+  headerRef,
+  footerRef,
+  containerRef,
+  gap = 8,
+  extraOffsetRef = null,
+) {
   const [itemsHeight, setItemsHeight] = useState(120);
   const [containerHeight, setContainerHeight] = useState(null);
 
@@ -17,13 +23,14 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
   const recalculate = useCallback(() => {
     const headerH = headerRef.current?.offsetHeight ?? 0;
     const footerH = footerRef.current?.offsetHeight ?? 0;
+    const extraH = extraOffsetRef?.current?.offsetHeight ?? 0;
     const containerH =
       containerRef.current?.offsetHeight ??
       containerHeight ??
       window.innerHeight;
-    const remaining = containerH - headerH - footerH - gap;
+    const remaining = containerH - headerH - footerH - extraH - gap;
     setItemsHeight(Math.max(remaining, 120));
-  }, [headerRef, footerRef, containerRef, gap, containerHeight]);
+  }, [headerRef, footerRef, containerRef, gap, containerHeight, extraOffsetRef]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -42,6 +49,7 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
     if (containerRef.current) ro.observe(containerRef.current);
     if (headerRef.current) ro.observe(headerRef.current);
     if (footerRef.current) ro.observe(footerRef.current);
+    if (extraOffsetRef?.current) ro.observe(extraOffsetRef.current);
     return () => {
       clearTimeout(t);
       window.removeEventListener("resize", handleResize);
@@ -53,6 +61,7 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
     headerRef,
     footerRef,
     containerRef,
+    extraOffsetRef,
   ]);
 
   return { itemsHeight, containerHeight };
@@ -90,8 +99,12 @@ export const TransactionScreen = ({
   sidebarWidthClass = "w-[320px]",
   sidebarFooterTitle = "Summary",
   defaultSidebarSectionsCollapsed = true,
+  leftSidebar = null,
+  headerActions = null,
+  className = "",
 }) => {
   const containerRef = useRef(null);
+  const titleBarRef = useRef(null);
   const headerRef = useRef(null);
   const footerRef = useRef(null);
   const supportedDetailsLayouts =
@@ -143,6 +156,8 @@ export const TransactionScreen = ({
     headerRef,
     footerRef,
     containerRef,
+    8,
+    titleBarRef,
   );
 
   useEffect(() => {
@@ -332,37 +347,43 @@ export const TransactionScreen = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col w-full overflow-hidden min-h-0"
+      className={`flex flex-col w-full overflow-hidden min-h-0 ${className || ""}`}
       style={{ height: containerHeight ? `${containerHeight}px` : "100%" }}
       onKeyDown={onKeyDown}
     >
-      <div className="flex min-h-0 flex-1 gap-3">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {/* ── HEADER: title bar + cards grid ─────────────────────── */}
-          <div ref={headerRef} className="flex-none">
-            {/* Title bar — identical to old UI */}
-            <div className="w-full mx-auto rounded-md shadow-lg px-2 py-1">
-              <div className="flex items-center justify-between gap-3">
-                <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  {title}
-                  {badge}
-                  {versionDropdown}
-                </h1>
-                <div className="flex items-center gap-2">
-                  {renderDetailsLayoutSwitch()}
-                  <button
-                    onClick={onClose}
-                    className="text-indigo-600 hover:text-indigo-700"
-                    title="Back to Report"
-                  >
-                    {closeIcon}
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* ── Title bar — identical to old UI, spans across top ── */}
+      <div ref={titleBarRef} className="w-full mx-auto rounded-md shadow-lg px-2 py-1 flex-none bg-white">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+            <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              {title}
+              {badge}
+              {versionDropdown}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {renderDetailsLayoutSwitch()}
+            {headerActions}
+            <button
+              onClick={onClose}
+              className="text-indigo-600 hover:text-indigo-700 ml-1"
+              title="Back to Report"
+            >
+              {closeIcon}
+            </button>
+          </div>
+        </div>
+      </div>
 
+      <div className="flex min-h-0 min-w-0 flex-1 gap-2 pt-1 w-full">
+        {/* Optional Left Sidebar */}
+        {leftSidebar}
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {/* ── HEADER: cards grid ─────────────────────── */}
+          <div ref={headerRef} className="flex-none">
             {showDefaultHeader && (
-              <div className="pt-2">{effectiveDetailsContent}</div>
+              <div>{effectiveDetailsContent}</div>
             )}
 
             {renderCompactDetails()}
@@ -370,12 +391,12 @@ export const TransactionScreen = ({
 
           {/* ── ITEMS: adaptive height, scrolls internally ──────────── */}
           <div
-            className="flex-1 py-2 min-h-0 overflow-hidden"
+            className="flex-1 py-1 min-h-0 min-w-0 w-full overflow-hidden"
             style={{ height: itemsHeight, minHeight: 0 }}
           >
-            <fieldset className="h-full min-h-0 overflow-hidden">
+            <div className="h-full min-h-0 min-w-0 w-full overflow-hidden flex flex-col">
               {gridItems}
-            </fieldset>
+            </div>
           </div>
 
           {/* ── FOOTER: terms + totals + buttons ────────────────────── */}

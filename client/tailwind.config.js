@@ -4,7 +4,11 @@ module.exports = {
     fontFamily: {
       sans: ['Roboto', 'Arial', 'sans-serif'], 
     },
-    extend: {},
+    extend: {
+      fontFamily: {
+        geist: ["Geist", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };

@@ -27,7 +27,7 @@ const PO_GRID_COLUMNS = [
   {
     key: "serial",
     label: "S.No",
-    className: "w-12 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-10 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "styleItemId",
@@ -41,22 +41,22 @@ const PO_GRID_COLUMNS = [
   {
     key: "hsnId",
     label: "HSN",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "sizeId",
     label: "Size",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "colorId",
     label: "Color",
-    className: "w-32 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-36 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "gsmId",
     label: "GSM",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "uomId",
@@ -65,7 +65,7 @@ const PO_GRID_COLUMNS = [
         UOM<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "weight",
@@ -79,7 +79,7 @@ const PO_GRID_COLUMNS = [
         Quantity<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-24 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "price",
@@ -88,17 +88,17 @@ const PO_GRID_COLUMNS = [
         Price<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "gross",
     label: "Gross",
-    className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-32 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "tax",
     label: "Tax",
-    className: "w-20 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-16 px-1 py-2 text-center font-medium text-[11px]",
   },
 ];
 
@@ -306,7 +306,7 @@ const PoItems = ({
   };
 
   const footer = (
-    <tr className="bg-gray-50 h-6 font-medium text-gray-800 text-[12px]">
+    <tr className="bg-slate-50 h-6 font-medium text-slate-800 text-[12px]">
       <td
         className="text-right px-4 border border-gray-300 font-medium"
         colSpan={8}
@@ -343,11 +343,21 @@ const PoItems = ({
         onClose={() => {
           setCurrentSelectedIndex("");
         }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
       >
         <TaxDetailsFullTemplate
           readOnly={readOnly}
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
+          serialNumber={
+            visibleRows.findIndex(
+              (item) => item.originalIndex === currentSelectedIndex,
+            ) !== -1
+              ? visibleRows.findIndex(
+                  (item) => item.originalIndex === currentSelectedIndex,
+                ) + 1
+              : currentSelectedIndex + 1
+          }
           setCurrentSelectedIndex={setCurrentSelectedIndex}
           poItems={enrichedPoItems || poItems}
           handleInputChange={handleInputChange}
@@ -531,17 +541,22 @@ const PoItems = ({
           })()}
       </Modal>
 
-      <div ref={gridWrapperRef} className="h-full">
+      <div
+        ref={gridWrapperRef}
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
+      >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[1380px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={PO_GRID_COLUMNS}
           rows={visibleRows}
           footer={footer}
           getRowKey={(item) =>
             `${item.row.quoteVersion || "draft"}-${item.originalIndex}`
           }
-          getRowClassName={(_, index) =>
-            `${index % 2 === 0 ? "bg-white" : "bg-gray-100"} border border-blue-gray-200 cursor-pointer h-6`
+          getRowClassName={() =>
+            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
           }
           renderRow={(item, index) => {
             const row = item.row;

@@ -3,7 +3,7 @@ const TransactionGrid = ({
   className = "",
   containerClassName = "",
   tableClassName = "w-full border-collapse table-fixed",
-  headClassName = "bg-gray-200 text-gray-800 sticky top-0 z-10",
+  headClassName = "bg-slate-50 text-slate-800 sticky top-0 z-10 border-b border-slate-200/80",
   bodyClassName = "",
   footer,
   columns = [],
@@ -12,12 +12,13 @@ const TransactionGrid = ({
   getRowClassName,
   renderRow,
   emptyState = null,
+  borderColor = "border-l-cyan-600",
 }) => {
   const visibleRows = Array.isArray(rows) ? rows : [];
 
   return (
     <div
-      className={`border border-slate-200 px-2 bg-white rounded-md shadow-sm w-full h-full min-h-0 flex flex-col ${containerClassName}`}
+      className={`border border-slate-200 px-2 bg-white rounded-md shadow-sm w-full h-full min-h-0 min-w-0 flex flex-col border-l-4 ${borderColor} overflow-hidden ${containerClassName}`}
     >
       {title ? (
         <div className="flex justify-between items-center my-2 shrink-0">
@@ -26,7 +27,7 @@ const TransactionGrid = ({
       ) : null}
 
       <div
-        className={`w-full flex-1 min-h-0 overflow-auto my-1 ${className}`}
+        className={`w-full flex-1 min-h-0 min-w-0 overflow-auto my-1 ${className}`}
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -68,7 +69,7 @@ const TransactionGrid = ({
           </tbody>
 
           {footer ? (
-            <tfoot className="sticky bottom-0 z-10 bg-gray-50">{footer}</tfoot>
+            <tfoot className="sticky bottom-0 z-10 bg-slate-50 border-t border-slate-200/80">{footer}</tfoot>
           ) : null}
         </table>
       </div>

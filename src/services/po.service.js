@@ -46,19 +46,22 @@ function manualFilterSearchData(
   searchGridType,
   data,
 ) {
-  return data.filter(
+  return (data || []).filter(
     (item) =>
       (searchPoDate
-        ? String(getDateFromDateTime(item.createdAt)).includes(searchPoDate)
+        ? (String(getDateFromDateTime(item.docDate)).includes(searchPoDate) ||
+           String(getDateFromDateTime(item.createdAt)).includes(searchPoDate))
         : true) &&
       (searchDueDate
         ? String(getDateFromDateTime(item.dueDate)).includes(searchDueDate)
         : true) &&
       (searchPoType
-        ? item.poType.toLowerCase().includes(searchPoType.toLowerCase())
+        ? (item.poType || "")
+            .toLowerCase()
+            .includes(searchPoType.toLowerCase())
         : true) &&
       (searchGridType
-        ? item.orderGridType
+        ? (item.orderGridType || "")
             .toLowerCase()
             .includes(searchGridType.toLowerCase())
         : true),
@@ -72,15 +75,15 @@ function manualFilterSearchDataPoItems(
   data,
 ) {
   const inwardTypeKey = poType ? poType.split(" ")[0].toUpperCase() : "";
-  return data.filter(
+  return (data || []).filter(
     (item) =>
       (searchDocDate
-        ? String(getDateFromDateTime(item.Po.docDate)).includes(searchDocDate)
+        ? String(getDateFromDateTime(item?.Po?.docDate)).includes(searchDocDate)
         : true) &&
       (searchDueDate
-        ? String(getDateFromDateTime(item.Po.dueDate)).includes(searchDueDate)
+        ? String(getDateFromDateTime(item?.Po?.dueDate)).includes(searchDueDate)
         : true) &&
-      (inwardTypeKey ? item.Po.poType.toUpperCase() === inwardTypeKey : true),
+      (inwardTypeKey ? (item?.Po?.poType || "").toUpperCase() === inwardTypeKey : true),
   );
 }
 

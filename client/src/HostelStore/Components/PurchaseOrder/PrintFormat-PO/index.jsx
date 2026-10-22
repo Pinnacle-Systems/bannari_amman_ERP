@@ -7,7 +7,7 @@ import {
   Font,
   StyleSheet,
 } from "@react-pdf/renderer";
-import Logo from "../../../../../src/assets/mplogo.png";
+import Logo from "../../../../../src/assets/bannarispintexlogo.jpeg";
 import { numberToWords } from "number-to-words";
 import {
   findFromList,
