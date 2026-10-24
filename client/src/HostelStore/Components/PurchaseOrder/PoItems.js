@@ -184,22 +184,41 @@ const PoItems = ({
     ]);
   };
 
-  const deleteRow = (rowIndex) => {
-    setPoItems((currentRows) => {
-      if (currentRows.length > 1) {
-        return currentRows.filter((_, index) => index !== parseInt(rowIndex));
+  const deleteRow = (targetIndex) => {
+    const originalIndex =
+      typeof targetIndex === "number" && visibleRows[targetIndex]
+        ? visibleRows[targetIndex].originalIndex
+        : targetIndex;
+
+    const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
+
+    setPoItems((prev) => {
+      if (prev.length <= 1) return prev;
+      const filtered = prev.filter((_, i) => i !== originalIndex);
+      const visibleCount = filtered.filter((r) => isVisibleRow(r)).length;
+      if (visibleCount < DEFAULT_PURCHASE_ORDER_ROWS) {
+        return [
+          ...filtered,
+          ...createPurchaseOrderRows(
+            DEFAULT_PURCHASE_ORDER_ROWS - visibleCount,
+            targetVersion,
+          ),
+        ];
       }
-      return currentRows;
+      return filtered;
     });
   };
 
   const handleDeleteAllRows = () => {
-    setPoItems(
-      createPurchaseOrderRows(
-        DEFAULT_PURCHASE_ORDER_ROWS,
-        id ? (isNewVersion ? "New" : quoteVersion) : quoteVersion,
-      ),
+    const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
+    const nonVisibleItems = id
+      ? poItems.filter((r) => !isVisibleRow(r))
+      : [];
+    const newItems = createPurchaseOrderRows(
+      DEFAULT_PURCHASE_ORDER_ROWS,
+      targetVersion,
     );
+    setPoItems([...nonVisibleItems, ...newItems]);
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -221,6 +240,17 @@ const PoItems = ({
     );
     setContextMenu(null);
   };
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClickOutside = () => setContextMenu(null);
+    window.addEventListener("click", handleClickOutside);
+    window.addEventListener("scroll", handleClickOutside, true);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("scroll", handleClickOutside, true);
+    };
+  }, [contextMenu]);
 
   useEffect(() => {
     setPoItems((prev) => {
@@ -544,6 +574,26 @@ const PoItems = ({
       <div
         ref={gridWrapperRef}
         className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
+        onContextMenu={(e) => {
+          const td =
+            e.target.closest("td[data-grid-row]") || e.target.closest("td");
+          const tr = e.target.closest("tbody tr");
+          let rowIndex = null;
+          if (td && td.getAttribute("data-grid-row") !== null) {
+            rowIndex = parseInt(td.getAttribute("data-grid-row"), 10);
+          } else if (tr && tr.parentElement) {
+            rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
+          }
+          if (rowIndex !== null && rowIndex >= 0 && !readOnly) {
+            e.preventDefault();
+            handleRightClick(e, rowIndex);
+          }
+        }}
+        onMouseDownCapture={(e) => {
+          if (e.button === 2) {
+            e.stopPropagation();
+          }
+        }}
       >
         <TransactionGrid
           title=""
@@ -568,11 +618,6 @@ const PoItems = ({
                   data-grid-row={index}
                   data-grid-col={0}
                   className="w-12 border border-gray-300 text-[11px] text-center"
-                  onContextMenu={(event) => {
-                    if (!readOnly) {
-                      handleRightClick(event, rowIndex);
-                    }
-                  }}
                 >
                   {index + 1}
                 </td>
@@ -630,7 +675,10 @@ const PoItems = ({
                     advanceOnSelect
                   />
                 </td>
-                <td className="border border-gray-300 px-2 text-[11px] text-black">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 px-2 text-[11px] text-black"
+                >
                   <span className="block truncate">
                     {findFromList(row.hsnId, hsnList?.data, "name") || ""}
                   </span>
@@ -742,7 +790,10 @@ const PoItems = ({
                     addNewModalWidth="w-[30%] h-[45%]"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 text-[11px] text-black">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 px-2 text-[11px] text-black"
+                >
                   <span className="block truncate">
                     {findFromList(row.uomId, uomList?.data, "name") || ""}
                   </span>
@@ -853,7 +904,10 @@ const PoItems = ({
                     }
                   />
                 </td>
-                <td className="border border-gray-300 text-[11px]">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 text-[11px]"
+                >
                   <input
                     type="number"
                     onFocus={(event) => event.target.select()}
@@ -910,7 +964,7 @@ const PoItems = ({
         />
       </div>
 
-      {contextMenu ? (
+      {!readOnly && contextMenu ? (
         <div
           style={{
             position: "fixed",
@@ -926,7 +980,7 @@ const PoItems = ({
         >
           <div className="flex flex-col gap-1">
             <button
-              className="text-black text-[12px] text-left rounded px-1"
+              className="text-black text-[12px] text-left rounded px-2 py-0.5 hover:bg-gray-200 cursor-pointer"
               onClick={() => {
                 deleteRow(contextMenu.rowId);
                 deleteSelectedRows();
@@ -936,7 +990,7 @@ const PoItems = ({
               Delete
             </button>
             <button
-              className="text-black text-[12px] text-left rounded px-1"
+              className="text-black text-[12px] text-left rounded px-2 py-0.5 hover:bg-gray-200 cursor-pointer"
               onClick={() => {
                 handleDeleteAllRows();
                 handleCloseContextMenu();

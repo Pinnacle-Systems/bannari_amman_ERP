@@ -29,6 +29,7 @@ import PageSearch from "./PageSearch";
 import Notification from "./Notification";
 import { GLOBE_ICON } from "../../../icons";
 import useLogout from "../../../CustomHooks/useLogout";
+import { useGetCompanyQuery } from "../../../redux/services/CompanyMasterService";
 const BASE_URL = process.env.REACT_APP_SERVER_URL;
 
 const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
@@ -48,8 +49,12 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
   const handleOutsideClick = () => {
     sethideNavBar(true);
   };
-
+  const { data: companyData } = useGetCompanyQuery({ searchParams: "" });
   const ref = useOutsideClick(handleOutsideClick);
+  console.log(companyData, "companyData");
+
+  let companyName = companyData?.data?.[0]?.name;
+  console.log(companyName, "companyName");
 
   const toggleNavMenu = () => {
     sethideNavBar(!hideNavBar);
@@ -223,7 +228,7 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
             className="h-8 w-8 object-contain rounded"
           />
         </div>
-
+        <p>{companyName}</p>
         <button
           type="button"
           onClick={() => dispatch(push({ active: true, name: "DASHBOARD" }))}

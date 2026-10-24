@@ -107,7 +107,7 @@ const YarnItems = ({
         ? visibleRows[targetIndex].originalIndex
         : targetIndex;
 
-    if (visibleRows.length <= 14) {
+    if (visibleRows.length <= 10) {
       const newItems = [...poYarnItems];
       if (newItems[originalIndex]) {
         newItems[originalIndex] = {
@@ -128,7 +128,7 @@ const YarnItems = ({
     if (!id) return;
     setPoYarnItems((prev) => {
       const localVisibleRows = prev.filter((row) => isVisibleRow(row));
-      const missing = 14 - localVisibleRows.length;
+      const missing = 10 - localVisibleRows.length;
       if (missing <= 0) return prev;
       return [
         ...prev,
@@ -249,7 +249,7 @@ const YarnItems = ({
     const nonVisibleItems = id
       ? poYarnItems.filter((r) => !isVisibleRow(r))
       : [];
-    const newItems = Array.from({ length: 14 }, () => ({
+    const newItems = Array.from({ length: 10 }, () => ({
       ...EMPTY_ROW,
       quoteVersion: targetVersion,
       rowId: Math.random().toString(36).substring(2, 9),

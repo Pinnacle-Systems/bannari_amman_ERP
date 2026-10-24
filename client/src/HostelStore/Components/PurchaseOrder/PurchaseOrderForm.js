@@ -132,7 +132,7 @@ const EMPTY_YARN_ROW = {
   quoteVersion: "",
 };
 
-const padFabricItems = (itemsArray = [], minLength = 14, quoteVersion = "") => {
+const padFabricItems = (itemsArray = [], minLength = 10, quoteVersion = "") => {
   const currentLength = itemsArray.length;
   const formattedItems = (itemsArray || []).map((item) => ({
     ...item,
@@ -151,7 +151,7 @@ const padFabricItems = (itemsArray = [], minLength = 14, quoteVersion = "") => {
   return formattedItems;
 };
 
-const padYarnItems = (itemsArray = [], minLength = 14, quoteVersion = "") => {
+const padYarnItems = (itemsArray = [], minLength = 10, quoteVersion = "") => {
   const currentLength = itemsArray.length;
   const formattedItems = (itemsArray || []).map((item) => ({
     ...item,
@@ -408,7 +408,7 @@ const PurchaseOrderForm = ({
           if (!resolvedQuoteVersion) return i?.quoteVersion !== "New";
           return parseInt(i?.quoteVersion) === parseInt(resolvedQuoteVersion);
         });
-        const missing = 14 - (visibleFabricItems?.length || 0);
+        const missing = 10 - (visibleFabricItems?.length || 0);
         if (missing > 0) {
           finalFabricItems = [
             ...finalFabricItems,
@@ -420,7 +420,7 @@ const PurchaseOrderForm = ({
           ];
         }
       } else {
-        finalFabricItems = Array.from({ length: 14 }, () => ({
+        finalFabricItems = Array.from({ length: 10 }, () => ({
           ...EMPTY_FABRIC_ROW,
           quoteVersion: resolvedQuoteVersion || 1,
           rowId: Math.random().toString(36).substring(2, 9),
@@ -441,7 +441,7 @@ const PurchaseOrderForm = ({
           if (!resolvedQuoteVersion) return i?.quoteVersion !== "New";
           return parseInt(i?.quoteVersion) === parseInt(resolvedQuoteVersion);
         });
-        const missing = 14 - (visibleYarnItems?.length || 0);
+        const missing = 10 - (visibleYarnItems?.length || 0);
         if (missing > 0) {
           finalYarnItems = [
             ...finalYarnItems,
@@ -453,7 +453,7 @@ const PurchaseOrderForm = ({
           ];
         }
       } else {
-        finalYarnItems = Array.from({ length: 14 }, () => ({
+        finalYarnItems = Array.from({ length: 10 }, () => ({
           ...EMPTY_YARN_ROW,
           quoteVersion: resolvedQuoteVersion || 1,
           rowId: Math.random().toString(36).substring(2, 9),
@@ -494,8 +494,8 @@ const PurchaseOrderForm = ({
     setPoItems(
       createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
     );
-    setPoFabricItems(padFabricItems([], 14, quoteVersion));
-    setPoYarnItems(padYarnItems([], 14, quoteVersion));
+    setPoFabricItems(padFabricItems([], 10, quoteVersion));
+    setPoYarnItems(padYarnItems([], 10, quoteVersion));
     if (newPoType !== "ORDER") {
       setOrderEntryId("");
       setSelectedOrderGridType("");
@@ -508,16 +508,16 @@ const PurchaseOrderForm = ({
     setPoItems(
       createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
     );
-    setPoFabricItems(padFabricItems([], 14, quoteVersion));
-    setPoYarnItems(padYarnItems([], 14, quoteVersion));
+    setPoFabricItems(padFabricItems([], 10, quoteVersion));
+    setPoYarnItems(padYarnItems([], 10, quoteVersion));
   };
 
   const handleOrderNoChange = async (selectedOrderEntryId) => {
     setOrderEntryId(selectedOrderEntryId);
     if (!selectedOrderEntryId) {
       setSelectedOrderGridType("");
-      setPoFabricItems(padFabricItems([], 14, quoteVersion));
-      setPoYarnItems(padYarnItems([], 14, quoteVersion));
+      setPoFabricItems(padFabricItems([], 10, quoteVersion));
+      setPoYarnItems(padYarnItems([], 10, quoteVersion));
       setPoItems(
         createPurchaseOrderRows(DEFAULT_PURCHASE_ORDER_ROWS, quoteVersion),
       );
@@ -569,7 +569,7 @@ const PurchaseOrderForm = ({
           discounttype: "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
-        setPoFabricItems(padFabricItems(mapped, 14, quoteVersion));
+        setPoFabricItems(padFabricItems(mapped, 10, quoteVersion));
 
         if (order?.orderYarnItems?.length) {
           const yarnMapped = order.orderYarnItems.map((item) => ({
@@ -590,9 +590,9 @@ const PurchaseOrderForm = ({
             discounttype: "",
             rowId: Math.random().toString(36).substring(2, 9),
           }));
-          setPoYarnItems(padYarnItems(yarnMapped, 14, quoteVersion));
+          setPoYarnItems(padYarnItems(yarnMapped, 10, quoteVersion));
         } else {
-          setPoYarnItems(padYarnItems([], 14, quoteVersion));
+          setPoYarnItems(padYarnItems([], 10, quoteVersion));
         }
       } else if (gridType === "YARN") {
         const itemsArr = order?.orderYarnItems || [];
@@ -614,7 +614,7 @@ const PurchaseOrderForm = ({
           discounttype: "",
           rowId: Math.random().toString(36).substring(2, 9),
         }));
-        setPoYarnItems(padYarnItems(mapped, 14, quoteVersion));
+        setPoYarnItems(padYarnItems(mapped, 10, quoteVersion));
       }
     } catch (err) {
       console.error("Failed to fetch order entry details:", err);
@@ -1879,7 +1879,7 @@ const PurchaseOrderForm = ({
           "radial-gradient(120% 70% at 50% 0%, rgba(96, 165, 250, 0.25) 0%, rgba(30, 75, 125, 0.12) 45%, transparent 75%), linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%), linear-gradient(180deg, #16304C 0%, #0d1e30 40%, #050b12 75%, #000000 100%)",
       }}
       className={`transition-all duration-300 ease-in-out flex flex-col min-h-0 flex-none self-stretch text-white rounded-md border border-[#20456C] shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] border-l-4 border-l-white overflow-hidden relative ${
-        isSidebarOpen ? "w-[330px] xl:w-[350px]" : "w-[44px]"
+        isSidebarOpen ? "w-[300px] xl:w-[320px]" : "w-[44px]"
       }`}
     >
       {isSidebarOpen ? (
@@ -1891,7 +1891,7 @@ const PurchaseOrderForm = ({
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
-                  Basic Details
+                  Purchase Order
                 </span>
                 <h2 className="text-xl font-extrabold text-white tracking-tight truncate leading-tight mt-0.5">
                   {docId && docId !== "New" ? docId : "New PO"}
@@ -2087,30 +2087,43 @@ const PurchaseOrderForm = ({
             type="button"
             onClick={toggleSidebar}
             className="w-8 h-8 rounded-lg bg-white/15 hover:bg-sky-600 active:bg-sky-700 text-white border border-white/25 hover:border-sky-400 shadow-md flex items-center justify-center transition active:scale-95 flex-shrink-0 mt-1 cursor-pointer"
-            title="Expand Basic Details"
+            title={
+              docId && docId !== "New"
+                ? `Expand Basic Details (${docId})`
+                : "Expand Basic Details"
+            }
           >
-            <FiChevronRight
-              className="w-5 h-5 text-white"
-              strokeWidth={2.75}
-            />
+            <FiChevronRight className="w-5 h-5 text-white" strokeWidth={2.75} />
           </button>
 
           {/* Vertical rotated text label */}
           <div
             onClick={toggleSidebar}
             className="flex-1 flex flex-col items-center justify-center cursor-pointer select-none py-4 w-full hover:bg-white/5 transition"
-            title="Click to expand Basic Details"
+            title={
+              docId && docId !== "New"
+                ? `Click to expand (${docId})`
+                : "Click to expand Basic Details"
+            }
           >
             <div className="flex flex-col items-center gap-2">
-              <FiLayers className="w-3.5 h-3.5 text-[#7098BC]" />
+              <FiLayers
+                className={`w-3.5 h-3.5 ${
+                  docId && docId !== "New" ? "text-sky-300" : "text-[#7098BC]"
+                }`}
+              />
               <span
-                className="text-[10px] font-bold text-[#7098BC] tracking-widest uppercase whitespace-nowrap"
+                className={`text-[10px] font-bold uppercase whitespace-nowrap ${
+                  docId && docId !== "New"
+                    ? "text-sky-200 tracking-wider font-extrabold"
+                    : "text-[#7098BC] tracking-widest"
+                }`}
                 style={{
                   writingMode: "vertical-rl",
                   transform: "rotate(180deg)",
                 }}
               >
-                Basic Details
+                {docId && docId !== "New" ? docId : "Basic Details"}
               </span>
             </div>
           </div>
@@ -2145,7 +2158,7 @@ const PurchaseOrderForm = ({
               className="flex flex-col items-center gap-1.5 cursor-pointer"
               title="Click to expand Basic Details"
             >
-              {docId && (
+              {docId && docId !== "New" && (
                 <span
                   className="px-1 py-0.5 rounded bg-white/20 text-white font-bold text-[10px] max-w-[38px] truncate"
                   title={`PO: ${docId}`}

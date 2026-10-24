@@ -30,7 +30,7 @@ export const PURCHASE_ORDER_TRANSACTION_DEFINITION = {
   actions: ["saveClose", "saveNew", "submitApproval", "summary", "print"],
 };
 
-export const DEFAULT_PURCHASE_ORDER_ROWS = 20;
+export const DEFAULT_PURCHASE_ORDER_ROWS = 10;
 
 export const createPurchaseOrderRow = (quoteVersion = "") => ({
   styleItemId: "",
