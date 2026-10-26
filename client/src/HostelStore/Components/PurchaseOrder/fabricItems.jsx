@@ -537,7 +537,7 @@ const FabricItems = ({
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-1 py-2 text-center font-medium text-[11px] sticky left-0 bg-slate-50 z-[20]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-slate-50 z-[30]",
             },
             {
               key: "desc",
@@ -547,13 +547,13 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-80 px-2 py-2 text-center font-medium text-[11px] sticky left-[40px] bg-slate-50 z-[20]",
+                "w-[321px] min-w-[321px] max-w-[321px] px-2 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-slate-50 z-[25]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] sticky left-[328px] bg-slate-50 z-[20]",
+                "w-[113px] min-w-[113px] max-w-[113px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[359px] bg-slate-50 z-[20]",
             },
 
             {
@@ -678,7 +678,7 @@ const FabricItems = ({
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={() => `h-6 bg-white hover:bg-gray-50`}
+          getRowClassName={() => `h-6 bg-white hover:bg-gray-50 group`}
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
@@ -688,7 +688,7 @@ const FabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-inherit z-[1]"
+                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   {index + 1}
                 </td>
@@ -696,7 +696,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-inherit z-[1]"
+                  className="w-[321px] min-w-[321px] max-w-[321px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-white group-hover:bg-gray-50 z-[5]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -718,7 +718,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="w-[113px] min-w-[113px] max-w-[113px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[359px] bg-white group-hover:bg-gray-50 z-[2]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}

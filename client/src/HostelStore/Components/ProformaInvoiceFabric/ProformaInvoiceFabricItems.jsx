@@ -368,7 +368,7 @@ const ProformaInvoiceFabricItems = ({
 
       <div
         ref={gridWrapperRef}
-        className="h-full overflow-x-auto w-[100vw]"
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -394,12 +394,14 @@ const ProformaInvoiceFabricItems = ({
       >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[2300px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-gray-200 z-[2]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-slate-50 z-[30]",
             },
             {
               key: "desc",
@@ -409,75 +411,65 @@ const ProformaInvoiceFabricItems = ({
                 </>
               ),
               className:
-                "w-72 px-2 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-gray-200 z-[2]",
+                "w-[321px] min-w-[321px] max-w-[321px] px-2 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-slate-50 z-[25]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-28 px-1 py-2 text-center text-xs border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[328px] bg-gray-200 z-[2]",
+                "w-[113px] min-w-[113px] max-w-[113px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[359px] bg-slate-50 z-[20]",
             },
 
             {
               key: "color",
               label: "Color",
-              className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "design",
               label: "Design",
-              className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gauge",
               label: "Gauge",
-              className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "loop",
               label: "Loop Length",
-              className:
-                "w-40 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gsm",
               label: "GSM",
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "kDia",
               label: "K-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "fDia",
               label: "F-Dia",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "uom",
               label: "UOM",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
               key: "width",
               label: "Width",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "weight",
               label: "Weight",
-              className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "qty",
@@ -486,8 +478,7 @@ const ProformaInvoiceFabricItems = ({
                   Qty<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -497,27 +488,23 @@ const ProformaInvoiceFabricItems = ({
                   <span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gross",
               label: "Gross",
-              className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-32 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "tax",
               label: "Tax",
-              className:
-                "w-12 px-1 py-2 text-center text-xs  border border-gray-300",
+              className: "w-12 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
               key: "actions",
               label: "Actions",
-              className:
-                "w-16 px-2 py-2 text-center text-xs  border border-gray-300",
+              className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
             },
           ]}
           rows={
@@ -527,9 +514,9 @@ const ProformaInvoiceFabricItems = ({
             })) || []
           }
           footer={
-            <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
+            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 bg-gray-200"
+                className="text-right px-2 border border-gray-300 bg-slate-50"
                 colSpan={13}
               >
                 Total
@@ -556,13 +543,11 @@ const ProformaInvoiceFabricItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-gray-200" colSpan={3} />
+              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={(_, index) =>
-            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`
-          }
+          getRowClassName={() => `h-6 bg-white hover:bg-gray-50 group`}
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
@@ -571,7 +556,7 @@ const ProformaInvoiceFabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-inherit z-[1]"
+                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   {index + 1}
                 </td>
@@ -579,7 +564,7 @@ const ProformaInvoiceFabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[40px] bg-inherit z-[1]"
+                  className="w-[321px] min-w-[321px] max-w-[321px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-white group-hover:bg-gray-50 z-[5]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -600,7 +585,7 @@ const ProformaInvoiceFabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="w-[113px] min-w-[113px] max-w-[113px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[359px] bg-white group-hover:bg-gray-50 z-[2]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}

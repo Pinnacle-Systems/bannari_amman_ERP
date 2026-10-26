@@ -1914,7 +1914,7 @@ const PurchaseOrderForm = ({
           "radial-gradient(120% 70% at 50% 0%, rgba(96, 165, 250, 0.25) 0%, rgba(30, 75, 125, 0.12) 45%, transparent 75%), linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%), linear-gradient(180deg, #16304C 0%, #0d1e30 40%, #050b12 75%, #000000 100%)",
       }}
       className={`transition-all duration-300 ease-in-out flex flex-col min-h-0 flex-none self-stretch text-white rounded-md border border-[#20456C] shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] border-l-4 border-l-white overflow-hidden relative ${
-        isSidebarOpen ? "w-[300px] xl:w-[320px]" : "w-[44px]"
+        isSidebarOpen ? "w-[260px] xl:w-[280px]" : "w-[44px]"
       }`}
     >
       {isSidebarOpen ? (
@@ -1936,7 +1936,7 @@ const PurchaseOrderForm = ({
                     onClick={() => {
                       if (id) setShowVersionDropdown((prev) => !prev);
                     }}
-                    className={`text-xl font-extrabold tracking-tight truncate leading-none select-none transition-colors ${
+                    className={`text-md font-extrabold tracking-tight truncate leading-none select-none transition-colors ${
                       id
                         ? "cursor-pointer text-white hover:text-sky-300 active:scale-98"
                         : "text-white"
@@ -2688,7 +2688,7 @@ const PurchaseOrderForm = ({
         detailsTitle="Transaction Details"
         detailsSummary={transactionDetailsSummary}
         sidebarDetailsSections={sidebarDetailsSections}
-        sidebarWidthClass="w-[300px]"
+        sidebarWidthClass="w-[260px] xl:w-[280px]"
         sidebarFooter={sidebarFooterContent}
         gridItems={
           orderGridType === "FABRIC" ? (

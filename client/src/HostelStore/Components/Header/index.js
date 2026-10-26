@@ -228,7 +228,9 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
             className="h-8 w-8 object-contain rounded"
           />
         </div>
-        <p>{companyName}</p>
+        <p className="text-black font-semibold hidden md:inline">
+          {companyName}
+        </p>
         <button
           type="button"
           onClick={() => dispatch(push({ active: true, name: "DASHBOARD" }))}

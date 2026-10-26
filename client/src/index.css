@@ -249,8 +249,9 @@ label {
 }
 
 .grid-editable-cell:focus-within {
-  background-color: rgba(219, 234, 254, 0.65);
+  background-color: #dbeafe !important;
   box-shadow: inset 0 0 0 1px #2563eb;
+  z-index: 15 !important;
 }
 
 @media print {

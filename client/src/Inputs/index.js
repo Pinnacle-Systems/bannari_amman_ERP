@@ -307,6 +307,7 @@ export const TextInput = forwardRef(
       onKeyDown,
       onFocus,
       max,
+      placeholder,
     },
     ref,
   ) => {
@@ -357,7 +358,7 @@ export const TextInput = forwardRef(
               : handleOnChange(e, setValue, type)
           }
           onBlur={handleBlur}
-          placeholder={name}
+          placeholder={placeholder !== undefined ? placeholder : name}
           readOnly={readOnly}
           onFocus={onFocus}
           disabled={disabled}
@@ -3572,12 +3573,18 @@ export const customStyles = {
     ...base,
     zIndex: 9999,
     fontSize: "11px",
+    backgroundColor: "white",
   }),
   menuList: (base) => ({
     ...base,
     maxHeight: "120px", // 🔥 reduce dropdown height
     paddingTop: 0,
     paddingBottom: 0,
+    backgroundColor: "white",
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
   }),
 };
 export function CustomInput({

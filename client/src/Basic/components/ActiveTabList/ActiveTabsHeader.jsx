@@ -152,7 +152,7 @@ const ActiveTabsHeader = ({ className = "" }) => {
             <div
               key={tab.name || index}
               ref={isActive ? activeTabRef : null}
-              className={`h-[26px] px-2.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-150 select-none flex-shrink-0 cursor-pointer shadow-xs leading-none ${
+              className={`h-[26px] px-2.5 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all duration-150 select-none flex-shrink-0 cursor-pointer shadow-xs leading-none ${
                 isActive
                   ? "bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 text-white border border-blue-400/40 shadow-sm shadow-blue-500/25 ring-1 ring-blue-500/20"
                   : "bg-slate-50/90 text-slate-600 border border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
@@ -192,7 +192,7 @@ const ActiveTabsHeader = ({ className = "" }) => {
           <button
             type="button"
             onClick={() => setShowHidden((prev) => !prev)}
-            className="h-[26px] px-2 text-xs text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-300 rounded-md hover:bg-blue-50 transition-all duration-150 flex items-center gap-1 cursor-pointer bg-white shadow-xs select-none"
+            className="h-[26px] px-2 text-xs text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-300 rounded-lg hover:bg-blue-50 transition-all duration-150 flex items-center gap-1 cursor-pointer bg-white shadow-xs select-none"
             title={`${hiddenTabs.length} more tabs hidden inside. Click to open`}
           >
             {DOUBLE_NEXT_ICON}
