@@ -2404,9 +2404,9 @@ export default function Form({
   return (
     <>
       <div onKeyDown={handleKeyDown}>
-        <div className="w-full  mx-auto rounded-md shadow-lg px-2 py-1 overflow-y-auto mt-1 bg-white">
+        <div className="w-full mx-auto rounded-md shadow-lg px-2 py-1 mt-1 bg-white relative z-30">
           <div className="w-full flex justify-between py-0.5 items-center px-0.5 gap-4">
-            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <ActiveTabsHeader />
             </div>
             <div className="flex items-center gap-4 text-md flex-shrink-0">

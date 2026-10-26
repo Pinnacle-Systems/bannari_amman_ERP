@@ -233,73 +233,10 @@ const ActiveTabList = () => {
       style={{ backgroundColor: "#F1F1F0" }}
     >
       {!hideTopTabs && (
-        <div className="flex justify-between shrink-0">
-          <div className="flex gap-2 ">
-            {currentShowingTabs.map((tab, index) => (
-              <div
-                key={index}
-                className={`px-2 rounded-lg text-[11px] d-flex content-center items-center gap-1 hover:bg-gray-500 hover:text-white transition my-1 ${
-                  tab.active
-                    ? "bg-gray-500 text-white border border-gray-500"
-                    : "text-gray-500 border border-gray-500"
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    dispatch(push({ name: tab.name }));
-                  }}
-                >
-                  {tab.name}
-                </button>
-                <button
-                  className="px-1 rounded-xs transition"
-                  onClick={() => {
-                    dispatch(remove({ name: tab.name }));
-                  }}
-                >
-                  {CLOSE_ICON}
-                </button>
-              </div>
-            ))}
+        <div className="flex justify-between items-center shrink-0 px-2 py-1 bg-white border-b border-slate-200 relative z-30">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <ActiveTabsHeader />
           </div>
-          <div>
-            {hiddenTabs.length !== 0 && (
-              <button onClick={() => setShowHidden(true)}>
-                {DOUBLE_NEXT_ICON}
-              </button>
-            )}
-          </div>
-          {showHidden && (
-            <ul
-              ref={ref}
-              className="absolute right-0 top-5 bg-gray-200 z-50 text-xs p-1"
-            >
-              {hiddenTabs.map((tab) => (
-                <li
-                  key={tab.name}
-                  className={`flex justify-between  ${
-                    tab.active ? "bg-[#009688]" : "bg-gray-300"
-                  } `}
-                >
-                  <button
-                    onClick={() => {
-                      dispatch(push({ name: tab.name }));
-                    }}
-                  >
-                    {tab.name}
-                  </button>
-                  <button
-                    className="hover:bg-red-400 px-1 rounded-xs transition"
-                    onClick={() => {
-                      dispatch(remove({ name: tab.name }));
-                    }}
-                  >
-                    {CLOSE_ICON}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       )}
       {openTabs.tabs.map((tab, index) => (
@@ -336,6 +273,7 @@ export const PAGES_WITH_HEADER_TABS = [
   "CUSTOMER / SUPPLIER MASTER",
   "BANK MASTER",
   "ITEM GROUP MASTER",
+  "ITEM SUB GROUP MASTER",
   "ITEM MASTER",
   "GSM MASTER",
   "SIZE MASTER",
@@ -347,6 +285,7 @@ export const PAGES_WITH_HEADER_TABS = [
   "LOOP LENGTH MASTER",
   "DIA MASTER",
   "YARN MASTER",
+  "YARN BLEND MASTER",
   "DESIGN MASTER",
   "USERS & ROLES",
   "CONTROL PANEL",

@@ -181,19 +181,19 @@ export default function Form() {
   };
 
   return (
-    <>
+    <div className="p-1 bg-[#F1F1F0] h-full flex flex-col overflow-hidden">
       <div
-        className="p-1 bg-[#F1F1F0] h-full"
-        style={{ display: showForm ? "none" : "block" }}
+        className="h-full flex flex-col overflow-hidden"
+        style={{ display: showForm ? "none" : "flex" }}
       >
-        <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-2 items-start sm:items-center mb-2 gap-x-4 rounded-md shadow-sm border border-gray-200">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+        <div className="w-full flex bg-white py-1 px-2 justify-between items-center rounded-md shadow-sm border border-gray-200 mb-2 flex-none h-[38px] min-h-[38px] max-h-[38px] relative z-30">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <ActiveTabsHeader />
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800 py-1 rounded-md flex items-center gap-2 text-xs px-2 shadow-sm font-medium transition cursor-pointer"
+              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800 py-1 rounded-md flex items-center gap-2 text-xs px-2.5 shadow-sm font-medium transition cursor-pointer"
               onClick={handleCreate}
             >
               <FaPlus /> Create New
@@ -201,7 +201,7 @@ export default function Form() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex-1 min-h-0">
           <PurchaseOrderFormReport
             onView={handleView}
             onEdit={handleEdit}
@@ -216,7 +216,7 @@ export default function Form() {
       </div>
 
       {showForm && (
-        <div className="h-full overflow-hidden">
+        <div className="h-full flex-1 min-h-0 overflow-hidden">
           <PurchaseOrderForm
             readOnly={readOnly}
             setReadOnly={setReadOnly}
@@ -245,6 +245,6 @@ export default function Form() {
           />
         </div>
       )}
-    </>
+    </div>
   );
 }

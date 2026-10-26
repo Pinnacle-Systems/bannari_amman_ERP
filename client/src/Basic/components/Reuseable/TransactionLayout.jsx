@@ -34,10 +34,8 @@ export function useAdaptiveLayout(
   }, [headerRef, footerRef, containerRef, gap, containerHeight, extraOffsetRef]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      recalculateContainerHeight();
-      recalculate();
-    }, 200);
+    recalculateContainerHeight();
+    recalculate();
     const handleResize = () => {
       recalculateContainerHeight();
       recalculate();
@@ -52,7 +50,6 @@ export function useAdaptiveLayout(
     if (footerRef.current) ro.observe(footerRef.current);
     if (extraOffsetRef?.current) ro.observe(extraOffsetRef.current);
     return () => {
-      clearTimeout(t);
       window.removeEventListener("resize", handleResize);
       ro.disconnect();
     };
@@ -350,39 +347,39 @@ export const TransactionScreen = ({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col w-full overflow-hidden min-h-0 ${className || ""}`}
-      style={{ height: containerHeight ? `${containerHeight}px` : "100%" }}
+      className={`flex flex-col w-full h-full overflow-hidden min-h-0 ${className || ""}`}
       onKeyDown={onKeyDown}
     >
-      {/* ── Title bar — identical to old UI, spans across top ── */}
-      <div ref={titleBarRef} className="w-full mx-auto rounded-md shadow-lg px-2 py-1 flex-none bg-white">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
-            {showTabs || tabs ? (
-              tabs || <ActiveTabsHeader />
-            ) : (
-              <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                {title}
-                {badge}
-                {versionDropdown}
-              </h1>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {renderDetailsLayoutSwitch()}
-            {headerActions}
-            <button
-              onClick={onClose}
-              className="text-indigo-600 hover:text-indigo-700 ml-1"
-              title="Back to Report"
-            >
-              {closeIcon}
-            </button>
-          </div>
+      {/* ── Title bar — identical to report header, spans across top ── */}
+      <div
+        ref={titleBarRef}
+        className="w-full flex bg-white py-1 px-2 justify-between items-center rounded-md shadow-sm border border-gray-200 mb-2 flex-none h-[38px] min-h-[38px] max-h-[38px] relative z-30"
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {showTabs || tabs ? (
+            tabs || <ActiveTabsHeader />
+          ) : (
+            <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              {title}
+              {badge}
+              {versionDropdown}
+            </h1>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {renderDetailsLayoutSwitch()}
+          {headerActions}
+          <button
+            onClick={onClose}
+            className="text-indigo-600 hover:text-indigo-700 flex items-center justify-center cursor-pointer"
+            title="Back to Report"
+          >
+            {closeIcon}
+          </button>
         </div>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 gap-2 pt-1 w-full">
+      <div className="flex min-h-0 min-w-0 flex-1 gap-2 w-full">
         {/* Optional Left Sidebar */}
         {leftSidebar}
 

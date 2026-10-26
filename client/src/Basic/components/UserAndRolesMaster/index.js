@@ -24,8 +24,8 @@ const UserRoles = () => {
 
     return (
         <div className='h-full flex flex-col'>
-            <div className='md:flex md:items-center page-heading py-1 px-2 justify-between'>
-                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <div className='md:flex md:items-center page-heading py-1 px-2 justify-between relative z-30'>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     <ActiveTabsHeader />
                 </div>
             </div>

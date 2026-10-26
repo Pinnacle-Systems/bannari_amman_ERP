@@ -85,8 +85,8 @@ const Report = ({
 }) => {
   return (
     <div className="flex flex-col w-full h-[95%] overflow-auto">
-      <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2">
-        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+      <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2 relative z-30">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <ActiveTabsHeader />
         </div>
         <div className="flex sub-heading justify-center md:justify-start items-center flex-shrink-0">

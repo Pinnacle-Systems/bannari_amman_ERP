@@ -505,19 +505,19 @@ const PurchaseReturnForm = ({
           />
         </PDFViewer>
       </Modal>
-      <div className="w-full mx-auto rounded-md shadow-lg px-2 py-1 overflow-y-auto">
-        <div className="flex justify-between items-center gap-4">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
-            <ActiveTabsHeader />
-          </div>
+      <div className="w-full flex bg-white py-1 px-2 justify-between items-center rounded-md shadow-sm border border-gray-200 mb-2 flex-none h-[38px] min-h-[38px] max-h-[38px] relative z-30">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <ActiveTabsHeader />
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => {
               onClose();
             }}
-            className="text-indigo-600 hover:text-indigo-700 flex-shrink-0"
+            className="text-indigo-600 hover:text-indigo-700 flex items-center justify-center cursor-pointer flex-shrink-0"
             title="Back to Report"
           >
-            <IoArrowBackCircleSharp className="w-7 h-7" />
+            <IoArrowBackCircleSharp className="w-6 h-6" />
           </button>
         </div>
       </div>

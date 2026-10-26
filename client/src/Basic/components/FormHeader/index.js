@@ -99,8 +99,8 @@ const FormHeader = ({
       {isLoading || isFetching ? (
         <div></div>
       ) : (
-        <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+        <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2 relative z-30">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <ActiveTabsHeader />
           </div>
           <div className="flex sub-heading flex-shrink-0">
