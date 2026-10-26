@@ -20,6 +20,7 @@ import { Check, Power } from "lucide-react";
 import Swal from "sweetalert2";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import MasterHeader from "../ActiveTabList/MasterHeader";
 import {
   useAddbankMutation,
   useDeletebankMutation,
@@ -558,17 +559,14 @@ export default function Form({
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1">
-      <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Bank Master</h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border h-6  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Bank
-          </button>
-        </div>
-      </div>
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border h-6 border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Bank
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <ReusableTable

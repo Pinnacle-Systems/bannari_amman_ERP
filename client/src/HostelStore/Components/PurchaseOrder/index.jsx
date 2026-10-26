@@ -29,6 +29,7 @@ import { useGetGsmMasterQuery } from "../../../redux/services/GsmMasterService.j
 import { useGetUserByIdQuery } from "../../../redux/services/UsersMasterService.js";
 import { push } from "../../../redux/features/opentabs";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 
 export default function Form() {
   const [showForm, setShowForm] = useState(false);
@@ -182,19 +183,17 @@ export default function Form() {
   return (
     <>
       <div
-        className="p-1 bg-[#F1F1F0] h-[85%]"
+        className="p-1 bg-[#F1F1F0] h-full"
         style={{ display: showForm ? "none" : "block" }}
       >
-        <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-1 items-start sm:items-center mb-4 gap-x-4 rounded-tl-lg rounded-tr-lg shadow-sm border border-gray-200">
-          <div>
-            <h1 className="text-lg font-bold text-gray-800">
-              Purchase Order Report
-            </h1>
+        <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-2 items-start sm:items-center mb-2 gap-x-4 rounded-md shadow-sm border border-gray-200">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <ActiveTabsHeader />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800  py-1 rounded-md flex items-center gap-2 text-xs px-2"
+              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800 py-1 rounded-md flex items-center gap-2 text-xs px-2 shadow-sm font-medium transition cursor-pointer"
               onClick={handleCreate}
             >
               <FaPlus /> Create New
@@ -217,7 +216,7 @@ export default function Form() {
       </div>
 
       {showForm && (
-        <div className="h-[93vh] overflow-hidden">
+        <div className="h-full overflow-hidden">
           <PurchaseOrderForm
             readOnly={readOnly}
             setReadOnly={setReadOnly}

@@ -1,6 +1,7 @@
 // components/Reuseable/TransactionLayout.jsx
 import { useRef, useState, useEffect, useCallback } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import ActiveTabsHeader from "../ActiveTabList/ActiveTabsHeader";
 
 // ── Hook: exported so forms can use it standalone if needed ──────────────
 export function useAdaptiveLayout(
@@ -102,6 +103,8 @@ export const TransactionScreen = ({
   leftSidebar = null,
   headerActions = null,
   className = "",
+  showTabs = true,
+  tabs = null,
 }) => {
   const containerRef = useRef(null);
   const titleBarRef = useRef(null);
@@ -354,12 +357,16 @@ export const TransactionScreen = ({
       {/* ── Title bar — identical to old UI, spans across top ── */}
       <div ref={titleBarRef} className="w-full mx-auto rounded-md shadow-lg px-2 py-1 flex-none bg-white">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0 flex-wrap">
-            <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              {title}
-              {badge}
-              {versionDropdown}
-            </h1>
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            {showTabs || tabs ? (
+              tabs || <ActiveTabsHeader />
+            ) : (
+              <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                {title}
+                {badge}
+                {versionDropdown}
+              </h1>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {renderDetailsLayoutSwitch()}

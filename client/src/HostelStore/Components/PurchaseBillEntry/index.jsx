@@ -13,6 +13,7 @@ import { useDeletePurchaseBillEntryMutation, } from "../../../redux/uniformServi
 import { useGetTaxTemplateQuery } from "../../../redux/services/TaxTemplateServices.js";
 import { useSelector } from "react-redux";
 import { invalidatePurchaseModule } from "../../../redux/Dispatch/PurchaseInvalidateTags.js";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 
 export default function Form() {
   const [showForm, setShowForm] = useState(false);
@@ -123,13 +124,11 @@ export default function Form() {
         style={{ display: showForm ? "none" : "block" }}
       >
         <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-1 items-start sm:items-center mb-4 gap-x-4 rounded-tl-lg rounded-tr-lg shadow-sm border border-gray-200">
-          <div>
-            <h1 className="text-lg font-bold text-gray-800">
-              Purchase Bill Entry
-            </h1>
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <ActiveTabsHeader />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800  py-1 rounded-md flex items-center gap-2 text-xs px-2"
               onClick={() => {

@@ -26,6 +26,7 @@ import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices"
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import MasterHeader from "../ActiveTabList/MasterHeader";
 import { DropdownWithModal } from "../../../Inputs/Reuseable";
 import { dropDownListObject } from "../../../Utils/contructObject";
 import CountsMaster from "../CountsMaster";
@@ -967,17 +968,14 @@ export default function YarnMaster({
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
-      <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Yarn Master</h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Yarn Master
-          </button>
-        </div>
-      </div>
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Yarn Master
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable

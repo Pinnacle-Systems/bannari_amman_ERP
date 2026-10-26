@@ -54,6 +54,7 @@ import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { BranchTypeMaster } from "..";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 
 export default function Form({
   partyId,
@@ -2404,11 +2405,11 @@ export default function Form({
     <>
       <div onKeyDown={handleKeyDown}>
         <div className="w-full  mx-auto rounded-md shadow-lg px-2 py-1 overflow-y-auto mt-1 bg-white">
-          <div className="w-full flex justify-between py-0.5 items-center px-0.5">
-            <h1 className="text-lg font-bold text-gray-800">
-              Customer/Supplier Master{" "}
-            </h1>
-            <div className="flex items-center gap-4 text-md">
+          <div className="w-full flex justify-between py-0.5 items-center px-0.5 gap-4">
+            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+              <ActiveTabsHeader />
+            </div>
+            <div className="flex items-center gap-4 text-md flex-shrink-0">
               <button
                 onClick={() => {
                   handleCreate();

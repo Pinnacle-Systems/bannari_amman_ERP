@@ -1031,26 +1031,26 @@ const PurchaseOrderForm = ({
   const effectiveReadOnly = readOnly || isOldVersion;
 
   const versionDropdown = (
-    <div className="flex items-center gap-2 ml-2">
-      <span className="text-xs text-gray-500 mt-1">Version</span>
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-bold text-[#7098BC] uppercase tracking-wider">
+        Version
+      </span>
 
       <div className="relative">
         <select
           value={quoteVersion}
           onChange={(e) => setQuoteVersion(Number(e.target.value))}
-          className="appearance-none bg-white border border-gray-300 text-gray-700 text-xs rounded-md pl-2 pr-6 py-1 
-                   focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 
-                   hover:border-gray-400 transition"
+          className="appearance-none bg-[#102438] border border-[#28496D] text-white text-xs rounded-md pl-2.5 pr-7 py-1 focus:outline-none focus:border-sky-400 hover:border-sky-500/50 transition cursor-pointer"
         >
           {quoteVersionOptions.map((v, index) => (
-            <option key={v} value={v}>
+            <option key={v} value={v} className="bg-[#102438] text-white">
               {index === quoteVersionOptions.length - 1 ? "Latest" : `V${v}`}
             </option>
           ))}
         </select>
 
         {/* Custom arrow */}
-        <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-gray-400">
+        <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-[#7098BC]">
           <svg
             className="w-3 h-3"
             fill="none"
@@ -1890,9 +1890,14 @@ const PurchaseOrderForm = ({
           <div className="px-3.5 pt-2.5 pb-2.5 border-b border-[#20456C] flex-none">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
-                  Purchase Order
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
+                    Purchase Order
+                  </span>
+                  {id && (
+                    <ModeChip id={id} readOnly={effectiveReadOnly} />
+                  )}
+                </div>
                 <h2 className="text-xl font-extrabold text-white tracking-tight truncate leading-tight mt-0.5">
                   {docId && docId !== "New" ? docId : "New PO"}
                 </h2>
@@ -1909,6 +1914,14 @@ const PurchaseOrderForm = ({
                 />
               </button>
             </div>
+
+            {/* Version dropdown & Approval banner inside basic details */}
+            {id && (
+              <div className="mt-2 pt-2 border-t border-[#20456C]/80 flex items-center justify-between gap-2 flex-wrap">
+                {versionDropdown}
+                {approvalStatusBanner}
+              </div>
+            )}
           </div>
 
           {/* Form Content */}
@@ -2602,8 +2615,8 @@ const PurchaseOrderForm = ({
       </Modal>
       <TransactionLayout
         className="po-form-geist"
+        showTabs={true}
         title="Purchase Order"
-        badge={<ModeChip id={id} readOnly={effectiveReadOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-7 h-7" />}
         onClose={onClose}
         onKeyDown={handleKeyDown}
@@ -2690,12 +2703,6 @@ const PurchaseOrderForm = ({
           )
         }
         footer={footerContent}
-        versionDropdown={
-          <div className="flex items-center gap-4">
-            {id ? versionDropdown : null}
-            {approvalStatusBanner}
-          </div>
-        }
       />
     </div>
   );

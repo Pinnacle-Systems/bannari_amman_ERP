@@ -44,6 +44,7 @@ import { CityMaster, DepartmentMaster, EmployeeCategoryMaster } from "..";
 import { DropdownWithModal } from "../../../Inputs/Reuseable";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import ActiveTabsHeader from "../ActiveTabList/ActiveTabsHeader";
 
 export default function Form() {
   const [form, setForm] = useState(false);
@@ -592,9 +593,11 @@ export default function Form() {
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1 ">
-      <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h1 className="text-lg font-bold text-gray-800">Employee Master</h1>
-        <div className="flex items-center gap-4">
+      <div className="w-full flex bg-white p-1 justify-between items-center gap-4">
+        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+          <ActiveTabsHeader />
+        </div>
+        <div className="flex items-center gap-4 flex-shrink-0">
           <button
             onClick={handleCreate}
             className="bg-white border text-xs border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"

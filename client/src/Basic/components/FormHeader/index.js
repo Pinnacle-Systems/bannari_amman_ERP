@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import secureLocalStorage from "react-secure-storage";
 import { useGetPagePermissionsByIdQuery } from "../../../redux/services/PageMasterService";
 import { useGetPagesQuery } from "../../../redux/services/PageMasterService";
+import ActiveTabsHeader from "../ActiveTabList/ActiveTabsHeader";
 
 
 const FormHeader = ({
@@ -98,15 +99,11 @@ const FormHeader = ({
       {isLoading || isFetching ? (
         <div></div>
       ) : (
-        <div className="md:flex md:items-center md:justify-between page-heading">
-          {model ? (
-            <div className="font-bold heading text-center md:mx-10">
-              {model}
-            </div>
-          ) : (
-            <div></div>
-          )}
-          <div className="flex sub-heading">
+        <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <ActiveTabsHeader />
+          </div>
+          <div className="flex sub-heading flex-shrink-0">
             <NewButton onClick={() => { hasPermission(onNew, "create") }} />
             <EditButton
               onClick={() => {

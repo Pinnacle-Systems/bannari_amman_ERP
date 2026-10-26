@@ -3,6 +3,7 @@ import moment from "moment/moment";
 import { AddNewButton } from "../../../Buttons";
 import { EMPTY_ICON } from "../../../icons";
 import { Loader } from "../../components";
+import ActiveTabsHeader from "../ActiveTabList/ActiveTabsHeader";
 
 const ACTIVE = (
   <button className="rounded bg-green-500 border border-green-300 p-1 disabled">
@@ -84,9 +85,11 @@ const Report = ({
 }) => {
   return (
     <div className="flex flex-col w-full h-[95%] overflow-auto">
-      <div className="md:flex md:items-center md:justify-between page-heading">
-        <div className="heading text-center md:mx-10">{heading}</div>
-        <div className="flex sub-heading justify-center md:justify-start items-center">
+      <div className="md:flex md:items-center md:justify-between page-heading py-1 px-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+          <ActiveTabsHeader />
+        </div>
+        <div className="flex sub-heading justify-center md:justify-start items-center flex-shrink-0">
           <input
             type="text"
             className="text-black h-6 focus:outline-none border md:ml-3"

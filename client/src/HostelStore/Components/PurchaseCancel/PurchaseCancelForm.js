@@ -35,6 +35,7 @@ import { DropdownWithModal } from "../../../Inputs/Reuseable";
 import { PartyMaster } from "..";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { CommonFormFooter } from "../../../Basic/components/Reuseable";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 
 const PurchaseCancelForm = ({
   onClose,
@@ -384,17 +385,16 @@ const PurchaseCancelForm = ({
 
   return (
     <>
-      <div className="w-full  mx-auto rounded-md shadow-lg px-2 py-1 overflow-y-auto">
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-            Purchase Cancel
-            <ModeChip id={id} readOnly={readOnly} />
-          </h1>
+      <div className="w-full mx-auto rounded-md shadow-lg px-2 py-1 overflow-y-auto">
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <ActiveTabsHeader />
+          </div>
           <button
             onClick={() => {
               onClose();
             }}
-            className="text-indigo-600 hover:text-indigo-700"
+            className="text-indigo-600 hover:text-indigo-700 flex-shrink-0"
             title="Back to Report"
           >
             <IoArrowBackCircleSharp className="w-7 h-7" />
@@ -404,7 +404,10 @@ const PurchaseCancelForm = ({
       <div className="space-y-2 py-2" onKeyDown={handleKeyDown}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div className="border border-slate-200 p-2 bg-white rounded-md shadow-sm col-span-1">
-            <h2 className="font-medium text-slate-700 mb-2">Basic Details</h2>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="font-medium text-slate-700">Basic Details</h2>
+              <ModeChip id={id} readOnly={readOnly} />
+            </div>
             <div className="grid grid-cols-2 gap-1">
               <ReusableInput
                 label="Purchase Cancel No"

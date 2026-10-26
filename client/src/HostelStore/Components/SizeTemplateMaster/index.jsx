@@ -26,6 +26,7 @@ import { toast } from "react-toastify";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import MasterHeader from "../../../Basic/components/ActiveTabList/MasterHeader";
 
 const MODEL = "Size Template Master";
 export default function Form({
@@ -523,19 +524,14 @@ export default function Form({
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1">
-      <div className="w-full flex bg-white justify-between p-1 items-center">
-        <h5 className="text-lg font-bold font-segoe text-gray-800">
-          Size Template Master
-        </h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Size Template
-          </button>
-        </div>
-      </div>
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Size Template
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <ReusableTable

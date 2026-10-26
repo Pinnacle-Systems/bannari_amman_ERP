@@ -17,6 +17,7 @@ import { useGetbankQuery } from "../../../redux/services/BankMasterService.js";
 import OrderEntryApi from "../../../redux/uniformService/OrderEntryService.js";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
 import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 
 const ProfomaInvoiceYarn = () => {
   const [showForm, setShowForm] = useState(false);
@@ -107,13 +108,11 @@ const ProfomaInvoiceYarn = () => {
         style={{ display: showForm ? "none" : "block" }}
       >
         <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-1 items-start sm:items-center mb-4 gap-x-4 rounded-tl-lg rounded-tr-lg shadow-sm border border-gray-200">
-          <div>
-            <h1 className="text-lg font-bold text-gray-800">
-              Yarn Proforma Invoice Report
-            </h1>
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto">
+            <ActiveTabsHeader />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800  py-1 rounded-md flex items-center gap-2 text-xs px-2"
               onClick={handleCreate}
