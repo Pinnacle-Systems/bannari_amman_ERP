@@ -53,6 +53,8 @@ const YarnItems = ({
     price: "",
     amount: "",
     taxPercent: "",
+    discountValue: "",
+    discountType: "",
     discountvalue: "",
     discounttype: "",
     quoteVersion: "",

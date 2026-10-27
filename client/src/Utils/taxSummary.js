@@ -21,10 +21,6 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
     hsnBreakup: {},
   };
 
-  console.log(qtyField, "qtyFieldqtyField")
-  console.log(result?.slabBreakup, "slabBreakup")
-
-
   const slabMap = {};
   const hsnMap = {};
 
@@ -36,13 +32,11 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
     const dozen = Number(item?.dozen) || 0;
     const price = Number(item?.price) || 0;
     const taxPct = Number(item?.taxPercent) || 0;
-    const discountVal = Number(item?.discountValue) || 0;
-    const dType = item?.discountType || "Flat";
+    const discountVal = Number(item?.discountValue ?? item?.discountvalue) || 0;
+    const dType = item?.discountType || item?.discounttype || "Flat";
     const hsn = item?.hsn || "NA";
 
     const gross = isDozen ? dozen * price : qty * price;
-
-    console.log(qty, dozen, price, gross, isDozen, "sales delivery")
 
     const itemDiscount = dType === "Flat" ? discountVal : (gross * discountVal) / 100;
 
@@ -57,17 +51,24 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
   });
 
   const totalTaxableBeforeOverall = items.reduce(
-    (s, i) => s + i._taxableBeforeOverall,
+    (s, i) => s + (Number(i._taxableBeforeOverall) || 0),
     0,
   );
 
   // ---- Step 2: Overall discount ----
   let overallDiscount = 0;
-  if (discountType == "Flat") {
-    overallDiscount = discountValue;
+  const numDiscountValue = Number(discountValue) || 0;
+  if (discountType === "Flat") {
+    overallDiscount = numDiscountValue;
+  } else if (discountType === "Percentage" || discountType === "%") {
+    overallDiscount = (totalTaxableBeforeOverall * numDiscountValue) / 100;
+  } else if (numDiscountValue > 0) {
+    overallDiscount = (totalTaxableBeforeOverall * numDiscountValue) / 100;
   } else {
-    overallDiscount = (totalTaxableBeforeOverall * discountValue) / 100;
+    overallDiscount = 0;
   }
+
+  overallDiscount = Math.max(0, Math.min(overallDiscount || 0, totalTaxableBeforeOverall || 0));
 
   // ---- Step 3: Apply overall + GST per item ----
   items.forEach((item) => {
@@ -76,94 +77,92 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
         ? 0
         : item._taxableBeforeOverall / totalTaxableBeforeOverall;
 
-    const overallShare = overallDiscount * ratio;
-    const finalTaxable = item._taxableBeforeOverall - overallShare;
+    const overallShare = (overallDiscount * ratio) || 0;
+    const finalTaxable = Math.max(0, (item._taxableBeforeOverall - overallShare) || 0);
 
     let cgst = 0,
       sgst = 0,
       igst = 0;
     const taxType = item.taxType || (isSupplierOutside ? "IGST" : "CGST_SGST");
     if (taxType === "IGST") {
-      igst = (finalTaxable * item._taxPct) / 100;
+      igst = ((finalTaxable * item._taxPct) / 100) || 0;
     } else {
       const half = item._taxPct / 2;
-      cgst = (finalTaxable * half) / 100;
-      sgst = (finalTaxable * half) / 100;
+      cgst = ((finalTaxable * half) / 100) || 0;
+      sgst = ((finalTaxable * half) / 100) || 0;
     }
 
     let net = finalTaxable + cgst + sgst + igst;
 
-
-
     // 👉 INSERT totals INTO poItems
     item.totals = {
-      gross: +item._gross.toFixed(roundTo),
-      itemDiscount: +item._itemDiscount.toFixed(roundTo),
-      overallDiscountShare: +overallShare.toFixed(roundTo),
-      taxable: +finalTaxable.toFixed(roundTo),
-      cgst: +cgst.toFixed(roundTo),
-      sgst: +sgst.toFixed(roundTo),
-      igst: +igst.toFixed(roundTo),
-      net: +net.toFixed(roundTo),
+      gross: +(Number(item._gross) || 0).toFixed(roundTo),
+      itemDiscount: +(Number(item._itemDiscount) || 0).toFixed(roundTo),
+      overallDiscountShare: +(Number(overallShare) || 0).toFixed(roundTo),
+      taxable: +(Number(finalTaxable) || 0).toFixed(roundTo),
+      cgst: +(Number(cgst) || 0).toFixed(roundTo),
+      sgst: +(Number(sgst) || 0).toFixed(roundTo),
+      igst: +(Number(igst) || 0).toFixed(roundTo),
+      net: +(Number(net) || 0).toFixed(roundTo),
     };
 
     // ---- Global + slab + hsn ----
-    result.gross += item._gross;
-    result.itemDiscount += item._itemDiscount;
-    result.overallDiscount += overallShare;
-    result.taxable += finalTaxable;
+    result.gross += item._gross || 0;
+    result.itemDiscount += item._itemDiscount || 0;
+    result.overallDiscount += overallShare || 0;
+    result.taxable += finalTaxable || 0;
 
     if (taxType === "IGST") {
       const key = `IGST_${item._taxPct}`;
-      slabMap[key] = (slabMap[key] || 0) + igst;
+      slabMap[key] = (slabMap[key] || 0) + (igst || 0);
 
       hsnMap[item._hsn] = hsnMap[item._hsn] || {};
-      hsnMap[item._hsn][key] = (hsnMap[item._hsn][key] || 0) + igst;
+      hsnMap[item._hsn][key] = (hsnMap[item._hsn][key] || 0) + (igst || 0);
     } else {
       const half = item._taxPct / 2;
       const cgstKey = `CGST_${half}`;
       const sgstKey = `SGST_${half}`;
 
-      slabMap[cgstKey] = (slabMap[cgstKey] || 0) + cgst;
-      slabMap[sgstKey] = (slabMap[sgstKey] || 0) + sgst;
+      slabMap[cgstKey] = (slabMap[cgstKey] || 0) + (cgst || 0);
+      slabMap[sgstKey] = (slabMap[sgstKey] || 0) + (sgst || 0);
 
       hsnMap[item._hsn] = hsnMap[item._hsn] || {};
-      hsnMap[item._hsn][cgstKey] = (hsnMap[item._hsn][cgstKey] || 0) + cgst;
-      hsnMap[item._hsn][sgstKey] = (hsnMap[item._hsn][sgstKey] || 0) + sgst;
+      hsnMap[item._hsn][cgstKey] = (hsnMap[item._hsn][cgstKey] || 0) + (cgst || 0);
+      hsnMap[item._hsn][sgstKey] = (hsnMap[item._hsn][sgstKey] || 0) + (sgst || 0);
     }
   });
 
   // ---- Step 4: Build breakups ----
   result.slabBreakup = Object.entries(slabMap).map(([key, amt]) => {
     const [type, pct] = key.split("_");
-    return { tax: `${type} ${pct}%`, amount: +amt.toFixed(roundTo) };
+    return { tax: `${type} ${pct}%`, amount: +(Number(amt) || 0).toFixed(roundTo) };
   });
 
   Object.keys(hsnMap).forEach((hsn) => {
     result.hsnBreakup[hsn] = Object.entries(hsnMap[hsn]).map(([key, amt]) => {
       const [type, pct] = key.split("_");
-      return { tax: `${type} ${pct}%`, amount: +amt.toFixed(roundTo) };
+      return { tax: `${type} ${pct}%`, amount: +(Number(amt) || 0).toFixed(roundTo) };
     });
   });
 
-  const totalTax = result.slabBreakup.reduce((s, b) => s + b.amount, 0);
-  let totalBeforeRound = result.taxable + totalTax;
-
+  const totalTax = result.slabBreakup.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+  let totalBeforeRound = (Number(result.taxable) || 0) + totalTax;
 
   if (deliveryTaxType) {
+    const numDelTaxVal = Number(deliveryTaxValue) || 0;
     if (deliveryTaxType === "Flat") {
-      totalBeforeRound += Number(deliveryTaxValue);
+      totalBeforeRound += numDelTaxVal;
     } else {
-      totalBeforeRound += (totalBeforeRound * Number(deliveryTaxValue)) / 100;
+      totalBeforeRound += (totalBeforeRound * numDelTaxVal) / 100;
     }
   }
-  console.log(totalBeforeRound, 'totalBeforeRound')
-  const roundedNet = Math.round(totalBeforeRound);
-  result.roundOff = +(roundedNet - totalBeforeRound).toFixed(roundTo);
+
+  const roundedNet = Math.round(totalBeforeRound) || 0;
+  result.roundOff = +((roundedNet - totalBeforeRound) || 0).toFixed(roundTo);
   result.net = roundedNet;
 
   ["gross", "itemDiscount", "overallDiscount", "taxable"].forEach((k) => {
-    result[k] = +result[k].toFixed(roundTo);
+    result[k] = +(Number(result[k]) || 0).toFixed(roundTo);
   });
 
   return { ...result, items };

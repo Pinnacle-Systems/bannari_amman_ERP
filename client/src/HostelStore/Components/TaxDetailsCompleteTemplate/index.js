@@ -58,8 +58,8 @@ const TaxDetailsFullTemplate = ({
 
   if (!row) return null;
 
-  let discountType = row["discountType"];
-  let discountValue = row["discountValue"] ?? "";
+  let discountType = row["discountType"] || row["discounttype"] || "";
+  let discountValue = row["discountValue"] ?? row["discountvalue"] ?? "";
   let taxPercent = row["taxPercent"] ?? "";
 
   const handleExitToNextRow = useCallback(

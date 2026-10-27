@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs";
 
 import {
@@ -65,9 +65,13 @@ const FabricItems = ({
     pricePerKg: "",
     totalPrice: "",
     qty: "",
+    wastePercentage: "",
+    requiredQty: "",
     price: "",
     amount: "",
     taxPercent: "",
+    discountValue: "",
+    discountType: "",
     discountvalue: "",
     discounttype: "",
   };
@@ -75,6 +79,8 @@ const FabricItems = ({
   const [contextMenu, setContextMenu] = useState(null);
   const [currentSelectedIndex, setCurrentSelectedIndex] = useState(null);
   const [currentWeightSelectedIndex, setCurrentWeightSelectedIndex] =
+    useState(null);
+  const [currentYarnSelectedIndex, setCurrentYarnSelectedIndex] =
     useState(null);
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
@@ -137,6 +143,15 @@ const FabricItems = ({
       const pricePerKg = parseFloat(newItems[index].pricePerKg) || 0;
       newItems[index].totalPrice = (totalKgs * pricePerKg).toFixed(2);
       newItems[index].amount = newItems[index].totalPrice;
+
+      const q = parseFloat(newItems[index].qty) || 0;
+      const waste = parseFloat(newItems[index].wastePercentage) || 0;
+      if (q > 0) {
+        const required = q + (q * waste) / 100;
+        newItems[index].requiredQty = required.toFixed(3);
+      } else {
+        newItems[index].requiredQty = "";
+      }
     }
 
     if (field === "pricePerKg") {
@@ -152,6 +167,17 @@ const FabricItems = ({
       const qty = parseFloat(newItems[index].qty) || 0;
       const price = parseFloat(newItems[index].price) || 0;
       newItems[index].amount = (qty * price).toFixed(2);
+    }
+
+    if (field === "qty" || field === "wastePercentage") {
+      const q = parseFloat(newItems[index].qty) || 0;
+      const waste = parseFloat(newItems[index].wastePercentage) || 0;
+      if (q > 0) {
+        const required = q + (q * waste) / 100;
+        newItems[index].requiredQty = required.toFixed(3);
+      } else {
+        newItems[index].requiredQty = "";
+      }
     }
 
     setFabricItems(newItems);
@@ -200,6 +226,17 @@ const FabricItems = ({
       })),
     );
   };
+
+  const enrichedFabricItems = useMemo(() => {
+    return (orderFabricItems || []).map((row) => {
+      const matched = enrichedItems?.items?.find((item) =>
+        row.rowId
+          ? item.rowId === row.rowId
+          : item.fabricId && item.fabricId === row.fabricId,
+      );
+      return matched || row;
+    });
+  }, [orderFabricItems, enrichedItems]);
 
   return (
     <>
@@ -361,7 +398,7 @@ const FabricItems = ({
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
-          poItems={enrichedItems?.items || orderFabricItems}
+          poItems={enrichedFabricItems}
           handleInputChange={handleInputChange}
           id={id}
           isNewVersion={false}
@@ -371,9 +408,52 @@ const FabricItems = ({
         />
       </Modal>
 
+      <Modal
+        isOpen={Number.isInteger(currentYarnSelectedIndex)}
+        onClose={() => {
+          setCurrentYarnSelectedIndex(null);
+        }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-lg w-full"
+      >
+        <div className="p-6 bg-white rounded-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+            <h2 className="text-base font-semibold text-gray-800">
+              Yarn Details{" "}
+              {Number.isInteger(currentYarnSelectedIndex) && (
+                <span className="text-xs font-normal text-gray-500">
+                  (Row {currentYarnSelectedIndex + 1})
+                </span>
+              )}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setCurrentYarnSelectedIndex(null)}
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="py-8 text-center text-sm text-gray-600">
+            Yarn details for row{" "}
+            {Number.isInteger(currentYarnSelectedIndex)
+              ? currentYarnSelectedIndex + 1
+              : ""}
+          </div>
+          <div className="flex justify-end pt-3 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setCurrentYarnSelectedIndex(null)}
+              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div
-        ref={gridWrapperRef}
         className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
+        tabIndex={-1}
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -399,14 +479,14 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="min-w-[2300px] w-full border-collapse table-fixed"
+          tableClassName="w-[2302px] min-w-[2302px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-slate-50 z-[30]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-0 bg-slate-50 z-[32]",
             },
             {
               key: "desc",
@@ -416,74 +496,103 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[321px] min-w-[321px] max-w-[321px] px-2 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-slate-50 z-[25]",
+                "w-[320px] min-w-[320px] max-w-[320px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-[40px] bg-slate-50 z-[31]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-[113px] min-w-[113px] max-w-[113px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[359px] bg-slate-50 z-[20]",
+                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[360px] bg-slate-50 z-[30]",
             },
 
             {
               key: "color",
               label: "Color",
-              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "design",
               label: "Design",
-              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gauge",
               label: "Gauge",
-              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "loop",
               label: "Loop Length",
-              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gsm",
               label: "GSM",
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "kDia",
               label: "K-Dia",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "fDia",
               label: "F-Dia",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "uom",
               label: "UOM",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
 
-            {
-              key: "width",
-              label: "Width",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
-            },
-            {
-              key: "weight",
-              label: "Weight",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
-            },
+            // {
+            //   key: "width",
+            //   label: "Width",
+            //   className:
+            //     "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            // },
+            // {
+            //   key: "weight",
+            //   label: "Weight",
+            //   className:
+            //     "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            // },
             {
               key: "qty",
               label: (
                 <>
-                  Qty<span className="text-red-500">*</span>
+                  Order Qty<span className="text-red-500">*</span>
                 </>
               ),
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            },
+            {
+              key: "wastePercentage",
+              label: "Waste %",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            },
+            {
+              key: "requiredQty",
+              label: "Required Qty",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            },
+            {
+              key: "yarn",
+              label: "Yarn",
+              className:
+                "w-14 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "price",
@@ -493,23 +602,27 @@ const FabricItems = ({
                   <span className="text-red-500">*</span>
                 </>
               ),
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gross",
               label: "Gross",
-              className: "w-32 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "tax",
               label: "Tax",
-              className: "w-12 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
 
             {
               key: "actions",
               label: "Actions",
-              className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
           ]}
           rows={
@@ -520,24 +633,37 @@ const FabricItems = ({
           }
           footer={
             <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
+              <td className="w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-[22] bg-slate-50 border-r border-b border-gray-300" />
+              <td className="w-[320px] min-w-[320px] max-w-[320px] sticky left-[40px] z-[21] bg-slate-50 border-r border-b border-gray-300" />
+              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[360px] z-[20] bg-slate-50 border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
               <td
-                className="text-right px-2 border border-gray-300 bg-slate-50"
-                colSpan={13}
+                className="text-right px-2 border-r border-b border-gray-300 bg-slate-50"
+                colSpan={8}
               >
                 Total
               </td>
-              <td className="text-right px-1 border border-gray-300">
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {orderFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
-              <td className="text-right px-1 border border-gray-300">
+              <td className="w-24 border-r border-b border-gray-300 bg-slate-50" />
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
+                {orderFabricItems
+                  ?.reduce(
+                    (sum, i) => sum + (parseFloat(i.requiredQty) || 0),
+                    0,
+                  )
+                  .toFixed(3)}
+              </td>
+              <td className="w-14 border-r border-b border-gray-300 bg-slate-50" />
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
-              <td className="text-right px-1 border border-gray-300 text-black">
+              <td className="w-32 text-right px-1 border-r border-b border-gray-300 text-black">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
                   orderFabricItems?.reduce(
@@ -548,7 +674,10 @@ const FabricItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
+              <td
+                className="border-r border-b border-gray-300 bg-slate-50"
+                colSpan={2}
+              />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
@@ -561,7 +690,7 @@ const FabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-white group-hover:bg-gray-50 z-[10]"
+                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border-r border-b border-gray-300 sticky left-0 bg-white group-hover:bg-gray-50 z-[12]"
                 >
                   {index + 1}
                 </td>
@@ -569,7 +698,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="w-[321px] min-w-[321px] max-w-[321px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-white group-hover:bg-gray-50 z-[5]"
+                  className="w-[320px] min-w-[320px] max-w-[320px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -590,7 +719,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-[113px] min-w-[113px] max-w-[113px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[359px] bg-white group-hover:bg-gray-50 z-[2]"
+                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px] px-2 sticky left-[360px] bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
@@ -608,7 +737,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -627,7 +756,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.designId}
@@ -646,7 +775,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem?.gaugeId}
@@ -665,7 +794,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.loopLengthId}
@@ -686,7 +815,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={3}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-28 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.gsmId}
@@ -708,7 +837,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.kDiaId}
@@ -730,7 +859,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fDiaId}
@@ -752,7 +881,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.uomId}
@@ -771,42 +900,9 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  data-grid-col={4}
-                  data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
-                >
-                  <input
-                    type="text"
-                    className="text-left px-3 w-full table-data-input bg-transparent"
-                    value={rowItem.width}
-                    onChange={(e) =>
-                      handleInputChange(e.target.value, originalIndex, "width")
-                    }
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={5}
-                  data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
-                >
-                  <button
-                    disabled={!rowItem.fabricId}
-                    className="text-indigo-600 w-full hover:text-indigo-800 disabled:text-gray-300 table-data-input"
-                    onClick={() => {
-                      setCurrentWeightSelectedIndex(originalIndex);
-                    }}
-                  >
-                    {VIEW}
-                  </button>
-                </td>
-
-                <td
-                  data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="number"
@@ -816,6 +912,17 @@ const FabricItems = ({
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
+                    onBlur={() => {
+                      const val = rowItem.qty;
+                      if (val !== "" && val !== undefined && val !== null) {
+                        const num = parseFloat(val);
+                        handleInputChange(
+                          !isNaN(num) ? num.toFixed(3) : "",
+                          originalIndex,
+                          "qty",
+                        );
+                      }
+                    }}
                     readOnly={
                       readOnly ||
                       rowItem.pricePerKg > 0 ||
@@ -825,9 +932,87 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-24 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.wastePercentage ?? ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "wastePercentage",
+                      )
+                    }
+                    onBlur={() => {
+                      const val = rowItem.wastePercentage;
+                      if (val !== "" && val !== undefined && val !== null) {
+                        const num = parseFloat(val);
+                        handleInputChange(
+                          !isNaN(num) ? num.toFixed(2) : "",
+                          originalIndex,
+                          "wastePercentage",
+                        );
+                      }
+                    }}
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.requiredQty ?? ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "requiredQty",
+                      )
+                    }
+                    onBlur={() => {
+                      const val = rowItem.requiredQty;
+                      if (val !== "" && val !== undefined && val !== null) {
+                        const num = parseFloat(val);
+                        handleInputChange(
+                          !isNaN(num) ? num.toFixed(3) : "",
+                          originalIndex,
+                          "requiredQty",
+                        );
+                      }
+                    }}
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-14 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
+                >
+                  <button
+                    type="button"
+                    disabled={!rowItem.fabricId}
+                    className="text-indigo-600 w-full flex items-center justify-center hover:text-indigo-800 disabled:text-gray-300 table-data-input"
+                    onClick={() => {
+                      setCurrentYarnSelectedIndex(originalIndex);
+                    }}
+                  >
+                    {VIEW}
+                  </button>
+                </td>
+                <td
+                  data-grid-row={index}
                   data-grid-col={7}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <div className="relative w-full">
                     <input
@@ -886,7 +1071,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2"
+                  className="w-32 text-[11px] text-right px-1 border-r border-b border-gray-300 bg-gray-50 bg-transparent gap-x-2"
                 >
                   <span className="pr-1">
                     {isCurrencySymbol && rowItem.fabricId
@@ -904,7 +1089,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
+                  className="w-12 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
                 >
                   <button
                     disabled={!rowItem.fabricId || isCustomerExport}
@@ -927,7 +1112,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
+                  className="w-16 border-r border-b border-gray-300 align-top pt-1 bg-gray-50"
                 >
                   {!readOnly && (
                     <div className="flex items-center justify-center">

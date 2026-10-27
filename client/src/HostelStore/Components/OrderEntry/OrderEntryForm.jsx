@@ -114,6 +114,8 @@ const EMPTY_FABRIC_ROW = {
   pricePerKg: "",
   totalPrice: "",
   qty: "",
+  wastePercentage: "",
+  requiredQty: "",
   price: "",
   amount: "",
   taxPercent: "",
@@ -193,7 +195,7 @@ const OrderEntryForm = ({
   const [customerId, setCustomerId] = useState("");
   const [remarks, setRemarks] = useState("");
   const [requirements, setRequirements] = useState("");
-  const [orderType, setOrderType] = useState("AGAINSTPI");
+  const [orderType, setOrderType] = useState("GENERAL");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [docId, setDocId] = useState("");
   const [summary, setSummary] = useState(false);
@@ -320,7 +322,7 @@ const OrderEntryForm = ({
           ? moment.utc(data.docDate).format("YYYY-MM-DD")
           : moment.utc(new Date()).format("YYYY-MM-DD"),
       );
-      setOrderType(data?.orderType || "AGAINSTPI");
+      setOrderType(data?.orderType || "GENERAL");
       setCustomerId(data?.customerId || "");
       setRemarks(data?.remarks || "");
       setAttachments(data?.attachments ? data?.attachments : []);
@@ -343,6 +345,14 @@ const OrderEntryForm = ({
         pricePerKg: item?.pricePerKg?.toFixed(2),
         totalPrice: item?.totalPrice?.toFixed(2),
         qty: item?.qty?.toFixed(3),
+        wastePercentage:
+          item?.wastePercentage != null
+            ? Number(item?.wastePercentage).toFixed(2)
+            : "",
+        requiredQty:
+          item?.requiredQty != null
+            ? Number(item?.requiredQty).toFixed(3)
+            : "",
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -362,7 +372,7 @@ const OrderEntryForm = ({
       setProFormaIYarnId(data?.proFormaYarnId || "");
       setTaxTemplateId(data?.taxTemplateId || "");
       setDiscountType(data?.discountType || "");
-      setDiscountValue(data?.discountValue);
+      setDiscountValue(data?.discountValue || "");
       setPayTermId(data?.payTermId || "");
       setBankId(data?.bankId || "");
       setCurrencyId(data?.currencyId || "");
@@ -991,7 +1001,7 @@ const OrderEntryForm = ({
 
                       setTaxTemplateId(res?.data?.taxTemplateId || "");
                       setDiscountType(res?.data?.discountType || "");
-                      setDiscountValue(res?.data?.discountValue);
+                      setDiscountValue(res?.data?.discountValue || "");
 
                       if (res?.data?.termsId) setTermsId(res.data.termsId);
                       if (res?.data?.termsAndCondition)
@@ -1048,6 +1058,12 @@ const OrderEntryForm = ({
                           ? Number(item?.totalPrice)?.toFixed(2)
                           : "",
                         qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+                        wastePercentage: item?.wastePercentage
+                          ? Number(item?.wastePercentage)?.toFixed(2)
+                          : "",
+                        requiredQty: item?.requiredQty
+                          ? Number(item?.requiredQty)?.toFixed(3)
+                          : "",
                         price: item?.price
                           ? Number(item?.price)?.toFixed(2)
                           : "",
@@ -1102,7 +1118,7 @@ const OrderEntryForm = ({
 
                     setTaxTemplateId(res?.data?.taxTemplateId || "");
                     setDiscountType(res?.data?.discountType || "");
-                    setDiscountValue(res?.data?.discountValue);
+                    setDiscountValue(res?.data?.discountValue || "");
 
                     if (res?.data?.termsId) setTermsId(res.data.termsId);
                     if (res?.data?.termsAndCondition)

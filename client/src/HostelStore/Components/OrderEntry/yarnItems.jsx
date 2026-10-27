@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import FxSelect, { FxSelectWithAdd } from "../../../Inputs/index.js";
 
 import {
@@ -47,6 +47,8 @@ const YarnItems = ({
     price: "",
     amount: "",
     taxPercent: "",
+    discountValue: "",
+    discountType: "",
     discountvalue: "",
     discounttype: "",
   };
@@ -161,6 +163,17 @@ const YarnItems = ({
     );
   };
 
+  const enrichedYarnItems = useMemo(() => {
+    return (orderYarnItems || []).map((row) => {
+      const matched = enrichedItems?.items?.find((item) =>
+        row.rowId
+          ? item.rowId === row.rowId
+          : item.yarnId && item.yarnId === row.yarnId,
+      );
+      return matched || row;
+    });
+  }, [orderYarnItems, enrichedItems]);
+
   return (
     <>
       <Modal
@@ -178,7 +191,7 @@ const YarnItems = ({
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
-          poItems={enrichedItems?.items || orderYarnItems}
+          poItems={enrichedYarnItems}
           handleInputChange={handleInputChange}
           id={id}
           isNewVersion={false}
