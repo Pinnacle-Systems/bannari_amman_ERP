@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { push, remove } from "../../../redux/features/opentabs";
+import ActiveTabsHeader from "./ActiveTabsHeader";
 import {
   CountryMaster,
   PageMaster,
@@ -224,7 +225,8 @@ const ActiveTabList = () => {
   const hiddenTabs = openTabs.tabs.slice(parseInt(itemsToShow));
 
   const activeTab = openTabs.tabs.find((tab) => tab.active);
-  const hideTopTabs = activeTab && PAGES_WITH_HEADER_TABS.includes(activeTab.name);
+  const hideTopTabs =
+    activeTab && PAGES_WITH_HEADER_TABS.includes(activeTab.name);
 
   return (
     // <div className="relative ">

@@ -86,13 +86,25 @@ const ActiveTabsHeader = ({ className = "" }) => {
   }, [showHidden]);
 
   const tabsList = openTabs?.tabs || [];
+  const activeIndex = tabsList.findIndex((t) => t.active);
+
+  // Scroll active tab into view when activeIndex changes
+  useEffect(() => {
+    if (activeTabRef.current) {
+      activeTabRef.current.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
+    }
+  }, [activeIndex]);
+
   if (tabsList.length === 0) return null;
 
   // Tabs fit within available space up to search bar (~125px per tab pill + gap)
   // Reserve ~52px for the overflow ">> N" button
   const spaceForTabs = Math.max(100, maxAvailableWidth - 52);
   const itemsToShow = Math.max(1, Math.floor(spaceForTabs / 125));
-  const activeIndex = tabsList.findIndex((t) => t.active);
 
   let currentShowingTabs = [];
   let hiddenTabs = [];
@@ -114,17 +126,6 @@ const ActiveTabsHeader = ({ className = "" }) => {
       (tab) => !currentShowingTabs.some((shown) => shown.name === tab.name),
     );
   }
-
-  // Scroll active tab into view when activeIndex changes
-  useEffect(() => {
-    if (activeTabRef.current) {
-      activeTabRef.current.scrollIntoView({
-        behavior: "smooth",
-        inline: "nearest",
-        block: "nearest",
-      });
-    }
-  }, [activeIndex]);
 
   const handleWheel = (e) => {
     if (e.deltaY !== 0 && scrollContainerRef.current) {
