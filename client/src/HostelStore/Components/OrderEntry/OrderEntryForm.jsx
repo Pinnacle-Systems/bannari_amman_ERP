@@ -121,6 +121,7 @@ const EMPTY_FABRIC_ROW = {
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
+  yarnDetails: [],
 };
 
 const EMPTY_YARN_ROW = {
@@ -352,7 +353,33 @@ const OrderEntryForm = ({
         requiredQty:
           item?.requiredQty != null
             ? Number(item?.requiredQty).toFixed(3)
-            : "",
+            : item?.qty != null
+              ? (
+                  Number(item?.qty) +
+                  (Number(item?.qty) * (Number(item?.wastePercentage) || 0)) / 100
+                ).toFixed(3)
+              : "",
+        yarnDetails: Array.isArray(item?.yarnDetails)
+          ? item.yarnDetails.map((yd) => {
+              const reqNum =
+                item?.requiredQty != null
+                  ? Number(item?.requiredQty)
+                  : item?.qty != null
+                    ? Number(item?.qty) +
+                      (Number(item?.qty) *
+                        (Number(item?.wastePercentage) || 0)) /
+                        100
+                    : 0;
+              const pct = parseFloat(yd.percentage);
+              return {
+                ...yd,
+                yarnQty:
+                  reqNum > 0 && !isNaN(pct)
+                    ? ((reqNum * pct) / 100).toFixed(3)
+                    : yd.yarnQty,
+              };
+            })
+          : item?.yarnDetails,
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -2387,6 +2414,7 @@ const OrderEntryForm = ({
               loopLengthList={loopLengthList}
               gaugeList={gaugeList}
               fabricList={fabricList}
+              yarnList={yarnList}
               id={id}
               termsRef={termsRef}
               childRecord={childRecord}

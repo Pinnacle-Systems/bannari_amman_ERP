@@ -9,6 +9,7 @@ import {
 import { VIEW } from "../../../icons";
 import Modal from "../../../UiComponents/Modal";
 import TaxDetailsFullTemplate from "../TaxDetailsCompleteTemplate";
+import YarnDetails from "./yarnDetails.jsx";
 import Swal from "sweetalert2";
 import { Gsm, UomMaster, ColorMaster } from "..";
 import {
@@ -43,9 +44,11 @@ const FabricItems = ({
   loopLengthList,
   gaugeList,
   fabricList,
+  yarnList,
 }) => {
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
+  console.log(orderFabricItems, "orderFabricItems");
 
   const EMPTY_ROW = {
     fabricId: "",
@@ -74,6 +77,7 @@ const FabricItems = ({
     discountType: "",
     discountvalue: "",
     discounttype: "",
+    yarnDetails: [],
   };
 
   const [contextMenu, setContextMenu] = useState(null);
@@ -152,6 +156,20 @@ const FabricItems = ({
       } else {
         newItems[index].requiredQty = "";
       }
+
+      if (Array.isArray(newItems[index].yarnDetails)) {
+        const reqNum = parseFloat(newItems[index].requiredQty) || 0;
+        newItems[index].yarnDetails = newItems[index].yarnDetails.map((yd) => {
+          const pct = parseFloat(yd.percentage);
+          return {
+            ...yd,
+            yarnQty:
+              reqNum > 0 && !isNaN(pct)
+                ? ((reqNum * pct) / 100).toFixed(3)
+                : yd.yarnQty,
+          };
+        });
+      }
     }
 
     if (field === "pricePerKg") {
@@ -169,14 +187,34 @@ const FabricItems = ({
       newItems[index].amount = (qty * price).toFixed(2);
     }
 
-    if (field === "qty" || field === "wastePercentage") {
-      const q = parseFloat(newItems[index].qty) || 0;
-      const waste = parseFloat(newItems[index].wastePercentage) || 0;
-      if (q > 0) {
-        const required = q + (q * waste) / 100;
-        newItems[index].requiredQty = required.toFixed(3);
-      } else {
-        newItems[index].requiredQty = "";
+    if (
+      field === "qty" ||
+      field === "wastePercentage" ||
+      field === "requiredQty"
+    ) {
+      if (field === "qty" || field === "wastePercentage") {
+        const q = parseFloat(newItems[index].qty) || 0;
+        const waste = parseFloat(newItems[index].wastePercentage) || 0;
+        if (q > 0) {
+          const required = q + (q * waste) / 100;
+          newItems[index].requiredQty = required.toFixed(3);
+        } else {
+          newItems[index].requiredQty = "";
+        }
+      }
+
+      if (Array.isArray(newItems[index].yarnDetails)) {
+        const reqNum = parseFloat(newItems[index].requiredQty) || 0;
+        newItems[index].yarnDetails = newItems[index].yarnDetails.map((yd) => {
+          const pct = parseFloat(yd.percentage);
+          return {
+            ...yd,
+            yarnQty:
+              reqNum > 0 && !isNaN(pct)
+                ? ((reqNum * pct) / 100).toFixed(3)
+                : yd.yarnQty,
+          };
+        });
       }
     }
 
@@ -413,42 +451,18 @@ const FabricItems = ({
         onClose={() => {
           setCurrentYarnSelectedIndex(null);
         }}
-        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-lg w-full"
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl w-[1300px] h-[520px] max-w-[96vw] max-h-[92vh]"
       >
-        <div className="p-6 bg-white rounded-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-            <h2 className="text-base font-semibold text-gray-800">
-              Yarn Details{" "}
-              {Number.isInteger(currentYarnSelectedIndex) && (
-                <span className="text-xs font-normal text-gray-500">
-                  (Row {currentYarnSelectedIndex + 1})
-                </span>
-              )}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setCurrentYarnSelectedIndex(null)}
-              className="text-gray-400 hover:text-gray-600 text-lg leading-none"
-            >
-              &times;
-            </button>
-          </div>
-          <div className="py-8 text-center text-sm text-gray-600">
-            Yarn details for row{" "}
-            {Number.isInteger(currentYarnSelectedIndex)
-              ? currentYarnSelectedIndex + 1
-              : ""}
-          </div>
-          <div className="flex justify-end pt-3 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => setCurrentYarnSelectedIndex(null)}
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <YarnDetails
+          currentIndex={currentYarnSelectedIndex}
+          orderFabricItems={orderFabricItems}
+          setFabricItems={setFabricItems}
+          fabricList={fabricList}
+          yarnList={yarnList}
+          readOnly={readOnly}
+          colorList={colorList}
+          onClose={() => setCurrentYarnSelectedIndex(null)}
+        />
       </Modal>
 
       <div
@@ -578,7 +592,7 @@ const FabricItems = ({
             },
             {
               key: "wastePercentage",
-              label: "Waste %",
+              label: "Loss %",
               className:
                 "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
