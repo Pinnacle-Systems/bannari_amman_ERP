@@ -65,7 +65,7 @@ const YarnItems = ({
   };
 
   const deleteRow = (index) => {
-    if (orderYarnItems.length <= 14) {
+    if (orderYarnItems.length <= 10) {
       const newItems = [...orderYarnItems];
       newItems[index] = {
         ...EMPTY_ROW,
@@ -154,7 +154,7 @@ const YarnItems = ({
 
   const handleDeleteAllRows = () => {
     setYarnItems(
-      Array.from({ length: 14 }, () => ({
+      Array.from({ length: 10 }, () => ({
         ...EMPTY_ROW,
         rowId: Math.random().toString(36).substring(2, 9),
       })),
@@ -171,6 +171,7 @@ const YarnItems = ({
             handleFocusNextRow?.(currentSelectedIndex);
           }, 0);
         }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
       >
         <TaxDetailsFullTemplate
           readOnly={readOnly}
@@ -189,7 +190,7 @@ const YarnItems = ({
 
       <div
         ref={gridWrapperRef}
-        className="h-full"
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -215,12 +216,13 @@ const YarnItems = ({
       >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[1450px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
-              className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300 sticky left-0 bg-gray-200 z-[2]",
+              className: "w-10 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "desc",
@@ -229,53 +231,37 @@ const YarnItems = ({
                   Description of Goods<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-full px-2 py-2 text-center text-xs  border border-gray-300 sticky left-[40px] bg-gray-200 z-[2]",
+              className: "w-72 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "hsn",
               label: "HSN",
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300 sticky left-[328px] bg-gray-200 z-[2]",
+              className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
             },
-
-            // {
-            //   key: "content",
-            //   label: "Content",
-            //   className:
-            //     "w-36 px-1 py-2 text-center text-xs  border border-gray-300",
-            // },
-            // {
-            //   key: "counts",
-            //   label: "Counts",
-            //   className:
-            //     "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
-            // },
             {
               key: "color",
               label: "Color",
               className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "uom",
               label: "UOM",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "noOfbags",
               label: "No of Bags",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "weightPerBag",
               label: "Weight per Bag",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
-
             {
               key: "qty",
               label: (
@@ -284,7 +270,7 @@ const YarnItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -295,26 +281,25 @@ const YarnItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-32 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "tax",
               label: "Tax",
               className:
-                "w-12 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-16 px-1 py-2 text-center font-medium text-[11px]",
             },
-
             {
               key: "actions",
               label: "Actions",
               className:
-                "w-16 px-2 py-2 text-center text-xs  border border-gray-300",
+                "w-16 px-2 py-2 text-center font-medium text-[11px]",
             },
           ]}
           rows={
@@ -324,9 +309,9 @@ const YarnItems = ({
             })) || []
           }
           footer={
-            <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
+            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 bg-gray-200"
+                className="text-right px-2 border border-gray-300 bg-slate-50"
                 colSpan={7}
               >
                 Total
@@ -348,17 +333,17 @@ const YarnItems = ({
                   orderYarnItems?.reduce(
                     (sum, i) => sum + (parseFloat(i.amount) || 0),
                     0,
-                  ),
+                  ) || 0,
                   currencyCode || isCurrencySymbol,
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-gray-200" colSpan={3} />
+              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={(_, index) =>
-            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`
+          getRowClassName={() =>
+            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
           }
           renderRow={(item, index) => {
             const rowItem = item.row;
@@ -368,7 +353,7 @@ const YarnItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
+                  className="w-12 border border-gray-300 text-[11px] text-center"
                 >
                   {index + 1}
                 </td>
@@ -376,7 +361,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 sticky left-[40px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300"
                 >
                   <FxSelectWithAdd
                     value={rowItem.yarnId}
@@ -397,7 +382,7 @@ const YarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
                 >
                   <FxSelect
                     value={rowItem.hsnId}

@@ -759,15 +759,16 @@ const ProformaInvoiceFabricForm = ({
   const basicDetailsSidebar = (
     <aside
       style={{
+        backgroundColor: "#0d1e30",
         backgroundImage:
           "radial-gradient(120% 70% at 50% 0%, rgba(96, 165, 250, 0.25) 0%, rgba(30, 75, 125, 0.12) 45%, transparent 75%), linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%), linear-gradient(180deg, #16304C 0%, #0d1e30 40%, #050b12 75%, #000000 100%)",
       }}
-      className={`transition-all duration-300 ease-in-out flex flex-col min-h-0 flex-none self-stretch text-white rounded-md border border-[#20456C] shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] border-l-4 border-l-white overflow-hidden relative ${
+      className={`bg-[#0d1e30] transition-[width] duration-300 ease-in-out flex flex-col min-h-0 flex-none self-stretch text-white rounded-md border border-[#20456C] shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_1px_3px_rgba(0,0,0,0.3)] overflow-hidden relative ${
         isSidebarOpen ? "w-[260px] xl:w-[280px]" : "w-[44px]"
       }`}
     >
       {isSidebarOpen ? (
-        <div className="flex flex-col h-full min-h-0 relative">
+        <div className="w-[260px] xl:w-[280px] min-w-[260px] xl:min-w-[280px] flex flex-col h-full min-h-0 relative">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-28 bg-sky-400/20 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none" />
           {/* Header of Sidebar */}
@@ -823,7 +824,7 @@ const ProformaInvoiceFabricForm = ({
 
           {/* Form Content */}
           <div
-            className="flex-1 min-h-0 overflow-y-auto px-3 py-2.5 space-y-2.5
+            className="flex-1 min-h-0 overflow-y-auto px-3 py-2.5 space-y-2.5 [scrollbar-color:#28496D_#102438] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#102438] [&::-webkit-scrollbar-thumb]:bg-[#28496D] [&::-webkit-scrollbar-thumb]:rounded
             [&_label]:!text-[#7098BC] [&_label]:!text-[10px] [&_label]:!font-bold [&_label]:!tracking-[0.1em] [&_label]:!uppercase [&_label]:!mb-1
             [&_label_p]:!text-[#7098BC] [&_label_span:not(.text-red-500)]:!text-[#7098BC] [&_.text-red-500]:!text-rose-400
             [&_input]:!bg-[#102438] [&_input]:!border-[#28496D] [&_input]:!text-white [&_input]:[-webkit-text-fill-color:white] [&_input]:!opacity-100 [&_input]:!rounded-md [&_input]:[color-scheme:dark] [&_input:focus]:!border-sky-400
@@ -1009,7 +1010,7 @@ const ProformaInvoiceFabricForm = ({
           </div>
         </div>
       ) : (
-        <div className="flex flex-col h-full min-h-0 items-center justify-between py-2">
+        <div className="w-[44px] min-w-[44px] flex flex-col h-full min-h-0 items-center justify-between py-2">
           {/* Expand Button */}
           <button
             type="button"

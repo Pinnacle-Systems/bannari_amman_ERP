@@ -336,8 +336,7 @@ const YarnItems = ({
             {
               key: "serial",
               label: "S.No",
-              className:
-                "w-10 px-1 py-2 text-center font-medium text-[11px] sticky left-0 bg-slate-50 z-[20]",
+              className: "w-10 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "desc",
@@ -346,14 +345,12 @@ const YarnItems = ({
                   Description of Goods<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-72 px-2 py-2 text-center font-medium text-[11px] sticky left-[40px] bg-slate-50 z-[20]",
+              className: "w-72 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "hsn",
               label: "HSN",
-              className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] sticky left-[328px] bg-slate-50 z-[20]",
+              className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
             },
 
             // {
@@ -470,7 +467,7 @@ const YarnItems = ({
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
           getRowClassName={() =>
-            `h-6 bg-white hover:bg-gray-50`
+            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
           }
           renderRow={(item, index) => {
             const rowItem = item.row;
@@ -481,7 +478,7 @@ const YarnItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
+                  className="w-12 border border-gray-300 text-[11px] text-center"
                 >
                   {index + 1}
                 </td>
@@ -489,7 +486,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 sticky left-[40px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300"
                 >
                   <FxSelectWithAdd
                     value={rowItem.yarnId}
@@ -511,7 +508,7 @@ const YarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
