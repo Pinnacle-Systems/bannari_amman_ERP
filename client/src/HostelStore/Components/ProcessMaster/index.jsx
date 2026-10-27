@@ -17,10 +17,8 @@ import {
 } from "../../../redux/services/ProcessMasterService";
 import { Checkbox } from "@mui/material";
 import { UserPermissions } from "../../../Utils/UserPermissions";
-import { DepartmentMaster } from "../../../Basic/components";
-import { DropdownWithModal } from "../../../Inputs/Reuseable";
-import { dropDownListObject } from "../../../Utils/contructObject";
-import { useGetDepartmentQuery } from "../../../redux/services/DepartmentMasterService";
+import MasterHeader from "../../../Basic/components/ActiveTabList/MasterHeader";
+import { getCommonParams } from "../../../Utils/helper.js";
 
 export default function Form({
   onSuccess,
@@ -35,23 +33,21 @@ export default function Form({
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [active, setActive] = useState(true);
-  const [departmentId, setDepartmentId] = useState("");
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
   const [searchValue, setSearchValue] = useState("");
   const childRecord = useRef(0);
 
+  const { branchId, companyId } = getCommonParams();
   const params = {
-    companyId: secureLocalStorage.getItem(
-      sessionStorage.getItem("sessionId") + "userCompanyId",
-    ),
+    branchId,
+    companyId,
   };
   const {
     data: allData,
     isLoading,
     isFetching,
   } = useGetProcessMasterQuery({ params, searchParams: searchValue });
-  console.log(allData, "allData");
 
   const {
     data: singleData,
@@ -59,7 +55,6 @@ export default function Form({
     isLoading: isSingleLoading,
   } = useGetProcessMasterByIdQuery(id, { skip: !id });
   const [trigger, { data: LazyData }] = useLazyGetProcessMasterByIdQuery();
-  const { data: departmentList } = useGetDepartmentQuery({ params });
 
   const [addData] = useAddProcessMasterMutation();
   const [updateData] = useUpdateProcessMasterMutation();
@@ -78,7 +73,6 @@ export default function Form({
       setName(data?.name ? data.name : "");
       setActive(id ? (data?.active ? data.active : false) : true);
       setIsOutsideJob(data?.isOutsideJob ? data?.isOutsideJob : false);
-      setDepartmentId(data?.departmentId);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
     [id],
@@ -94,15 +88,12 @@ export default function Form({
     id,
     name,
     active,
-    companyId: secureLocalStorage.getItem(
-      sessionStorage.getItem("sessionId") + "userCompanyId",
-    ),
-    isOutsideJob,
-    departmentId,
+    companyId,
+    branchId,
   };
 
   const validateData = (data) => {
-    if (data.name && data?.departmentId) {
+    if (data.name) {
       return true;
     }
     return false;
@@ -169,8 +160,10 @@ export default function Form({
       });
       return false;
     }
-    if (!window.confirm("Are you sure save the details ...?")) {
-      return;
+    if (id) {
+      if (!window.confirm("Are you sure update the details ...?")) {
+        return;
+      }
     }
     if (id) {
       handleSubmitCustom(updateData, data, "Updated", nextProcess);
@@ -222,7 +215,6 @@ export default function Form({
     setSearchValue("");
     syncFormWithDb(undefined);
     setReadOnly(false);
-    setDepartmentId("");
   };
 
   const ACTIVE = (
@@ -247,14 +239,7 @@ export default function Form({
       header: "Process Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
-    },
-
-    {
-      header: "Department",
-      accessor: (item) => item?.Department?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className: "font-medium text-gray-900 text-left uppercase w-80",
     },
 
     {
@@ -292,57 +277,18 @@ export default function Form({
           <div className="bg-white p-3 rounded-md border border-gray-200 h-full">
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
-                <div className="flex gap-x-8 my-2">
-                  <div className="w-[50%]">
-                    <TextInputNew
-                      name="Process Name"
-                      value={name}
-                      setValue={setName}
-                      required={true}
-                      readOnly={readOnly}
-                      disabled={childRecord.current > 0}
-                      ref={countryNameRef}
-                    />
-                  </div>
-                  <div className="w-[50%]">
-                    <DropdownWithModal
-                      name="Department"
-                      options={dropDownListObject(
-                        id
-                          ? departmentList?.data
-                          : departmentList?.data?.filter(
-                              (item) => item?.active,
-                            ),
-                        "name",
-                        "id",
-                      )}
-                      value={departmentId}
-                      setValue={setDepartmentId}
-                      required={true}
-                      readOnly={readOnly}
-                      className={`w-[150px]`}
-                      disabled={childRecord.current > 0}
-                      addNewLabel="+ Add New Department"
-                      childComponent={DepartmentMaster}
-                      addNewModalWidth="w-[40%] h-[48%]"
-                    />
-                  </div>
+                <div className="my-2 w-[70%]">
+                  <TextInputNew
+                    name="Process Name"
+                    value={name}
+                    setValue={setName}
+                    required={true}
+                    readOnly={readOnly}
+                    disabled={childRecord.current > 0}
+                    ref={countryNameRef}
+                  />
                 </div>
                 <div className="flex gap-x-10 items-center mt-5">
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={isOutsideJob}
-                      onChange={(e) => setIsOutsideJob(e.target.checked)}
-                      disabled={readOnly}
-                      size="small"
-                      className="mt-1"
-                      readOnly={readOnly}
-                    />
-
-                    <label className="text-[14px] text-slate-700 font-medium">
-                      IsOutside
-                    </label>
-                  </div>
                   <ToggleButton
                     name=""
                     options={statusDropdown}
@@ -470,18 +416,15 @@ export default function Form({
   }
 
   return (
-    <div onKeyDown={handleKeyDown} className="p-1 h-[87%]">
-      <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Process Master</h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Process
-          </button>
-        </div>
-      </div>
+    <div onKeyDown={handleKeyDown} className="p-1">
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Process
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable

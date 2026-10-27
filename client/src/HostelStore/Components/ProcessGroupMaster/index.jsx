@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import secureLocalStorage from "react-secure-storage";
 import {
-  MultiSelectDropdown,
   ReusableTable,
   TextInput,
   TextInputNew,
   ToggleButton,
 } from "../../../Inputs";
+import Select from "react-select";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import { multiSelectOption } from "../../../Utils/contructObject";
 import { findFromList } from "../../../Utils/helper";
@@ -25,6 +25,8 @@ import {
 } from "../../../redux/services/ProcessGroupMaster.service";
 import { useGetProcessMasterQuery } from "../../../redux/services/ProcessMasterService";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import MasterHeader from "../../../Basic/components/ActiveTabList/MasterHeader";
+import { getCommonParams } from "../../../Utils/helper.js";
 
 export default function Form({
   onSuccess,
@@ -44,7 +46,11 @@ export default function Form({
   const childRecord = useRef(0);
   const [errors, setErrors] = useState({});
   const multiSelectRef = useRef(null);
-
+  const { branchId, companyId } = getCommonParams();
+  const params = {
+    branchId,
+    companyId,
+  };
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
@@ -54,11 +60,6 @@ export default function Form({
     saveCloseButtonRef,
     saveNewButtonRef,
   } = refs;
-  const params = {
-    companyId: secureLocalStorage.getItem(
-      sessionStorage.getItem("sessionId") + "userCompanyId",
-    ),
-  };
 
   const {
     data: allData,
@@ -140,14 +141,13 @@ export default function Form({
     id,
     name,
     active,
-    companyId: secureLocalStorage.getItem(
-      sessionStorage.getItem("sessionId") + "userCompanyId",
-    ),
+    companyId,
+    branchId,
     processGroupList: processGroupList.map((item) => item.value),
   };
 
   const validateData = (data) => {
-    if (data.name) {
+    if (data.name?.trim() && data.processGroupList?.length > 0) {
       return true;
     }
     return false;
@@ -217,6 +217,27 @@ export default function Form({
       return false;
     }
 
+    if (!name?.trim()) {
+      Swal.fire({
+        icon: "error",
+        title: "Validation error",
+        text: "Please enter Process Group Name!",
+        didClose: () => {
+          processNameRef?.current?.focus();
+        },
+      });
+      return false;
+    }
+
+    if (!processGroupList || processGroupList.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validation error",
+        text: "Please select at least one Process!",
+      });
+      return false;
+    }
+
     if (!validateData(data)) {
       Swal.fire({
         icon: "error",
@@ -226,7 +247,7 @@ export default function Form({
           processNameRef?.current?.focus();
         },
       });
-      return;
+      return false;
     }
     if (id) {
       if (!window.confirm("Are you sure update the details ...?")) {
@@ -354,7 +375,7 @@ export default function Form({
         <div className="lg:col-span- space-y-3">
           <div className="bg-white p-3 rounded-md border border-gray-200 h-full">
             <fieldset className="rounded mt-2">
-              <div className="w-[50%]">
+              <div className="w-[70%]">
                 <TextInputNew
                   name="Process Group Name"
                   type="text"
@@ -366,19 +387,63 @@ export default function Form({
                   ref={processNameRef}
                 />
               </div>
-              <div className="w-[50%] mt-5">
-                <MultiSelectDropdown
-                  name="Process"
-                  selected={processGroupList}
-                  setSelected={setProcessGroupList}
+              <div className="w-[70%] mt-3">
+                <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                  Process <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  isMulti
                   options={processOptions}
-                  readOnly={readOnly || childRecord.current > 0}
-                  // disabled={childRecord.current > 0}
-                  className="size-multiselect"
-                  containerRef={multiSelectRef}
-                  onTabFromLastItem={() => {
-                    toggleButtonRef?.current?.focus();
+                  value={processGroupList}
+                  onChange={(selected) => setProcessGroupList(selected || [])}
+                  isDisabled={readOnly || childRecord.current > 0}
+                  placeholder="Select Process..."
+                  className="text-xs"
+                  styles={{
+                    control: (base, state) => ({
+                      ...base,
+                      minHeight: "30px",
+                      fontSize: "12px",
+                      borderRadius: "0.375rem",
+                      borderColor: state.isFocused ? "#3b82f6" : "#cbd5e1",
+                      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
+                      "&:hover": {
+                        borderColor: "#94a3b8",
+                      },
+                    }),
+                    multiValue: (base) => ({
+                      ...base,
+                      backgroundColor: "#eff6ff",
+                      borderRadius: "0.25rem",
+                      border: "1px solid #bfdbfe",
+                    }),
+                    multiValueLabel: (base) => ({
+                      ...base,
+                      color: "#1d4ed8",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                      padding: "1px 4px",
+                    }),
+                    multiValueRemove: (base) => ({
+                      ...base,
+                      color: "#1d4ed8",
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "#dbeafe",
+                        color: "#dc2626",
+                      },
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 9999,
+                      fontSize: "12px",
+                    }),
+                    menuPortal: (base) => ({
+                      ...base,
+                      zIndex: 99999,
+                    }),
                   }}
+                  menuPortalTarget={typeof document !== "undefined" ? document.body : null}
                 />
               </div>
               <div className="mt-5">
@@ -501,19 +566,14 @@ export default function Form({
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1">
-      <div className="w-full flex bg-white justify-between p-1 items-center">
-        <h5 className="text-lg font-bold font-segoe text-gray-800">
-          Process Group Master
-        </h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Process Group
-          </button>
-        </div>
-      </div>
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Process Group
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <ReusableTable

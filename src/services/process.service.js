@@ -10,29 +10,31 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       // active: active ? Boolean(active) : undefined,
     },
-    include: {
-      Department: true,
-      _count: {
-        select: {
-          processGroupList: true,
-          laminationDetails: true,
-          varnishDetails: true,
-          machineDetails: true,
-          processDetails: true,
-        },
-      },
+    // include: {
+    //   _count: {
+    //     select: {
+    //       processGroupList: true,
+    //       laminationDetails: true,
+    //       varnishDetails: true,
+    //       machineDetails: true,
+    //       processDetails: true,
+    //     },
+    //   },
+    // },
+    orderBy: {
+      id: "asc",
     },
   });
   return {
     statusCode: 0,
     data: data.map((process) => ({
       ...process,
-      childRecord:
-        process._count.processGroupList +
-        process._count.laminationDetails +
-        process._count.varnishDetails +
-        process._count.machineDetails +
-        process._count.processDetails,
+      // childRecord:
+      //   process._count.processGroupList +
+      //   process._count.laminationDetails +
+      //   process._count.varnishDetails +
+      //   process._count.machineDetails +
+      //   process._count.processDetails,
     })),
   };
 }
@@ -53,21 +55,14 @@ async function getOne(id) {
 }
 
 async function create(body) {
-  const {
-    name,
-    companyId,
-    active = true,
-    isOutsideJob,
-    departmentId,
-  } = await body;
+  const { name, companyId, active = true, branchId } = await body;
 
   const data = await prisma.process.create({
     data: {
       name,
       active,
       companyId: parseInt(companyId),
-      isOutsideJob: Boolean(isOutsideJob),
-      departmentId: parseInt(departmentId),
+      branchId: parseInt(branchId),
     },
   });
 
@@ -199,15 +194,13 @@ async function UpdateProcess(req) {
       }
     } else if (flag === "STOP") {
       if (!completedQty) throw new Error("Completed Qty Must Be Entered");
-      if (Number(completedQty ?? 0) <= 0) 
+      if (Number(completedQty ?? 0) <= 0)
         throw new Error("Completed Qty must be greater than 0");
 
       const pRoute = await tx.processRoute.findUnique({
         where: { id: Number(processId || 0) },
         include: { JobCard: true },
       });
-
-     
 
       let actualQty = pRoute.actualQty || pRoute.sendQty;
       if (!actualQty) {
@@ -230,19 +223,18 @@ async function UpdateProcess(req) {
         });
         const previousWastages = previousRoutes.reduce(
           (acc, curr) => acc + Number(curr.wastageQty || 0),
-          0
+          0,
         );
         effectiveQty = Math.max(actualQty - previousWastages, 0);
       }
 
-
-
-      const getIncomingExist = processIncomingId ? await tx?.incomingQty?.findUnique({
-        where: {
-          id: Number(processIncomingId)
-        }
-      }) : null;
-
+      const getIncomingExist = processIncomingId
+        ? await tx?.incomingQty?.findUnique({
+            where: {
+              id: Number(processIncomingId),
+            },
+          })
+        : null;
 
       // Validation for Max Allowed Quantity
       let maxAllowed = actualQty;
@@ -266,13 +258,16 @@ async function UpdateProcess(req) {
       const totalWastage_Incoming =
         Number(getIncomingExist?.wastageQty || 0) + Number(wastageQty || 0);
 
-      if ((totalCompleted_Incoming + totalWastage_Incoming) > maxAllowed) {
-        throw new Error(`Cannot process ${totalCompleted_Incoming + totalWastage_Incoming} pieces. The previous process only completed ${maxAllowed} pieces.`);
+      if (totalCompleted_Incoming + totalWastage_Incoming > maxAllowed) {
+        throw new Error(
+          `Cannot process ${totalCompleted_Incoming + totalWastage_Incoming} pieces. The previous process only completed ${maxAllowed} pieces.`,
+        );
       }
 
-
-      if ((totalCompleted + totalWastage) > effectiveQty) {
-        throw new Error(`Cannot process ${totalCompleted + totalWastage} pieces. The  process only production below to ${effectiveQty}.`);
+      if (totalCompleted + totalWastage > effectiveQty) {
+        throw new Error(
+          `Cannot process ${totalCompleted + totalWastage} pieces. The  process only production below to ${effectiveQty}.`,
+        );
       }
 
       const pendingQty = Math.max(
@@ -280,7 +275,9 @@ async function UpdateProcess(req) {
         0,
       );
 
-      const baseIncomingQty = getIncomingExist ? Number(getIncomingExist.qty) : Number(processIncomingQty || 0);
+      const baseIncomingQty = getIncomingExist
+        ? Number(getIncomingExist.qty)
+        : Number(processIncomingQty || 0);
       const pendingQty_Incoming = Math.max(
         baseIncomingQty - (totalCompleted_Incoming + totalWastage_Incoming),
         0,
@@ -293,13 +290,12 @@ async function UpdateProcess(req) {
         routeStatus = "IN_PROGRESS";
       }
 
-
-        const seqRoute = await tx?.processRoute?.findFirst({
-        where:{
+      const seqRoute = await tx?.processRoute?.findFirst({
+        where: {
           jobCardId: jobcardId,
-          sequence : Number(pRoute?.sequence)+1 }
-          })
-
+          sequence: Number(pRoute?.sequence) + 1,
+        },
+      });
 
       let isCompleted = false;
       if (pendingQty_Incoming === 0) {
@@ -313,46 +309,45 @@ async function UpdateProcess(req) {
             isCompleted: isCompleted,
             pendingQty: pendingQty_Incoming,
             wastageQty: totalWastage_Incoming,
-            completedQty: totalCompleted_Incoming
+            completedQty: totalCompleted_Incoming,
           },
-              where:{
-              id:getIncomingExist?.id
-              }
-           })
-          }
+          where: {
+            id: getIncomingExist?.id,
+          },
+        });
+      }
 
-          if (seqRoute?.id) {
-            //  const existingNextSeq = await tx?.IncomingQty?.findFirst({
-            //    where: {
-            //      jobCardId: Number(jobcardId),
-            //      processRouteId: Number(processId || 0),
-            //      sendRoute: seqRoute?.id
-            //    }
-            //  });
+      if (seqRoute?.id) {
+        //  const existingNextSeq = await tx?.IncomingQty?.findFirst({
+        //    where: {
+        //      jobCardId: Number(jobcardId),
+        //      processRouteId: Number(processId || 0),
+        //      sendRoute: seqRoute?.id
+        //    }
+        //  });
 
-            //  if (existingNextSeq?.id) {
-            //    await tx?.IncomingQty?.update({
-            //      where: { id: existingNextSeq.id },
-            //      data: {
-            //        qty: Number(existingNextSeq.qty || 0) + Number(completedQty),
-            //        pendingQty: Number(existingNextSeq.pendingQty || 0) + Number(completedQty)
-            //      }
-            //    });
-            //  } else {
-               await tx?.incomingQty?.create({
-                 data: {
-                   jobCardId: Number(jobcardId),
-                   processRouteId: Number(processId || 0),
-                   sendRoute: seqRoute?.id,
-                   qty: Number(completedQty),
-                   pendingQty: Number(completedQty),
-                   completedQty: 0,
-                   wastageQty: 0
-                 }
-               });
-            //  }
-          }
-
+        //  if (existingNextSeq?.id) {
+        //    await tx?.IncomingQty?.update({
+        //      where: { id: existingNextSeq.id },
+        //      data: {
+        //        qty: Number(existingNextSeq.qty || 0) + Number(completedQty),
+        //        pendingQty: Number(existingNextSeq.pendingQty || 0) + Number(completedQty)
+        //      }
+        //    });
+        //  } else {
+        await tx?.incomingQty?.create({
+          data: {
+            jobCardId: Number(jobcardId),
+            processRouteId: Number(processId || 0),
+            sendRoute: seqRoute?.id,
+            qty: Number(completedQty),
+            pendingQty: Number(completedQty),
+            completedQty: 0,
+            wastageQty: 0,
+          },
+        });
+        //  }
+      }
 
       await tx.processRoute.update({
         where: {
@@ -392,8 +387,8 @@ async function UpdateProcess(req) {
             jobCardId: pRoute.jobCardId,
             processRouteId: pRoute.id,
             userId: Number(userId),
-            isExpired: false
-          }
+            isExpired: false,
+          },
         });
       }
 
@@ -407,7 +402,7 @@ async function UpdateProcess(req) {
           remarks: remarks,
           completedQty: Number(completedQty || 0),
           wastageQty: Number(wastageQty || 0),
-        }
+        },
       });
 
       if (splitSizes && splitSizes.length > 0) {
@@ -420,7 +415,7 @@ async function UpdateProcess(req) {
                 qty: element_size.qty,
               },
             });
-          })
+          }),
         );
       }
 
@@ -454,11 +449,11 @@ async function UpdateProcess(req) {
           await tx.reworkBatchTracker.updateMany({
             where: {
               jobCardId: pRoute.jobCardId,
-              isExpired: false
+              isExpired: false,
             },
             data: {
-              isExpired: true
-            }
+              isExpired: true,
+            },
           });
         }
       }
@@ -487,7 +482,6 @@ async function UpdatePushProcess(req) {
   } = req?.body;
 
   var splitSizes__ = splitSizes?.length > 0 ? splitSizes : [];
-
 
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
@@ -544,7 +538,7 @@ async function UpdatePushProcess(req) {
       if (Number(completedQty || 0) > 0 || Number(wastageQty || 0) > 0) {
         const punchInfo = await tx.productionempPunch.findUnique({
           where: { id: productionlogid },
-          include: { ProcessRoute: { include: { JobCard: true } } }
+          include: { ProcessRoute: { include: { JobCard: true } } },
         });
 
         if (punchInfo && punchInfo.ProcessRoute) {
@@ -573,23 +567,31 @@ async function UpdatePushProcess(req) {
             });
             const previousWastages = previousRoutes.reduce(
               (acc, curr) => acc + Number(curr.wastageQty || 0),
-              0
+              0,
             );
             effectiveQty = Math.max(actualQty - previousWastages, 0);
           }
 
-          const totalCompleted = Number(pRoute.completedQty || 0) + Number(completedQty || 0);
-          const totalWastage = Number(pRoute.wastageQty || 0) + Number(wastageQty || 0);
+          const totalCompleted =
+            Number(pRoute.completedQty || 0) + Number(completedQty || 0);
+          const totalWastage =
+            Number(pRoute.wastageQty || 0) + Number(wastageQty || 0);
 
-          if ((totalCompleted + totalWastage) > effectiveQty) {
-            throw new Error(`Cannot process ${totalCompleted + totalWastage} pieces. The process only production below to ${effectiveQty}.`);
+          if (totalCompleted + totalWastage > effectiveQty) {
+            throw new Error(
+              `Cannot process ${totalCompleted + totalWastage} pieces. The process only production below to ${effectiveQty}.`,
+            );
           }
 
-          const pendingQty = Math.max(effectiveQty - (totalCompleted + totalWastage), 0);
+          const pendingQty = Math.max(
+            effectiveQty - (totalCompleted + totalWastage),
+            0,
+          );
 
           let routeStatus = "NOT_STARTED";
           if (totalCompleted > 0 || totalWastage > 0) {
-            routeStatus = pendingQty === 0 ? "COMPLETED" : "PARTIALLY_COMPLETED";
+            routeStatus =
+              pendingQty === 0 ? "COMPLETED" : "PARTIALLY_COMPLETED";
           } else if (pRoute.sendQty > 0) {
             routeStatus = "IN_PROGRESS";
           }
@@ -598,25 +600,35 @@ async function UpdatePushProcess(req) {
             where: {
               sendRoute: processId,
               pendingQty: { gt: 0 },
-              isCompleted: false
+              isCompleted: false,
             },
-            orderBy: { id: 'asc' }
+            orderBy: { id: "asc" },
           });
 
           let maxAllowed = actualQty;
-          if (pRoute.sequence > 1 && getIncomingExist?.qty > 0) {  
-              maxAllowed = Number(getIncomingExist?.qty || 0);
+          if (pRoute.sequence > 1 && getIncomingExist?.qty > 0) {
+            maxAllowed = Number(getIncomingExist?.qty || 0);
           }
 
           if (getIncomingExist && pRoute.sequence > 1) {
-            const totalCompleted_Incoming = Number(getIncomingExist.completedQty || 0) + Number(completedQty || 0);
-            const totalWastage_Incoming = Number(getIncomingExist.wastageQty || 0) + Number(wastageQty || 0);
+            const totalCompleted_Incoming =
+              Number(getIncomingExist.completedQty || 0) +
+              Number(completedQty || 0);
+            const totalWastage_Incoming =
+              Number(getIncomingExist.wastageQty || 0) +
+              Number(wastageQty || 0);
 
-            if ((totalCompleted_Incoming + totalWastage_Incoming) > maxAllowed) {
-              throw new Error(`Cannot process ${totalCompleted_Incoming + totalWastage_Incoming} pieces. The previous process only completed ${maxAllowed} pieces.`);
+            if (totalCompleted_Incoming + totalWastage_Incoming > maxAllowed) {
+              throw new Error(
+                `Cannot process ${totalCompleted_Incoming + totalWastage_Incoming} pieces. The previous process only completed ${maxAllowed} pieces.`,
+              );
             }
 
-            const pendingQty_Incoming = Math.max((getIncomingExist.qty || 0) - (totalCompleted_Incoming + totalWastage_Incoming), 0);
+            const pendingQty_Incoming = Math.max(
+              (getIncomingExist.qty || 0) -
+                (totalCompleted_Incoming + totalWastage_Incoming),
+              0,
+            );
 
             await tx.incomingQty.update({
               where: { id: getIncomingExist.id },
@@ -624,13 +636,16 @@ async function UpdatePushProcess(req) {
                 isCompleted: pendingQty_Incoming === 0,
                 pendingQty: pendingQty_Incoming,
                 wastageQty: totalWastage_Incoming,
-                completedQty: totalCompleted_Incoming
-              }
+                completedQty: totalCompleted_Incoming,
+              },
             });
           }
 
           const seqRoute = await tx.processRoute.findFirst({
-            where: { jobCardId: jobcardId, sequence: Number(pRoute.sequence) + 1 }
+            where: {
+              jobCardId: jobcardId,
+              sequence: Number(pRoute.sequence) + 1,
+            },
           });
 
           if (seqRoute?.id && Number(completedQty || 0) > 0) {
@@ -642,8 +657,8 @@ async function UpdatePushProcess(req) {
                 qty: Number(completedQty || 0),
                 pendingQty: Number(completedQty || 0),
                 completedQty: 0,
-                wastageQty: 0
-              }
+                wastageQty: 0,
+              },
             });
           }
 
@@ -654,8 +669,8 @@ async function UpdatePushProcess(req) {
               wastageQty: totalWastage,
               actualQty: actualQty,
               pendingQty: pendingQty,
-              status: routeStatus
-            }
+              status: routeStatus,
+            },
           });
 
           if (pendingQty > 0 && reason === "Partially Completed") {
@@ -671,8 +686,8 @@ async function UpdatePushProcess(req) {
                 wastageQty: totalWastage,
                 pendingQty: pendingQty,
                 reason: "Partially Delivered",
-                Userid: Number(userId) || null
-              }
+                Userid: Number(userId) || null,
+              },
             });
             await tx.reworkBatchTracker.create({
               data: {
@@ -680,8 +695,8 @@ async function UpdatePushProcess(req) {
                 jobCardId: jobcardId,
                 processRouteId: processId,
                 userId: Number(userId) || 0,
-                isExpired: false
-              }
+                isExpired: false,
+              },
             });
           }
         }
@@ -741,7 +756,7 @@ async function UpdatePushProcess(req) {
 }
 
 async function update(id, body) {
-  const { name, active, companyId, isOutsideJob, departmentId } = await body;
+  const { name, active } = await body;
   const dataFound = await prisma.process.findUnique({
     where: {
       id: parseInt(id),
@@ -755,9 +770,6 @@ async function update(id, body) {
     data: {
       name,
       active,
-      companyId: parseInt(companyId),
-      isOutsideJob: Boolean(isOutsideJob),
-      departmentId: parseInt(departmentId),
     },
   });
   return { statusCode: 0, data };

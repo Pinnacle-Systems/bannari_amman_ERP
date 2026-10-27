@@ -33,13 +33,14 @@ async function getOne(id) {
 }
 
 async function create(body) {
-  const { name, companyId, active = true, processGroupList } = body;
+  const { name, companyId, active = true, processGroupList, branchId } = body;
   const result = await prisma.$transaction(async (tx) => {
     const processGroup = await tx.processGroup.create({
       data: {
         name,
         active,
         companyId: parseInt(companyId),
+        branchId: parseInt(branchId),
       },
     });
     if (processGroupList?.length) {

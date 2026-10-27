@@ -302,6 +302,8 @@ export const PAGES_WITH_HEADER_TABS = [
   "PURCHASE BILL ENTRY",
   "YARN PROFROMA INVOICE",
   "FABRIC  PROFORMA INVOICE",
+  "PROCESS GROUP MASTER",
+  "PROCESS MASTER",
 ];
 export { default as ActiveTabsHeader } from "./ActiveTabsHeader";
 export { default as MasterHeader } from "./MasterHeader";
