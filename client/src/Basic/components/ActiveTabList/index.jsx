@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { push, remove } from "../../../redux/features/opentabs";
+import ActiveTabsHeader from "./ActiveTabsHeader";
 import {
   CountryMaster,
   PageMaster,
@@ -223,80 +224,23 @@ const ActiveTabList = () => {
   const currentShowingTabs = openTabs.tabs.slice(0, parseInt(itemsToShow));
   const hiddenTabs = openTabs.tabs.slice(parseInt(itemsToShow));
 
+  const activeTab = openTabs.tabs.find((tab) => tab.active);
+  const hideTopTabs =
+    activeTab && PAGES_WITH_HEADER_TABS.includes(activeTab.name);
+
   return (
     // <div className="relative ">
     <div
       className="w-full h-full min-h-0 flex flex-col overflow-hidden"
       style={{ backgroundColor: "#F1F1F0" }}
     >
-      <div className="flex justify-between shrink-0">
-        <div className="flex gap-2 ">
-          {currentShowingTabs.map((tab, index) => (
-            <div
-              key={index}
-              className={`px-2 rounded-lg text-[11px] d-flex content-center items-center gap-1 hover:bg-gray-500 hover:text-white transition my-1 ${
-                tab.active
-                  ? "bg-gray-500 text-white border border-gray-500"
-                  : "text-gray-500 border border-gray-500"
-              }`}
-            >
-              <button
-                onClick={() => {
-                  dispatch(push({ name: tab.name }));
-                }}
-              >
-                {tab.name}
-              </button>
-              <button
-                className="px-1 rounded-xs transition"
-                onClick={() => {
-                  dispatch(remove({ name: tab.name }));
-                }}
-              >
-                {CLOSE_ICON}
-              </button>
-            </div>
-          ))}
+      {!hideTopTabs && (
+        <div className="flex justify-between items-center shrink-0 px-2 py-1 bg-white border-b border-slate-200 relative z-30">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <ActiveTabsHeader />
+          </div>
         </div>
-        <div>
-          {hiddenTabs.length !== 0 && (
-            <button onClick={() => setShowHidden(true)}>
-              {DOUBLE_NEXT_ICON}
-            </button>
-          )}
-        </div>
-        {showHidden && (
-          <ul
-            ref={ref}
-            className="absolute right-0 top-5 bg-gray-200 z-50 text-xs p-1"
-          >
-            {hiddenTabs.map((tab) => (
-              <li
-                key={tab.name}
-                className={`flex justify-between  ${
-                  tab.active ? "bg-[#009688]" : "bg-gray-300"
-                } `}
-              >
-                <button
-                  onClick={() => {
-                    dispatch(push({ name: tab.name }));
-                  }}
-                >
-                  {tab.name}
-                </button>
-                <button
-                  className="hover:bg-red-400 px-1 rounded-xs transition"
-                  onClick={() => {
-                    dispatch(remove({ name: tab.name }));
-                  }}
-                >
-                  {CLOSE_ICON}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
       {openTabs.tabs.map((tab, index) => (
         <div
           key={index}
@@ -309,4 +253,58 @@ const ActiveTabList = () => {
   );
 };
 
+export const PAGES_WITH_HEADER_TABS = [
+  "PURCHASE ORDER",
+  "TAX TEMPLATE",
+  "HSN MASTER",
+  "COLOR MASTER",
+  "UOM MASTER",
+  "FIN YEAR MASTER",
+  "COUNTRY MASTER",
+  "STATE MASTER",
+  "CITY MASTER",
+  "LOCATION MASTER",
+  "BRANCH TYPE MASTER",
+  "DEPARTMENT MASTER",
+  "EMPLOYEE CATEGORY MASTER",
+  "EMPLOYEE MASTER",
+  "TAX TERM MASTER",
+  "PAY TERM MASTER",
+  "CURRENCY MASTER",
+  "TERMS & CONDTIONS MASTER",
+  "CUSTOMER / SUPPLIER MASTER",
+  "BANK MASTER",
+  "ITEM GROUP MASTER",
+  "ITEM SUB GROUP MASTER",
+  "ITEM MASTER",
+  "GSM MASTER",
+  "SIZE MASTER",
+  "SIZE TEMPLATE MASTER",
+  "COUNTS MASTER",
+  "CONTENT MASTER",
+  "FABRIC MASTER",
+  "GAUGE MASTER",
+  "LOOP LENGTH MASTER",
+  "DIA MASTER",
+  "YARN MASTER",
+  "YARN BLEND MASTER",
+  "DESIGN MASTER",
+  "USERS & ROLES",
+  "CONTROL PANEL",
+  "ORDER ENTRY",
+  "SALES ORDER",
+  "SALES DELIVERY",
+  "SALES RETURN",
+  "SALES BILL ENTRY",
+  "PURCHASE INWARD",
+  "PURCHASE CANCEL",
+  "PURCHASE RETURN",
+  "PURCHASE BILL ENTRY",
+  "YARN PROFROMA INVOICE",
+  "FABRIC  PROFORMA INVOICE",
+  "PROCESS GROUP MASTER",
+  "PROCESS MASTER",
+];
+export { default as ActiveTabsHeader } from "./ActiveTabsHeader";
+export { default as MasterHeader } from "./MasterHeader";
 export default ActiveTabList;

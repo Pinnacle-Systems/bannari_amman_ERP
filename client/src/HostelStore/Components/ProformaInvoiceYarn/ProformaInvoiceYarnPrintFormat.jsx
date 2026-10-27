@@ -442,7 +442,6 @@ const ProformaInvoiceYarnPrintFormat = ({
   yarnList,
 }) => {
   if (!data) return null;
-  console.log(data, "data");
 
   const isExport = isExportProp ?? data?.customer?.isCustomerExport ?? false;
   let currencySymbol =
@@ -466,14 +465,12 @@ const ProformaInvoiceYarnPrintFormat = ({
   const branch = data?.Branch || {};
   const customer = data?.customer || {};
   const bank = data?.Bank || {};
-  console.log(data, "data?.items");
 
   // Filter only real items
   const rawItems = data?.currentVersionItems || [];
   const allItems = rawItems.filter(
     (i) => parseFloat(i.qty) > 0 || parseFloat(i.noOfbags) > 0,
   );
-  console.log(allItems, "allItems");
 
   // Totals
   const totalNoOfBags = allItems?.reduce(

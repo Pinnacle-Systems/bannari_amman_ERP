@@ -65,7 +65,7 @@ const ProformaInvoiceYarnItems = ({
   };
 
   const deleteRow = (index) => {
-    if (yarnItems.length <= 14) {
+    if (yarnItems.length <= 10) {
       const newItems = [...yarnItems];
       newItems[index] = {
         ...EMPTY_ROW,
@@ -105,14 +105,27 @@ const ProformaInvoiceYarnItems = ({
       }
     }
     if (field === "noOfbags" || field === "weightPerBag") {
-      const noOfbags = parseFloat(newItems[index].noOfbags) || 0;
-      const weightPerBag = parseFloat(newItems[index].weightPerBag) || 0;
-      newItems[index].qty = (noOfbags * weightPerBag).toFixed(3);
+      const noOfbagsVal = newItems[index].noOfbags;
+      const weightPerBagVal = newItems[index].weightPerBag;
+      if (noOfbagsVal !== "" || weightPerBagVal !== "") {
+        const noOfbags = parseFloat(noOfbagsVal) || 0;
+        const weightPerBag = parseFloat(weightPerBagVal) || 0;
+        const qty = noOfbags * weightPerBag;
+        newItems[index].qty = qty ? qty.toFixed(3) : "";
+        const price = parseFloat(newItems[index].price) || 0;
+        newItems[index].amount = price && qty ? (qty * price).toFixed(2) : "";
+      }
     }
     if (field === "qty" || field === "price") {
-      const qty = parseFloat(newItems[index].qty) || 0;
-      const price = parseFloat(newItems[index].price) || 0;
-      newItems[index].amount = (qty * price).toFixed(2);
+      const qtyVal = newItems[index].qty;
+      const priceVal = newItems[index].price;
+      if (qtyVal === "" || priceVal === "") {
+        newItems[index].amount = "";
+      } else {
+        const qty = parseFloat(qtyVal) || 0;
+        const price = parseFloat(priceVal) || 0;
+        newItems[index].amount = (qty * price).toFixed(2);
+      }
     }
     setYarnItems(newItems);
   };
@@ -154,7 +167,7 @@ const ProformaInvoiceYarnItems = ({
 
   const handleDeleteAllRows = () => {
     setYarnItems(
-      Array.from({ length: 14 }, () => ({
+      Array.from({ length: 10 }, () => ({
         ...EMPTY_ROW,
         rowId: Math.random().toString(36).substring(2, 9),
       })),
@@ -171,11 +184,13 @@ const ProformaInvoiceYarnItems = ({
             handleFocusNextRow?.(currentSelectedIndex);
           }, 0);
         }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
       >
         <TaxDetailsFullTemplate
           readOnly={readOnly}
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
+          serialNumber={currentSelectedIndex + 1}
           setCurrentSelectedIndex={setCurrentSelectedIndex}
           poItems={enrichedItems?.items || yarnItems}
           handleInputChange={handleInputChange}
@@ -189,7 +204,7 @@ const ProformaInvoiceYarnItems = ({
 
       <div
         ref={gridWrapperRef}
-        className="h-full"
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -215,12 +230,13 @@ const ProformaInvoiceYarnItems = ({
       >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[1450px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
-              className:
-                "w-10 px-1 py-2 text-center text-xs border border-gray-300 sticky left-0 bg-gray-200 z-[2]",
+              className: "w-10 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "desc",
@@ -229,51 +245,49 @@ const ProformaInvoiceYarnItems = ({
                   Description of Goods<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-full px-2 py-2 text-center text-xs  border border-gray-300 sticky left-[40px] bg-gray-200 z-[2]",
+              className: "w-72 px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "hsn",
               label: "HSN",
-              className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300 sticky left-[328px] bg-gray-200 z-[2]",
+              className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
             },
 
             // {
             //   key: "content",
             //   label: "Content",
             //   className:
-            //     "w-36 px-1 py-2 text-center text-xs  border border-gray-300",
+            //     "w-36 px-1 py-2 text-center font-medium text-[11px]",
             // },
             // {
             //   key: "counts",
             //   label: "Counts",
             //   className:
-            //     "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+            //     "w-28 px-1 py-2 text-center font-medium text-[11px]",
             // },
             {
               key: "color",
               label: "Color",
               className:
-                "w-60 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-60 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "uom",
               label: "UOM",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "noOfbags",
               label: "No of Bags",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "weightPerBag",
               label: "Weight per Bag",
               className:
-                "w-24 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
@@ -284,7 +298,7 @@ const ProformaInvoiceYarnItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -295,26 +309,26 @@ const ProformaInvoiceYarnItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-32 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-32 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "tax",
               label: "Tax",
               className:
-                "w-12 px-1 py-2 text-center text-xs  border border-gray-300",
+                "w-16 px-1 py-2 text-center font-medium text-[11px]",
             },
 
             {
               key: "actions",
               label: "Actions",
               className:
-                "w-16 px-2 py-2 text-center text-xs  border border-gray-300",
+                "w-16 px-2 py-2 text-center font-medium text-[11px]",
             },
           ]}
           rows={
@@ -324,9 +338,9 @@ const ProformaInvoiceYarnItems = ({
             })) || []
           }
           footer={
-            <tr className="bg-gray-200 h-7 font-bold text-gray-800 text-[12px]">
+            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 bg-gray-200"
+                className="text-right px-2 border border-gray-300 bg-slate-50"
                 colSpan={7}
               >
                 Total
@@ -348,17 +362,17 @@ const ProformaInvoiceYarnItems = ({
                   yarnItems?.reduce(
                     (sum, i) => sum + (parseFloat(i.amount) || 0),
                     0,
-                  ),
+                  ) || 0,
                   currencyCode || isCurrencySymbol,
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-gray-200" colSpan={3} />
+              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={(_, index) =>
-            `h-6 hover:bg-gray-50 ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}`
+          getRowClassName={() =>
+            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
           }
           renderRow={(item, index) => {
             const rowItem = item.row;
@@ -368,7 +382,7 @@ const ProformaInvoiceYarnItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="text-[11px] text-center border border-gray-300 sticky left-0 bg-inherit z-[1]"
+                  className="w-12 border border-gray-300 text-[11px] text-center"
                 >
                   {index + 1}
                 </td>
@@ -376,7 +390,7 @@ const ProformaInvoiceYarnItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 sticky left-[40px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300"
                 >
                   <FxSelectWithAdd
                     value={rowItem.yarnId}
@@ -387,6 +401,7 @@ const ProformaInvoiceYarnItems = ({
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
+                    disabled={readOnly}
                     placeholder=""
                     addNew={true}
                     childComponent={YarnMaster}
@@ -397,7 +412,7 @@ const ProformaInvoiceYarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2 sticky left-[328px] bg-inherit z-[1]"
+                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
@@ -413,48 +428,6 @@ const ProformaInvoiceYarnItems = ({
                   />
                 </td>
 
-                {/* <td
-                  data-grid-row={index}
-                  data-grid-col={2}
-                  data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
-                >
-                  <FxSelectWithAdd
-                    value={rowItem.contentId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "contentId")
-                    }
-                    options={(contentList?.data || [])
-                      ?.filter((i) => (id ? true : i.active))
-                      ?.map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
-                    placeholder=""
-                    childComponent={ContentMaster}
-                    addNewModalWidth="w-[50%] h-[57%]"
-                  />
-                </td>
-                <td
-                  data-grid-row={index}
-                  data-grid-col={2}
-                  data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
-                >
-                  <FxSelectWithAdd
-                    value={rowItem.countsId}
-                    onChange={(val) =>
-                      handleInputChange(val, originalIndex, "countsId")
-                    }
-                    options={(countsList?.data || [])
-                      ?.filter((i) => (id ? true : i.active))
-                      ?.map((i) => ({ label: i.name, value: i.id }))}
-                    readOnly={readOnly}
-                    addNew={true}
-                    placeholder=""
-                    childComponent={CountsMaster}
-                    addNewModalWidth="w-[50%] h-[57%]"
-                  />
-                </td> */}
                 <td
                   data-grid-row={index}
                   className="grid-editable-cell border border-gray-300 text-[11px] px-2"
@@ -468,6 +441,7 @@ const ProformaInvoiceYarnItems = ({
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
+                    disabled={readOnly}
                     addNew={true}
                     placeholder=""
                     childComponent={ColorMaster}
@@ -490,6 +464,7 @@ const ProformaInvoiceYarnItems = ({
                       .filter((i) => (id ? true : i.active))
                       .map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
+                    disabled={readOnly}
                     addNew={true}
                     placeholder=""
                     childComponent={UomMaster}
@@ -505,6 +480,7 @@ const ProformaInvoiceYarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.noOfbags}
@@ -516,6 +492,7 @@ const ProformaInvoiceYarnItems = ({
                       )
                     }
                     readOnly={readOnly}
+                    disabled={readOnly}
                   />
                 </td>
                 <td
@@ -526,6 +503,7 @@ const ProformaInvoiceYarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.weightPerBag}
@@ -547,6 +525,7 @@ const ProformaInvoiceYarnItems = ({
                       }
                     }}
                     readOnly={readOnly}
+                    disabled={readOnly}
                   />
                 </td>
                 <td
@@ -557,14 +536,21 @@ const ProformaInvoiceYarnItems = ({
                 >
                   <input
                     type="number"
+                    min="0"
                     step="any"
                     className="text-right px-3 w-full table-data-input bg-transparent"
                     value={rowItem.qty}
                     onChange={(e) =>
                       handleInputChange(e.target.value, originalIndex, "qty")
                     }
-                    readOnly={true}
-                    disabled={true}
+                    readOnly={
+                      readOnly ||
+                      Boolean(rowItem.noOfbags && rowItem.weightPerBag)
+                    }
+                    disabled={
+                      readOnly ||
+                      Boolean(rowItem.noOfbags && rowItem.weightPerBag)
+                    }
                   />
                 </td>
                 <td
@@ -580,6 +566,7 @@ const ProformaInvoiceYarnItems = ({
                           ? "number"
                           : "text"
                       }
+                      min="0"
                       step="0.01"
                       className="text-right px-3 w-full table-data-input bg-transparent"
                       value={
@@ -600,17 +587,23 @@ const ProformaInvoiceYarnItems = ({
                         )
                       }
                       readOnly={readOnly}
+                      disabled={readOnly}
                       onFocus={(e) => {
                         e.target.select();
                         setFocusedField(`price-${originalIndex}`);
                       }}
                       onBlur={(e) => {
-                        const num = parseFloat(e.target.value);
-                        handleInputChange(
-                          num ? Number(num).toFixed(2) : "",
-                          originalIndex,
-                          "price",
-                        );
+                        const val = e.target.value ? e.target.value.trim() : "";
+                        if (val === "") {
+                          handleInputChange("", originalIndex, "price");
+                        } else {
+                          const num = parseFloat(val);
+                          handleInputChange(
+                            !isNaN(num) ? Number(num).toFixed(2) : "",
+                            originalIndex,
+                            "price",
+                          );
+                        }
                         setFocusedField(null);
                       }}
                       onKeyDown={(e) => {
@@ -667,7 +660,7 @@ const ProformaInvoiceYarnItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
+                  className="w-12 border border-gray-300 align-top pt-1 bg-inherit"
                 >
                   {!readOnly && (
                     <div className="flex items-center justify-center">

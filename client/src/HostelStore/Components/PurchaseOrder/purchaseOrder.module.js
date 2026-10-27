@@ -30,7 +30,7 @@ export const PURCHASE_ORDER_TRANSACTION_DEFINITION = {
   actions: ["saveClose", "saveNew", "submitApproval", "summary", "print"],
 };
 
-export const DEFAULT_PURCHASE_ORDER_ROWS = 20;
+export const DEFAULT_PURCHASE_ORDER_ROWS = 10;
 
 export const createPurchaseOrderRow = (quoteVersion = "") => ({
   styleItemId: "",
@@ -153,13 +153,41 @@ export const validatePurchaseOrderData = ({
   colorList,
   gsmList,
 }) => {
-  const filledItems = (data?.poItems || []).filter((item) => item.styleItemId);
-  const duplicates = findPurchaseOrderDuplicates({
-    items: filledItems,
-    id,
-    isNewVersion,
-    quoteVersion,
-  });
+  const isFabric = data?.orderGridType === "FABRIC";
+  const isYarn = data?.orderGridType === "YARN";
+
+  const isVisibleRow = (row) => {
+    if (!id) return true;
+    if (isNewVersion) return row.quoteVersion === "New";
+    if (!quoteVersion) return row.quoteVersion !== "New";
+    return parseInt(row.quoteVersion) === parseInt(quoteVersion);
+  };
+
+  const fabricItems = (
+    data?.poFabricItems ||
+    data?.orderFabricItems ||
+    []
+  ).filter(isVisibleRow);
+  const yarnItems = (data?.poYarnItems || data?.orderYarnItems || []).filter(
+    isVisibleRow,
+  );
+  const poItems = (data?.poItems || []).filter(isVisibleRow);
+
+  const filledItems = isFabric
+    ? fabricItems.filter((item) => item.fabricId)
+    : isYarn
+      ? yarnItems.filter((item) => item.yarnId)
+      : poItems.filter((item) => item.styleItemId);
+
+  const duplicates =
+    isFabric || isYarn
+      ? []
+      : findPurchaseOrderDuplicates({
+          items: filledItems,
+          id,
+          isNewVersion,
+          quoteVersion,
+        });
   const dup = duplicates[0];
 
   const checks = [
@@ -210,17 +238,40 @@ export const validatePurchaseOrderData = ({
     },
     {
       severity: "block",
-      condition: !isGridDatasValid(data?.poItems, false, [
-        "styleItemId",
-        "uomId",
-        "qty",
-        "price",
-      ]),
+      condition: isFabric
+        ? !isGridDatasValid(filledItems, false, ["fabricId", "uomId"])
+        : isYarn
+          ? !isGridDatasValid(filledItems, false, ["yarnId", "uomId"])
+          : !isGridDatasValid(filledItems, false, ["styleItemId", "uomId"]),
       message: "Please fill all required item fields!",
     },
     {
       severity: "block",
-      condition: duplicates.length > 0,
+      condition: filledItems.some(
+        (item) =>
+          item.qty === "" ||
+          item.qty === null ||
+          item.qty === undefined ||
+          parseFloat(item.qty) <= 0 ||
+          isNaN(parseFloat(item.qty)),
+      ),
+      message: "Quantity is required and must be greater than 0!",
+    },
+    {
+      severity: "block",
+      condition: filledItems.some(
+        (item) =>
+          item.price === "" ||
+          item.price === null ||
+          item.price === undefined ||
+          parseFloat(item.price) <= 0 ||
+          isNaN(parseFloat(item.price)),
+      ),
+      message: "Price is required and must be greater than 0!",
+    },
+    {
+      severity: "block",
+      condition: !isFabric && !isYarn && duplicates.length > 0,
       message: "Duplicate Item Found!",
       html: dup
         ? `Item - ${findFromList(dup?.styleItemId, styleItemList?.data, "name")}, Size - ${findFromList(dup?.sizeId, sizeList?.data, "name")}, Color - ${findFromList(dup?.colorId, colorList?.data, "name")}, GSM - ${findFromList(dup?.gsmId, gsmList?.data, "name")}`
@@ -323,6 +374,10 @@ export const getPurchaseOrderPayload = ({
   userId,
   remarks,
   poItems,
+  orderGridType,
+  poFabricItems,
+  poYarnItems,
+
   deliveryType,
   deliveryToId,
   discountType,
@@ -340,30 +395,38 @@ export const getPurchaseOrderPayload = ({
   totalNetAmount,
   submitApproval,
   orderEntryId,
-}) => ({
-  supplierId,
-  dueDate,
-  docDate,
-  branchId,
-  id,
-  userId,
-  remarks,
-  poItems: (poItems || []).filter((po) => po.styleItemId),
-  deliveryType,
-  deliveryToId,
-  discountType,
-  discountValue,
-  taxPercent,
-  finYearId,
-  poType,
-  taxTemplateId,
-  termsAndCondtion,
-  termsId,
-  isNewVersion,
-  quoteVersion,
-  payTermId,
-  pageId,
-  totalNetAmount,
-  submitApproval,
-  orderEntryId,
-});
+}) => {
+  const resolvedFabricItems = (poFabricItems || []).filter((i) => i.fabricId);
+  const resolvedYarnItems = (poYarnItems || []).filter((i) => i.yarnId);
+
+  return {
+    supplierId,
+    dueDate,
+    docDate,
+    branchId,
+    id,
+    userId,
+    remarks,
+    poItems: (poItems || []).filter((po) => po.styleItemId),
+    orderGridType: orderGridType || "GENERAL",
+    poFabricItems: resolvedFabricItems,
+    poYarnItems: resolvedYarnItems,
+    deliveryType,
+    deliveryToId,
+    discountType,
+    discountValue,
+    taxPercent,
+    finYearId,
+    poType,
+    taxTemplateId,
+    termsAndCondtion,
+    termsId,
+    isNewVersion,
+    quoteVersion,
+    payTermId,
+    pageId,
+    totalNetAmount,
+    submitApproval,
+    orderEntryId,
+  };
+};

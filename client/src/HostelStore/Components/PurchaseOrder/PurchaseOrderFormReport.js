@@ -45,6 +45,7 @@ const PurchaseOrderFormReport = ({
   const [searchDueDate, setSearchDueDate] = useState("");
   const [supplier, setSupplier] = useState("");
   const [searchPoType, setSearchPoType] = useState("");
+  const [searchGridType, setSearchGridType] = useState("");
 
   const [totalCount, setTotalCount] = useState(0);
   const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -63,11 +64,19 @@ const PurchaseOrderFormReport = ({
     supplier,
     searchPoType,
     searchDueDate,
+    searchGridType,
   };
 
   useEffect(() => {
     setCurrentPageNumber(1);
-  }, [serachDocNo, searchClientName, searchDate, supplier, searchPoType]);
+  }, [
+    serachDocNo,
+    searchClientName,
+    searchDate,
+    supplier,
+    searchPoType,
+    searchGridType,
+  ]);
 
   const companyId = secureLocalStorage.getItem(
     sessionStorage.getItem("sessionId") + "userCompanyId",
@@ -518,9 +527,12 @@ const PurchaseOrderFormReport = ({
                   <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-20">
                     <div>Po Type</div>
                   </th>
+                  <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-24">
+                    <div>Item Type</div>
+                  </th>
 
-                  <th className="w-80  px-3   font-medium text-[13px] text-gray-900  text-center ">
-                    <div>Supplier</div>
+                  <th className="w-[35%]  px-3   font-medium text-[13px] text-gray-900  text-center ">
+                    <div>Supplier Name</div>
                   </th>
                   <th
                     className=" px-3 w-56  font-medium text-[13px]  text-gray-900  text-center "
@@ -528,7 +540,7 @@ const PurchaseOrderFormReport = ({
                   >
                     <div>Po Status</div>
                   </th>
-                  <th
+                  {/* <th
                     className=" px-3 w-36  font-medium text-[13px]  text-gray-900  text-center "
                     rowSpan={2}
                   >
@@ -547,7 +559,7 @@ const PurchaseOrderFormReport = ({
                     rowSpan={2}
                   >
                     <div>Approval Actions</div>
-                  </th>
+                  </th> */}
 
                   <th
                     className="w-14   px-3  font-medium text-[13px]  text-gray-900  text-center "
@@ -607,6 +619,17 @@ const PurchaseOrderFormReport = ({
                       value={searchPoType}
                       onChange={(e) => {
                         setSearchPoType(e.target.value);
+                      }}
+                    />
+                  </th>
+                  <th className="  px-1 font-medium text-[13px]  text-gray-900  text-center w-20">
+                    <input
+                      type="text"
+                      className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
+                      placeholder="Search"
+                      value={searchGridType}
+                      onChange={(e) => {
+                        setSearchGridType(e.target.value);
                       }}
                     />
                   </th>
@@ -673,6 +696,9 @@ const PurchaseOrderFormReport = ({
                         <td className="py-1.5 text-left  ">
                           {dataObj.poType}{" "}
                         </td>
+                        <td className="py-1.5 text-left  ">
+                          {dataObj.orderGridType}{" "}
+                        </td>
 
                         <td className="py-1.5 text-left">
                           {" "}
@@ -681,7 +707,7 @@ const PurchaseOrderFormReport = ({
                         <td className="py-1.5 text-left">
                           <StatusBadge status={dataObj?.status} />
                         </td>
-                        <td className="py-1.5 text-left">
+                        {/* <td className="py-1.5 text-left">
                           <ApprovalBadge
                             approvalStatus={dataObj?.approvalStatus}
                           />
@@ -695,7 +721,7 @@ const PurchaseOrderFormReport = ({
 
                         <td className="px-2 py-1">
                           <div className="flex items-center justify-center gap-1.5">
-                            {/* ↩️ Send Back — show when PENDING or APPROVED */}
+                         
                             {["PENDING"].includes(
                               dataObj?.approvalStatus?.status,
                             ) && (
@@ -712,7 +738,7 @@ const PurchaseOrderFormReport = ({
                               </Tooltip>
                             )}
 
-                            {/* ✅ Approve — show only when PENDING */}
+                           
                             {dataObj?.approvalStatus?.status === "PENDING" && (
                               <Tooltip title="Approve" arrow>
                                 <button
@@ -726,15 +752,15 @@ const PurchaseOrderFormReport = ({
                               </Tooltip>
                             )}
 
-                            {/* Already approved */}
-                            {/* {dataObj?.approvalStatus?.status ===
+                         
+                            {dataObj?.approvalStatus?.status ===
                                   "APPROVED" && (
                                   <span className="text-[10px] text-green-600 font-semibold px-1">
                                     ✅ Approved
                                   </span>
-                                )} */}
+                                )}
 
-                            {/* Not configured — no approval setup */}
+                         
                             {dataObj?.approvalStatus?.status ===
                               "NOT_CONFIGURED" && (
                               <span className="text-[10px] text-gray-400 italic">
@@ -742,7 +768,7 @@ const PurchaseOrderFormReport = ({
                               </span>
                             )}
                           </div>
-                        </td>
+                        </td> */}
 
                         {rowActions && (
                           <td className="px-2 py-1">

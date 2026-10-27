@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { AppHeader, AppFooter, Dashboard } from "../../components";
+import { Dashboard } from "../../components";
 import Modal from "../../../UiComponents/Modal";
 import { BranchAndFinyearForm, LogoutConfirm } from "../../components";
 import ActiveTabList from "../../components/ActiveTabList";
 import secureLocalStorage from "react-secure-storage";
 import SuperAdminHeader from "../../components/SuperAdminHeader";
-import Sidebar from "../../components/sidebar";
 import Header from "../../../HostelStore/Components/Header";
 import { useSelector } from "react-redux";
 
@@ -15,8 +14,6 @@ const Home = () => {
   const isSuperAdmin = secureLocalStorage.getItem(
     sessionStorage.getItem("sessionId") + "superAdmin",
   );
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMainDropdownOpen, setIsMainDropdownOpen] = useState(false);
   const [profile, setProfile] = useState(false);
   const openTabs = useSelector((state) => state.openTabs);
 
@@ -75,13 +72,6 @@ const Home = () => {
                   <ActiveTabList />
                 </div>
               )}
-
-              <Sidebar
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-                isMainDropdownOpen={isMainDropdownOpen}
-                setIsMainDropdownOpen={setIsMainDropdownOpen}
-              />
             </>
           )}
         </div>

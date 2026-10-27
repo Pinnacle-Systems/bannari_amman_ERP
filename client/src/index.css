@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,6 +11,46 @@ label {
 }
 .table-data {
   font-family: "Roboto", sans-serif;
+}
+
+/* Purchase Order Form - Geist Font Scope (Applies ONLY to Purchase Order form) */
+.po-form-geist,
+.po-form-geist *,
+.po-form-geist input,
+.po-form-geist select,
+.po-form-geist textarea,
+.po-form-geist button,
+.po-form-geist label,
+.po-form-geist table,
+.po-form-geist th,
+.po-form-geist td,
+.po-form-geist span,
+.po-form-geist p,
+.po-form-geist h1,
+.po-form-geist h2,
+.po-form-geist h3,
+.po-form-geist .table-data {
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Ensure ActiveTabsHeader always has consistent font & sizing regardless of form container font scoping */
+.active-tabs-header,
+.active-tabs-header *,
+.active-tabs-header span,
+.active-tabs-header button,
+.active-tabs-header div {
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+/* Hide scrollbar for Chrome, Safari, Edge, Opera, Firefox */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 .Select {
@@ -208,8 +249,9 @@ label {
 }
 
 .grid-editable-cell:focus-within {
-  background-color: rgba(219, 234, 254, 0.65);
+  background-color: #dbeafe !important;
   box-shadow: inset 0 0 0 1px #2563eb;
+  z-index: 15 !important;
 }
 
 @media print {

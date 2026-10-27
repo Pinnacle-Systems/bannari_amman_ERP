@@ -1,9 +1,16 @@
 // components/Reuseable/TransactionLayout.jsx
 import { useRef, useState, useEffect, useCallback } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import ActiveTabsHeader from "../ActiveTabList/ActiveTabsHeader";
 
 // ── Hook: exported so forms can use it standalone if needed ──────────────
-export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
+export function useAdaptiveLayout(
+  headerRef,
+  footerRef,
+  containerRef,
+  gap = 8,
+  extraOffsetRef = null,
+) {
   const [itemsHeight, setItemsHeight] = useState(120);
   const [containerHeight, setContainerHeight] = useState(null);
 
@@ -17,19 +24,18 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
   const recalculate = useCallback(() => {
     const headerH = headerRef.current?.offsetHeight ?? 0;
     const footerH = footerRef.current?.offsetHeight ?? 0;
+    const extraH = extraOffsetRef?.current?.offsetHeight ?? 0;
     const containerH =
       containerRef.current?.offsetHeight ??
       containerHeight ??
       window.innerHeight;
-    const remaining = containerH - headerH - footerH - gap;
+    const remaining = containerH - headerH - footerH - extraH - gap;
     setItemsHeight(Math.max(remaining, 120));
-  }, [headerRef, footerRef, containerRef, gap, containerHeight]);
+  }, [headerRef, footerRef, containerRef, gap, containerHeight, extraOffsetRef]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      recalculateContainerHeight();
-      recalculate();
-    }, 200);
+    recalculateContainerHeight();
+    recalculate();
     const handleResize = () => {
       recalculateContainerHeight();
       recalculate();
@@ -42,8 +48,8 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
     if (containerRef.current) ro.observe(containerRef.current);
     if (headerRef.current) ro.observe(headerRef.current);
     if (footerRef.current) ro.observe(footerRef.current);
+    if (extraOffsetRef?.current) ro.observe(extraOffsetRef.current);
     return () => {
-      clearTimeout(t);
       window.removeEventListener("resize", handleResize);
       ro.disconnect();
     };
@@ -53,6 +59,7 @@ export function useAdaptiveLayout(headerRef, footerRef, containerRef, gap = 8) {
     headerRef,
     footerRef,
     containerRef,
+    extraOffsetRef,
   ]);
 
   return { itemsHeight, containerHeight };
@@ -90,8 +97,14 @@ export const TransactionScreen = ({
   sidebarWidthClass = "w-[320px]",
   sidebarFooterTitle = "Summary",
   defaultSidebarSectionsCollapsed = true,
+  leftSidebar = null,
+  headerActions = null,
+  className = "",
+  showTabs = true,
+  tabs = null,
 }) => {
   const containerRef = useRef(null);
+  const titleBarRef = useRef(null);
   const headerRef = useRef(null);
   const footerRef = useRef(null);
   const supportedDetailsLayouts =
@@ -143,6 +156,8 @@ export const TransactionScreen = ({
     headerRef,
     footerRef,
     containerRef,
+    8,
+    titleBarRef,
   );
 
   useEffect(() => {
@@ -332,37 +347,47 @@ export const TransactionScreen = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col w-full overflow-hidden min-h-0"
-      style={{ height: containerHeight ? `${containerHeight}px` : "100%" }}
+      className={`flex flex-col w-full h-full overflow-hidden min-h-0 ${className || ""}`}
       onKeyDown={onKeyDown}
     >
-      <div className="flex min-h-0 flex-1 gap-3">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {/* ── HEADER: title bar + cards grid ─────────────────────── */}
-          <div ref={headerRef} className="flex-none">
-            {/* Title bar — identical to old UI */}
-            <div className="w-full mx-auto rounded-md shadow-lg px-2 py-1">
-              <div className="flex items-center justify-between gap-3">
-                <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  {title}
-                  {badge}
-                  {versionDropdown}
-                </h1>
-                <div className="flex items-center gap-2">
-                  {renderDetailsLayoutSwitch()}
-                  <button
-                    onClick={onClose}
-                    className="text-indigo-600 hover:text-indigo-700"
-                    title="Back to Report"
-                  >
-                    {closeIcon}
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* ── Title bar — identical to report header, spans across top ── */}
+      <div
+        ref={titleBarRef}
+        className="w-full flex bg-white py-1 px-2 justify-between items-center rounded-md shadow-sm border border-gray-200 mb-2 flex-none h-[38px] min-h-[38px] max-h-[38px] relative z-30"
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {showTabs || tabs ? (
+            tabs || <ActiveTabsHeader />
+          ) : (
+            <h1 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              {title}
+              {badge}
+              {versionDropdown}
+            </h1>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {renderDetailsLayoutSwitch()}
+          {headerActions}
+          <button
+            onClick={onClose}
+            className="text-indigo-600 hover:text-indigo-700 flex items-center justify-center cursor-pointer"
+            title="Back to Report"
+          >
+            {closeIcon}
+          </button>
+        </div>
+      </div>
 
+      <div className="flex min-h-0 min-w-0 flex-1 gap-2 w-full">
+        {/* Optional Left Sidebar */}
+        {leftSidebar}
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {/* ── HEADER: cards grid ─────────────────────── */}
+          <div ref={headerRef} className="flex-none">
             {showDefaultHeader && (
-              <div className="pt-2">{effectiveDetailsContent}</div>
+              <div>{effectiveDetailsContent}</div>
             )}
 
             {renderCompactDetails()}
@@ -370,12 +395,12 @@ export const TransactionScreen = ({
 
           {/* ── ITEMS: adaptive height, scrolls internally ──────────── */}
           <div
-            className="flex-1 py-2 min-h-0 overflow-hidden"
+            className="flex-1 py-1 min-h-0 min-w-0 w-full overflow-hidden"
             style={{ height: itemsHeight, minHeight: 0 }}
           >
-            <fieldset className="h-full min-h-0 overflow-hidden">
+            <div className="h-full min-h-0 min-w-0 w-full overflow-hidden flex flex-col">
               {gridItems}
-            </fieldset>
+            </div>
           </div>
 
           {/* ── FOOTER: terms + totals + buttons ────────────────────── */}

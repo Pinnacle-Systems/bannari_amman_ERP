@@ -307,6 +307,7 @@ export const TextInput = forwardRef(
       onKeyDown,
       onFocus,
       max,
+      placeholder,
     },
     ref,
   ) => {
@@ -357,7 +358,7 @@ export const TextInput = forwardRef(
               : handleOnChange(e, setValue, type)
           }
           onBlur={handleBlur}
-          placeholder={name}
+          placeholder={placeholder !== undefined ? placeholder : name}
           readOnly={readOnly}
           onFocus={onFocus}
           disabled={disabled}
@@ -986,15 +987,16 @@ export function ReusableInput({
   autoFocus,
   onKeyDown,
   required,
+  labelClass = "",
 }) {
   return (
     <div className="mb-1">
       {required ? (
-        <span className={FORM_LABEL_CLASS}>
+        <label className={`${FORM_LABEL_CLASS} ${labelClass}`}>
           {label} <span className="text-red-500">*</span>
-        </span>
+        </label>
       ) : (
-        <span className={FORM_LABEL_CLASS}>{label}</span>
+        <label className={`${FORM_LABEL_CLASS} ${labelClass}`}>{label}</label>
       )}
       <input
         type={type}
@@ -1010,8 +1012,8 @@ export function ReusableInput({
         disabled={disabled}
         className={`h-7 w-full px-2 py-0 border border-slate-300 rounded-md 
           focus:border-indigo-300 outline-none transition-all duration-200
-          hover:border-slate-400 ${
-            readOnly || disabled ? "bg-slate-100" : ""
+          hover:border-slate-400 text-black font-medium ${
+            readOnly || disabled ? "bg-slate-100 !text-black [-webkit-text-fill-color:black]" : "bg-white text-black"
           } ${FORM_INPUT_TEXT_CLASS} ${className}`}
         autoFocus={autoFocus}
       />
@@ -3571,12 +3573,18 @@ export const customStyles = {
     ...base,
     zIndex: 9999,
     fontSize: "11px",
+    backgroundColor: "white",
   }),
   menuList: (base) => ({
     ...base,
     maxHeight: "120px", // 🔥 reduce dropdown height
     paddingTop: 0,
     paddingBottom: 0,
+    backgroundColor: "white",
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
   }),
 };
 export function CustomInput({

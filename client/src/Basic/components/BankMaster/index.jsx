@@ -20,6 +20,7 @@ import { Check, Power } from "lucide-react";
 import Swal from "sweetalert2";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import { UserPermissions } from "../../../Utils/UserPermissions";
+import MasterHeader from "../ActiveTabList/MasterHeader";
 import {
   useAddbankMutation,
   useDeletebankMutation,
@@ -48,7 +49,7 @@ export default function Form({
   const [accNo, setAccNo] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [swiftCode, setSwiftCode] = useState("");
-  const [bankHolderName, setBankHolderName] = useState("")
+  const [bankHolderName, setBankHolderName] = useState("");
   const [branchId, setBranchId] = useState("");
   const [active, setActive] = useState(true);
   const [searchValue, setSearchValue] = useState("");
@@ -94,7 +95,7 @@ export default function Form({
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name || "");
-      setBankHolderName(data?.bankHolderName || "")
+      setBankHolderName(data?.bankHolderName || "");
       setAccNo(data?.accNo || "");
       setIfsc(data?.ifsc || "");
       setSwiftCode(data?.swiftCode || "");
@@ -112,7 +113,8 @@ export default function Form({
   }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
 
   const data = {
-    name, bankHolderName,
+    name,
+    bankHolderName,
     accNo,
     ifsc,
     swiftCode,
@@ -125,7 +127,13 @@ export default function Form({
   };
 
   const validateData = (data) => {
-    if (data.name && data.bankHolderName && data.accNo && data.ifsc && data.branchId) {
+    if (
+      data.name &&
+      data.bankHolderName &&
+      data.accNo &&
+      data.ifsc &&
+      data.branchId
+    ) {
       return true;
     }
     return false;
@@ -352,10 +360,12 @@ export default function Form({
                 setValue={setBankHolderName}
                 required={true}
                 readOnly={readOnly}
-
                 disabled={childRecord.current > 0}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-x-2">
             <div className="mb-3 ">
               <TextInputNew
                 name="Acc No"
@@ -367,9 +377,7 @@ export default function Form({
                 disabled={childRecord.current > 0}
               />
             </div>
-          </div>
-          <div className="flex gap-x-2">
-            <div className="mb-3 w-[50%]">
+            <div className="mb-3 ">
               <TextInputNew
                 name="IFSC Code"
                 type="ifsc"
@@ -380,7 +388,7 @@ export default function Form({
                 disabled={childRecord.current > 0}
               />
             </div>
-            <div className="mb-3 w-[50%]">
+            <div className="mb-3 ">
               <TextInputNew
                 name="Swift Code"
                 type="swift"
@@ -551,17 +559,14 @@ export default function Form({
 
   return (
     <div onKeyDown={handleKeyDown} className="p-1">
-      <div className="w-full flex bg-white p-1 justify-between  items-center">
-        <h5 className="text-lg font-bold text-gray-800">Bank Master</h5>
-        <div className="flex items-center">
-          <button
-            onClick={handleCreate}
-            className="bg-white border h-6  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
-          >
-            + Add New Bank
-          </button>
-        </div>
-      </div>
+      <MasterHeader>
+        <button
+          onClick={handleCreate}
+          className="bg-white border h-6 border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white text-xs px-2 py-1 rounded-md shadow transition-colors duration-200 flex items-center gap-2"
+        >
+          + Add New Bank
+        </button>
+      </MasterHeader>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <ReusableTable
@@ -579,7 +584,7 @@ export default function Form({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[38%] h-[440px]"}
+            widthClass={"w-[38%] h-[520px]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

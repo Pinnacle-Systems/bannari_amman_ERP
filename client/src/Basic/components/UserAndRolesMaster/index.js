@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import RolesMaster from './RolesMaster';
 import UserMaster from './UserMaster';
+import ActiveTabsHeader from '../ActiveTabList/ActiveTabsHeader';
 
 const UserRoles = () => {
     const [activeNavBar, setActiveNavBar] = useState("Roles");
@@ -23,8 +24,10 @@ const UserRoles = () => {
 
     return (
         <div className='h-full flex flex-col'>
-            <div className='md:flex md:items-center page-heading font-bold heading text-center py-2 justify-center'>
-                User & Roles
+            <div className='md:flex md:items-center page-heading py-1 px-2 justify-between relative z-30'>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <ActiveTabsHeader />
+                </div>
             </div>
             <div className='row-span-6 grid grid-cols-8 flex-1'>
                 <div className='border-2 bg-white'>

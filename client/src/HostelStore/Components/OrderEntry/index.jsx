@@ -13,13 +13,14 @@ import { FaPlus } from "react-icons/fa";
 import OrderEntryReport from "./OrderEntryReport.jsx";
 import OrderEntryForm from "./OrderEntryForm.jsx";
 import { useIsApprover } from "../../../CustomHooks/userIsApprover.js";
-import ProformaInvoiceApi from "../../../redux/uniformService/ProformaInvoiceService.js";
 import useInvalidateTags from "../../../CustomHooks/useInvalidateTags.js";
-import JobCardApi from "../../../redux/uniformService/JobCardService.js";
 import { UserPermissions } from "../../../Utils/UserPermissions.js";
 import Swal from "sweetalert2";
 import { useGetCityQuery } from "../../../redux/services/CityMasterService.js";
-
+import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
+import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
+import { invalidateOrderEntryModule } from "../../../redux/Dispatch/OrderInvalidateTags.js";
+import ActiveTabsHeader from "../../../Basic/components/ActiveTabList/ActiveTabsHeader";
 const index = () => {
   const [showForm, setShowForm] = useState(false);
   const [id, setId] = useState("");
@@ -73,9 +74,9 @@ const index = () => {
 
       try {
         let deldata = await removeData(id).unwrap();
-        dispatch(ProformaInvoiceApi.util.invalidateTags(["proformaInvoice"]));
-        dispatch(JobCardApi.util.invalidateTags(["jobCard"]));
-        dispatchInvalidate();
+        invalidateFabricModule();
+        invalidateYarnModule();
+        invalidateOrderEntryModule();
         if (deldata?.statusCode == 1) {
           Swal.fire({
             icon: "error",
@@ -131,21 +132,19 @@ const index = () => {
   };
 
   return (
-    <>
+    <div className="p-1 bg-[#F1F1F0] h-full flex flex-col overflow-hidden">
       <div
-        className="p-1 bg-[#F1F1F0] h-[85%]"
-        style={{ display: showForm ? "none" : "block" }}
+        className="h-full flex flex-col overflow-hidden"
+        style={{ display: showForm ? "none" : "flex" }}
       >
-        <div className="flex flex-col sm:flex-row justify-between bg-white py-1 px-1 items-start sm:items-center mb-4 gap-x-4 rounded-tl-lg rounded-tr-lg shadow-sm border border-gray-200">
-          <div>
-            <h1 className="text-lg font-bold text-gray-800">
-              Order Entry Report
-            </h1>
+        <div className="w-full flex bg-white py-1 px-2 justify-between items-center rounded-md shadow-sm border border-gray-200 mb-2 flex-none h-[38px] min-h-[38px] max-h-[38px] relative z-30">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <ActiveTabsHeader />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800  py-1 rounded-md flex items-center gap-2 text-xs px-2"
+              className="hover:bg-green-700 bg-white border border-green-700 hover:text-white text-green-800 py-1 rounded-md flex items-center gap-2 text-xs px-2.5 shadow-sm font-medium transition cursor-pointer"
               onClick={handleCreate}
             >
               <FaPlus /> Create New
@@ -153,7 +152,7 @@ const index = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex-1 min-h-0">
           <OrderEntryReport
             onView={handleView}
             onEdit={handleEdit}
@@ -167,7 +166,7 @@ const index = () => {
       </div>
 
       {showForm && (
-        <div className="h-[93vh] overflow-hidden">
+        <div className="h-full flex-1 min-h-0 overflow-hidden">
           <OrderEntryForm
             readOnly={readOnly}
             setReadOnly={setReadOnly}
@@ -189,7 +188,7 @@ const index = () => {
           />
         </div>
       )}
-    </>
+    </div>
   );
 };
 

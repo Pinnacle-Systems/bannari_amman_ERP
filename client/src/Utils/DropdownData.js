@@ -241,3 +241,8 @@ export const gridTypes = [
   { show: "FABRIC", value: "FABRIC" },
   { show: "YARN", value: "YARN" },
 ];
+export const gridTypesPo = [
+  { show: "FABRIC", value: "FABRIC" },
+  { show: "YARN", value: "YARN" },
+  { show: "GENERAL", value: "GENERAL" },
+];

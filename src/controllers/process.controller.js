@@ -1,6 +1,5 @@
 import { prisma, Prisma } from "../lib/prisma.js";
 
-
 import {
   get as _get,
   getOne as _getOne,
@@ -9,7 +8,7 @@ import {
   remove as _remove,
   UpdateProcess as _UpdateProcess,
   UpdatePushProcess as _UpdatePushProcess,
-  UpdateCurrentProcess  as _UpdateCurrentProcess
+  UpdateCurrentProcess as _UpdateCurrentProcess,
 } from "../services/process.service.js";
 
 async function get(req, res, next) {
@@ -28,20 +27,21 @@ async function getOne(req, res, next) {
   }
 }
 
-
 async function UpdateProcess(req, res, next) {
   try {
     res.json(await _UpdateProcess(req));
   } catch (error) {
     console.error(`Error`, error.message);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) { // ✅ Fixed
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // ✅ Fixed
       if (error.code === "P2002") {
         return res.status(200).json({
           statusCode: 0,
           message: `${error.meta.target.split("_")[1].toUpperCase()} Already exists`,
         });
       }
-      if (error.code === "P2025") { // ✅ Added
+      if (error.code === "P2025") {
+        // ✅ Added
         return res.status(200).json({
           statusCode: 0,
           message: "Record not found. Update failed.",
@@ -52,22 +52,22 @@ async function UpdateProcess(req, res, next) {
     }
   }
 }
-
-
 
 async function UpdateCurrentProcess(req, res, next) {
   try {
     res.json(await _UpdateCurrentProcess(req));
   } catch (error) {
     console.error(`Error`, error.message);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) { // ✅ Fixed
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // ✅ Fixed
       if (error.code === "P2002") {
         return res.status(200).json({
           statusCode: 0,
           message: `${error.meta.target.split("_")[1].toUpperCase()} Already exists`,
         });
       }
-      if (error.code === "P2025") { // ✅ Added
+      if (error.code === "P2025") {
+        // ✅ Added
         return res.status(200).json({
           statusCode: 0,
           message: "Record not found. Update failed.",
@@ -79,23 +79,21 @@ async function UpdateCurrentProcess(req, res, next) {
   }
 }
 
-
-
-
-
 async function UpdatePushProcess(req, res, next) {
   try {
     res.json(await _UpdatePushProcess(req));
   } catch (error) {
     console.error(`Error`, error.message);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) { // ✅ Fixed
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // ✅ Fixed
       if (error.code === "P2002") {
         return res.status(200).json({
           statusCode: 0,
           message: `${error.meta.target.split("_")[1].toUpperCase()} Already exists`,
         });
       }
-      if (error.code === "P2025") { // ✅ Added
+      if (error.code === "P2025") {
+        // ✅ Added
         return res.status(200).json({
           statusCode: 0,
           message: "Record not found. Update failed.",
@@ -112,7 +110,7 @@ async function create(req, res, next) {
     res.json(await _create(req.body));
   } catch (error) {
     console.error(`Error`, error.message);
-    if (error instanceof prisma.PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         res.statusCode = 200;
         res.json({
@@ -132,7 +130,7 @@ async function update(req, res, next) {
     res.json(await _update(req.params.id, req.body));
   } catch (error) {
     console.error(`Error`, error.message);
-    if (error instanceof prisma.PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         res.statusCode = 200;
         res.json({
@@ -163,4 +161,13 @@ async function remove(req, res, next) {
   }
 }
 
-export { get, getOne, create, update, remove,UpdateProcess,UpdatePushProcess,UpdateCurrentProcess };
+export {
+  get,
+  getOne,
+  create,
+  update,
+  remove,
+  UpdateProcess,
+  UpdatePushProcess,
+  UpdateCurrentProcess,
+};

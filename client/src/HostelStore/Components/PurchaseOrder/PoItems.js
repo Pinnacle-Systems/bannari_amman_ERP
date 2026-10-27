@@ -27,7 +27,7 @@ const PO_GRID_COLUMNS = [
   {
     key: "serial",
     label: "S.No",
-    className: "w-12 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-10 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "styleItemId",
@@ -41,22 +41,22 @@ const PO_GRID_COLUMNS = [
   {
     key: "hsnId",
     label: "HSN",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "sizeId",
     label: "Size",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "colorId",
     label: "Color",
-    className: "w-32 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-36 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "gsmId",
     label: "GSM",
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "uomId",
@@ -65,7 +65,7 @@ const PO_GRID_COLUMNS = [
         UOM<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-20 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-24 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "weight",
@@ -79,7 +79,7 @@ const PO_GRID_COLUMNS = [
         Quantity<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-24 px-4 py-2 text-center font-medium text-[11px]",
+    className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "price",
@@ -88,17 +88,17 @@ const PO_GRID_COLUMNS = [
         Price<span className="text-red-500">*</span>
       </>
     ),
-    className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-28 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "gross",
     label: "Gross",
-    className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-32 px-2 py-2 text-center font-medium text-[11px]",
   },
   {
     key: "tax",
     label: "Tax",
-    className: "w-20 px-1 py-2 text-center font-medium text-[11px]",
+    className: "w-16 px-1 py-2 text-center font-medium text-[11px]",
   },
 ];
 
@@ -184,22 +184,41 @@ const PoItems = ({
     ]);
   };
 
-  const deleteRow = (rowIndex) => {
-    setPoItems((currentRows) => {
-      if (currentRows.length > 1) {
-        return currentRows.filter((_, index) => index !== parseInt(rowIndex));
+  const deleteRow = (targetIndex) => {
+    const originalIndex =
+      typeof targetIndex === "number" && visibleRows[targetIndex]
+        ? visibleRows[targetIndex].originalIndex
+        : targetIndex;
+
+    const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
+
+    setPoItems((prev) => {
+      if (prev.length <= 1) return prev;
+      const filtered = prev.filter((_, i) => i !== originalIndex);
+      const visibleCount = filtered.filter((r) => isVisibleRow(r)).length;
+      if (visibleCount < DEFAULT_PURCHASE_ORDER_ROWS) {
+        return [
+          ...filtered,
+          ...createPurchaseOrderRows(
+            DEFAULT_PURCHASE_ORDER_ROWS - visibleCount,
+            targetVersion,
+          ),
+        ];
       }
-      return currentRows;
+      return filtered;
     });
   };
 
   const handleDeleteAllRows = () => {
-    setPoItems(
-      createPurchaseOrderRows(
-        DEFAULT_PURCHASE_ORDER_ROWS,
-        id ? (isNewVersion ? "New" : quoteVersion) : quoteVersion,
-      ),
+    const targetVersion = isNewVersion ? "New" : effectiveQuoteVersion || 1;
+    const nonVisibleItems = id
+      ? poItems.filter((r) => !isVisibleRow(r))
+      : [];
+    const newItems = createPurchaseOrderRows(
+      DEFAULT_PURCHASE_ORDER_ROWS,
+      targetVersion,
     );
+    setPoItems([...nonVisibleItems, ...newItems]);
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -221,6 +240,17 @@ const PoItems = ({
     );
     setContextMenu(null);
   };
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClickOutside = () => setContextMenu(null);
+    window.addEventListener("click", handleClickOutside);
+    window.addEventListener("scroll", handleClickOutside, true);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("scroll", handleClickOutside, true);
+    };
+  }, [contextMenu]);
 
   useEffect(() => {
     setPoItems((prev) => {
@@ -306,7 +336,7 @@ const PoItems = ({
   };
 
   const footer = (
-    <tr className="bg-gray-50 h-6 font-medium text-gray-800 text-[12px]">
+    <tr className="bg-slate-50 h-6 font-medium text-slate-800 text-[12px]">
       <td
         className="text-right px-4 border border-gray-300 font-medium"
         colSpan={8}
@@ -343,11 +373,21 @@ const PoItems = ({
         onClose={() => {
           setCurrentSelectedIndex("");
         }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
       >
         <TaxDetailsFullTemplate
           readOnly={readOnly}
           taxTypeId={taxTemplateId}
           currentIndex={currentSelectedIndex}
+          serialNumber={
+            visibleRows.findIndex(
+              (item) => item.originalIndex === currentSelectedIndex,
+            ) !== -1
+              ? visibleRows.findIndex(
+                  (item) => item.originalIndex === currentSelectedIndex,
+                ) + 1
+              : currentSelectedIndex + 1
+          }
           setCurrentSelectedIndex={setCurrentSelectedIndex}
           poItems={enrichedPoItems || poItems}
           handleInputChange={handleInputChange}
@@ -531,17 +571,42 @@ const PoItems = ({
           })()}
       </Modal>
 
-      <div ref={gridWrapperRef} className="h-full">
+      <div
+        ref={gridWrapperRef}
+        className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
+        onContextMenu={(e) => {
+          const td =
+            e.target.closest("td[data-grid-row]") || e.target.closest("td");
+          const tr = e.target.closest("tbody tr");
+          let rowIndex = null;
+          if (td && td.getAttribute("data-grid-row") !== null) {
+            rowIndex = parseInt(td.getAttribute("data-grid-row"), 10);
+          } else if (tr && tr.parentElement) {
+            rowIndex = Array.from(tr.parentElement.children).indexOf(tr);
+          }
+          if (rowIndex !== null && rowIndex >= 0 && !readOnly) {
+            e.preventDefault();
+            handleRightClick(e, rowIndex);
+          }
+        }}
+        onMouseDownCapture={(e) => {
+          if (e.button === 2) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <TransactionGrid
           title=""
+          tableClassName="min-w-[1380px] w-full border-collapse table-fixed"
+          containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={PO_GRID_COLUMNS}
           rows={visibleRows}
           footer={footer}
           getRowKey={(item) =>
             `${item.row.quoteVersion || "draft"}-${item.originalIndex}`
           }
-          getRowClassName={(_, index) =>
-            `${index % 2 === 0 ? "bg-white" : "bg-gray-100"} border border-blue-gray-200 cursor-pointer h-6`
+          getRowClassName={() =>
+            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
           }
           renderRow={(item, index) => {
             const row = item.row;
@@ -553,11 +618,6 @@ const PoItems = ({
                   data-grid-row={index}
                   data-grid-col={0}
                   className="w-12 border border-gray-300 text-[11px] text-center"
-                  onContextMenu={(event) => {
-                    if (!readOnly) {
-                      handleRightClick(event, rowIndex);
-                    }
-                  }}
                 >
                   {index + 1}
                 </td>
@@ -615,7 +675,10 @@ const PoItems = ({
                     advanceOnSelect
                   />
                 </td>
-                <td className="border border-gray-300 px-2 text-[11px] text-black">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 px-2 text-[11px] text-black"
+                >
                   <span className="block truncate">
                     {findFromList(row.hsnId, hsnList?.data, "name") || ""}
                   </span>
@@ -727,7 +790,10 @@ const PoItems = ({
                     addNewModalWidth="w-[30%] h-[45%]"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 text-[11px] text-black">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 px-2 text-[11px] text-black"
+                >
                   <span className="block truncate">
                     {findFromList(row.uomId, uomList?.data, "name") || ""}
                   </span>
@@ -838,7 +904,10 @@ const PoItems = ({
                     }
                   />
                 </td>
-                <td className="border border-gray-300 text-[11px]">
+                <td
+                  data-grid-row={index}
+                  className="border border-gray-300 text-[11px]"
+                >
                   <input
                     type="number"
                     onFocus={(event) => event.target.select()}
@@ -895,7 +964,7 @@ const PoItems = ({
         />
       </div>
 
-      {contextMenu ? (
+      {!readOnly && contextMenu ? (
         <div
           style={{
             position: "fixed",
@@ -911,7 +980,7 @@ const PoItems = ({
         >
           <div className="flex flex-col gap-1">
             <button
-              className="text-black text-[12px] text-left rounded px-1"
+              className="text-black text-[12px] text-left rounded px-2 py-0.5 hover:bg-gray-200 cursor-pointer"
               onClick={() => {
                 deleteRow(contextMenu.rowId);
                 deleteSelectedRows();
@@ -921,7 +990,7 @@ const PoItems = ({
               Delete
             </button>
             <button
-              className="text-black text-[12px] text-left rounded px-1"
+              className="text-black text-[12px] text-left rounded px-2 py-0.5 hover:bg-gray-200 cursor-pointer"
               onClick={() => {
                 handleDeleteAllRows();
                 handleCloseContextMenu();

@@ -469,7 +469,6 @@ const ProformaInvoiceFabricPrintFormat = ({
   const branch = data?.Branch || {};
   const customer = data?.customer || {};
   const bank = data?.Bank || {};
-  console.log(data, "data?.items");
 
   // Filter only real items
   const rawItems = data?.currentVersionItems || [];
