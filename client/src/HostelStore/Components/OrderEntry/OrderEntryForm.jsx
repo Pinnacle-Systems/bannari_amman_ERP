@@ -959,178 +959,50 @@ const OrderEntryForm = ({
             </div>
 
             {/* PI Selection when AGAINSTPI */}
-            {orderType === "AGAINSTPI" && (
-              <div className={narrowFieldWrap}>
-                {orderGridType === "FABRIC" ? (
-                  id ? (
-                    <TextInput
-                      name="Fabric PI No"
-                      placeholder="Fabric PI No"
-                      value={fabricPIDocId}
-                      disabled={true}
-                      className={`${compactFieldClass} w-full`}
-                    />
-                  ) : (
-                    <DropdownInput
-                      name="Fabric PI No"
-                      options={dropDownListObject(
-                        fabricPIList?.data?.filter(
-                          (item) => item?.customerId === customerId,
-                        ) || [],
-                        "docId",
-                        "id",
-                      )}
-                      value={proFormaFabricId}
-                      setValue={async (val) => {
-                        setProFormaIFabricId(val);
-                        if (!val) {
-                          setFabricItems(padFabricItems([]));
-                          return;
-                        }
-
-                        const res = await getPIById(val).unwrap();
-
-                        setTaxTemplateId(
-                          res?.data?.taxTemplateId || "",
-                        );
-                        setDiscountType(res?.data?.discountType || "");
-                        setDiscountValue(res?.data?.discountValue);
-
-                        if (res?.data?.termsId)
-                          setTermsId(res.data.termsId);
-                        if (res?.data?.termsAndCondition)
-                          setTermsAndCondition(
-                            res.data.termsAndCondition,
-                          );
-                        if (res?.data?.deliveryDate)
-                          setDeliveryDate(
-                            moment
-                              .utc(res.data.deliveryDate)
-                              .format("YYYY-MM-DD"),
-                          );
-                        if (res?.data?.remarks)
-                          setRemarks(res.data.remarks);
-
-                        setPayTermId(res?.data?.payTermId || "");
-                        setBankId(res?.data?.bankId || "");
-                        setCurrencyId(res?.data?.currencyId || "");
-
-                        setCarriageCharge(
-                          res?.data?.carriageCharge?.toFixed(2) || "",
-                        );
-                        setLoadingId(res?.data?.loadingId || "");
-                        setDeliveryId(res?.data?.deliveryId || "");
-                        setCarriageTax(res?.data?.carriageTax || "");
-                        setCustomerPoNo(res?.data?.customerPoNo || "");
-
-                        const itemsArr = res?.data?.fabricItems || [];
-                        const maxVersion =
-                          itemsArr.length > 0
-                            ? Math.max(
-                                res?.data?.quoteVersion || 1,
-                                ...itemsArr.map(
-                                  (i) => Number(i.quoteVersion) || 1,
-                                ),
-                              )
-                            : res?.data?.quoteVersion || 1;
-
-                        const latestItems = itemsArr.filter(
-                          (item) =>
-                            (Number(item.quoteVersion) || 1) ===
-                            Number(maxVersion),
-                        );
-
-                        const mappedItems = latestItems?.map(
-                          (item) => ({
-                            ...item,
-                            weightPerRoll: item?.weightPerRoll
-                              ? Number(item?.weightPerRoll)?.toFixed(3)
-                              : "",
-                            totalKgs: item?.totalKgs
-                              ? Number(item?.totalKgs)?.toFixed(3)
-                              : "",
-                            pricePerKg: item?.pricePerKg
-                              ? Number(item?.pricePerKg)?.toFixed(2)
-                              : "",
-                            totalPrice: item?.totalPrice
-                              ? Number(item?.totalPrice)?.toFixed(2)
-                              : "",
-                            qty: item?.qty
-                              ? Number(item?.qty)?.toFixed(3)
-                              : "",
-                            price: item?.price
-                              ? Number(item?.price)?.toFixed(2)
-                              : "",
-                            amount: item?.amount
-                              ? Number(item?.amount)?.toFixed(2)
-                              : "",
-                          }),
-                        );
-
-                        setFabricItems(padFabricItems(mappedItems));
-                      }}
-                      required={orderType === "AGAINSTPI"}
-                      readOnly={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "GENERAL"
-                      }
-                      disabled={
-                        childRecord.current > 0 ||
-                        readOnly ||
-                        orderType === "GENERAL"
-                      }
-                      className={`${compactFieldClass} w-full max-w-none`}
-                    />
-                  )
-                ) : id ? (
+            <div className={narrowFieldWrap}>
+              {orderGridType === "FABRIC" ? (
+                id ? (
                   <TextInput
-                    name="Yarn PI No"
-                    placeholder="Yarn PI No"
-                    value={yarnPIDocId}
+                    name="Fabric PI No"
+                    placeholder="Fabric PI No"
+                    value={fabricPIDocId}
                     disabled={true}
                     className={`${compactFieldClass} w-full`}
                   />
                 ) : (
                   <DropdownInput
-                    name="Yarn PI No"
+                    name="Fabric PI No"
                     options={dropDownListObject(
-                      YarnPIList?.data?.filter(
+                      fabricPIList?.data?.filter(
                         (item) => item?.customerId === customerId,
                       ) || [],
                       "docId",
                       "id",
                     )}
-                    value={proFormaYarnId}
+                    value={proFormaFabricId}
                     setValue={async (val) => {
-                      setProFormaIYarnId(val);
+                      setProFormaIFabricId(val);
                       if (!val) {
-                        setYarnItems(padYarnItems([]));
+                        setFabricItems(padFabricItems([]));
                         return;
                       }
 
-                      const res = await getYarnPIById(val).unwrap();
+                      const res = await getPIById(val).unwrap();
 
-                      setTaxTemplateId(
-                        res?.data?.taxTemplateId || "",
-                      );
+                      setTaxTemplateId(res?.data?.taxTemplateId || "");
                       setDiscountType(res?.data?.discountType || "");
                       setDiscountValue(res?.data?.discountValue);
 
-                      if (res?.data?.termsId)
-                        setTermsId(res.data.termsId);
+                      if (res?.data?.termsId) setTermsId(res.data.termsId);
                       if (res?.data?.termsAndCondition)
-                        setTermsAndCondition(
-                          res.data.termsAndCondition,
-                        );
+                        setTermsAndCondition(res.data.termsAndCondition);
                       if (res?.data?.deliveryDate)
                         setDeliveryDate(
                           moment
                             .utc(res.data.deliveryDate)
                             .format("YYYY-MM-DD"),
                         );
-                      if (res?.data?.remarks)
-                        setRemarks(res.data.remarks);
+                      if (res?.data?.remarks) setRemarks(res.data.remarks);
 
                       setPayTermId(res?.data?.payTermId || "");
                       setBankId(res?.data?.bankId || "");
@@ -1144,7 +1016,7 @@ const OrderEntryForm = ({
                       setCarriageTax(res?.data?.carriageTax || "");
                       setCustomerPoNo(res?.data?.customerPoNo || "");
 
-                      const itemsArr = res?.data?.yarnItems || [];
+                      const itemsArr = res?.data?.fabricItems || [];
                       const maxVersion =
                         itemsArr.length > 0
                           ? Math.max(
@@ -1161,25 +1033,30 @@ const OrderEntryForm = ({
                           Number(maxVersion),
                       );
 
-                      const mappedItems = latestItems?.map(
-                        (item) => ({
-                          ...item,
-                          weightPerBag: item?.weightPerBag
-                            ? Number(item?.weightPerBag)?.toFixed(3)
-                            : "",
-                          qty: item?.qty
-                            ? Number(item?.qty)?.toFixed(3)
-                            : "",
-                          price: item?.price
-                            ? Number(item?.price)?.toFixed(2)
-                            : "",
-                          amount: item?.amount
-                            ? Number(item?.amount)?.toFixed(2)
-                            : "",
-                        }),
-                      );
+                      const mappedItems = latestItems?.map((item) => ({
+                        ...item,
+                        weightPerRoll: item?.weightPerRoll
+                          ? Number(item?.weightPerRoll)?.toFixed(3)
+                          : "",
+                        totalKgs: item?.totalKgs
+                          ? Number(item?.totalKgs)?.toFixed(3)
+                          : "",
+                        pricePerKg: item?.pricePerKg
+                          ? Number(item?.pricePerKg)?.toFixed(2)
+                          : "",
+                        totalPrice: item?.totalPrice
+                          ? Number(item?.totalPrice)?.toFixed(2)
+                          : "",
+                        qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+                        price: item?.price
+                          ? Number(item?.price)?.toFixed(2)
+                          : "",
+                        amount: item?.amount
+                          ? Number(item?.amount)?.toFixed(2)
+                          : "",
+                      }));
 
-                      setYarnItems(padYarnItems(mappedItems));
+                      setFabricItems(padFabricItems(mappedItems));
                     }}
                     required={orderType === "AGAINSTPI"}
                     readOnly={
@@ -1194,9 +1071,103 @@ const OrderEntryForm = ({
                     }
                     className={`${compactFieldClass} w-full max-w-none`}
                   />
-                )}
-              </div>
-            )}
+                )
+              ) : id ? (
+                <TextInput
+                  name="Yarn PI No"
+                  placeholder="Yarn PI No"
+                  value={yarnPIDocId}
+                  disabled={true}
+                  className={`${compactFieldClass} w-full`}
+                />
+              ) : (
+                <DropdownInput
+                  name="Yarn PI No"
+                  options={dropDownListObject(
+                    YarnPIList?.data?.filter(
+                      (item) => item?.customerId === customerId,
+                    ) || [],
+                    "docId",
+                    "id",
+                  )}
+                  value={proFormaYarnId}
+                  setValue={async (val) => {
+                    setProFormaIYarnId(val);
+                    if (!val) {
+                      setYarnItems(padYarnItems([]));
+                      return;
+                    }
+
+                    const res = await getYarnPIById(val).unwrap();
+
+                    setTaxTemplateId(res?.data?.taxTemplateId || "");
+                    setDiscountType(res?.data?.discountType || "");
+                    setDiscountValue(res?.data?.discountValue);
+
+                    if (res?.data?.termsId) setTermsId(res.data.termsId);
+                    if (res?.data?.termsAndCondition)
+                      setTermsAndCondition(res.data.termsAndCondition);
+                    if (res?.data?.deliveryDate)
+                      setDeliveryDate(
+                        moment.utc(res.data.deliveryDate).format("YYYY-MM-DD"),
+                      );
+                    if (res?.data?.remarks) setRemarks(res.data.remarks);
+
+                    setPayTermId(res?.data?.payTermId || "");
+                    setBankId(res?.data?.bankId || "");
+                    setCurrencyId(res?.data?.currencyId || "");
+
+                    setCarriageCharge(
+                      res?.data?.carriageCharge?.toFixed(2) || "",
+                    );
+                    setLoadingId(res?.data?.loadingId || "");
+                    setDeliveryId(res?.data?.deliveryId || "");
+                    setCarriageTax(res?.data?.carriageTax || "");
+                    setCustomerPoNo(res?.data?.customerPoNo || "");
+
+                    const itemsArr = res?.data?.yarnItems || [];
+                    const maxVersion =
+                      itemsArr.length > 0
+                        ? Math.max(
+                            res?.data?.quoteVersion || 1,
+                            ...itemsArr.map((i) => Number(i.quoteVersion) || 1),
+                          )
+                        : res?.data?.quoteVersion || 1;
+
+                    const latestItems = itemsArr.filter(
+                      (item) =>
+                        (Number(item.quoteVersion) || 1) === Number(maxVersion),
+                    );
+
+                    const mappedItems = latestItems?.map((item) => ({
+                      ...item,
+                      weightPerBag: item?.weightPerBag
+                        ? Number(item?.weightPerBag)?.toFixed(3)
+                        : "",
+                      qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+                      price: item?.price ? Number(item?.price)?.toFixed(2) : "",
+                      amount: item?.amount
+                        ? Number(item?.amount)?.toFixed(2)
+                        : "",
+                    }));
+
+                    setYarnItems(padYarnItems(mappedItems));
+                  }}
+                  required={orderType === "AGAINSTPI"}
+                  readOnly={
+                    childRecord.current > 0 ||
+                    readOnly ||
+                    orderType === "GENERAL"
+                  }
+                  disabled={
+                    childRecord.current > 0 ||
+                    readOnly ||
+                    orderType === "GENERAL"
+                  }
+                  className={`${compactFieldClass} w-full max-w-none`}
+                />
+              )}
+            </div>
 
             {/* Tax Type & Pay Term */}
             <div className="grid grid-cols-2 gap-1.5">
@@ -1563,18 +1534,14 @@ const OrderEntryForm = ({
               setValue={setBankId}
               required={false}
               readOnly={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI"
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
               className={compactFieldClass}
               addNewLabel="+ Add New Bank"
               childComponent={BankMaster}
               addNewModalWidth="w-[45%] h-[64%]"
               disabled={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI"
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
             />
           </div>
@@ -1589,9 +1556,7 @@ const OrderEntryForm = ({
               setValue={setDeliveryDate}
               required={true}
               readOnly={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI"
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
               min={docDate}
               type={"date"}
@@ -1608,9 +1573,7 @@ const OrderEntryForm = ({
               min="0"
               className={`${compactFieldClass} text-right`}
               disabled={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI"
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
               onBlur={(e) =>
                 setCarriageCharge(
@@ -1628,9 +1591,7 @@ const OrderEntryForm = ({
               value={carriageTax}
               setValue={setCarriageTax}
               disabled={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI"
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
               type="number"
               min="0"
@@ -1906,11 +1867,8 @@ const OrderEntryForm = ({
                   (sum, item) => sum + (parseFloat(item.amount) || 0),
                   0,
                 ) || 0) -
-                  (enrichedData.itemDiscount +
-                    enrichedData.overallDiscount >
-                  0
-                    ? enrichedData.itemDiscount +
-                      enrichedData.overallDiscount
+                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
+                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
                     : 0),
             currencyCode || isCurrencySymbol,
           )}`,
@@ -1922,8 +1880,7 @@ const OrderEntryForm = ({
           key: "carriageCharges",
           label: "Carriage Charges",
           value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
-            !isNaN(parseFloat(carriageFinalAmt)) &&
-            carriageFinalAmt !== ""
+            !isNaN(parseFloat(carriageFinalAmt)) && carriageFinalAmt !== ""
               ? formatCurrencyAmount(
                   carriageFinalAmt,
                   currencyCode || isCurrencySymbol,
