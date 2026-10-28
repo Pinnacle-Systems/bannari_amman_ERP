@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import Modal from "../UiComponents/Modal";
 
 const FORM_LABEL_CLASS = "block text-[11px] font-bold text-slate-700 mb-1";
-const FORM_INPUT_TEXT_CLASS = "text-[11px]";
+const FORM_INPUT_TEXT_CLASS = "text-xs";
 
 const RequiredLabel = ({ name }) => (
   <p>
@@ -185,7 +185,7 @@ export const DropdownWithModal = forwardRef(
           {isDisabled ? (
             <div
               title={selectedLabel || "Select"}
-              className={`flex h-7 w-full items-center px-3 py-0 border border-gray-300 rounded-lg
+              className={`flex w-full items-center px-3 py-1.5 border border-gray-300 rounded-lg
               bg-slate-100 text-black shadow-sm whitespace-nowrap overflow-hidden text-ellipsis
               ${FORM_INPUT_TEXT_CLASS} ${className}`}
             >
@@ -199,7 +199,7 @@ export const DropdownWithModal = forwardRef(
               tabIndex={tabIndex ?? undefined}
               defaultValue={defaultValue}
               required={required}
-              className={`h-8.5 w-full px-3 py-1 border border-gray-300 rounded-lg
+              className={`w-full px-3 py-1.5 border border-gray-300 rounded-lg
             focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
             transition-all duration-150 shadow-sm  ${readOnly || disabled ? "bg-slate-100 cursor-not-allowed" : "bg-white cursor-pointer"}
             ${FORM_INPUT_TEXT_CLASS} ${className}`}
@@ -247,7 +247,7 @@ export const DropdownWithModal = forwardRef(
           )}
           <div
             title={selectedLabel || "Select"}
-            className={`flex h-7 w-full items-center px-3 py-0 border border-gray-300 rounded-lg
+            className={`flex w-full items-center px-3 py-1.5 border border-gray-300 rounded-lg
             bg-slate-100 text-slate-700 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis
             ${FORM_INPUT_TEXT_CLASS} ${className}`}
           >
@@ -372,7 +372,7 @@ export const DropdownWithModal = forwardRef(
               setIsOpen(false);
             }
           }}
-          className={`flex h-7 w-full items-center justify-between border border-gray-300 rounded-lg px-3 py-0 text-left
+          className={`flex w-full items-center justify-between border border-gray-300 rounded-lg px-3 py-1.5 text-left
           focus:outline-none focus:ring-1 outline-none focus:ring-blue-500 focus:border-blue-500
           transition-all duration-150 shadow-sm
           ${isDisabled ? "bg-slate-100 cursor-not-allowed" : "bg-white cursor-pointer"}

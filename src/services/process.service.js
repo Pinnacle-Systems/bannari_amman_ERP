@@ -10,17 +10,13 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       // active: active ? Boolean(active) : undefined,
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       processGroupList: true,
-    //       laminationDetails: true,
-    //       varnishDetails: true,
-    //       machineDetails: true,
-    //       processDetails: true,
-    //     },
-    //   },
-    // },
+    include: {
+      processGroupList: {
+        include: {
+          processGroup: true,
+        },
+      },
+    },
     orderBy: {
       id: "asc",
     },
@@ -43,6 +39,13 @@ async function getOne(id) {
   const data = await prisma.process.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      processGroupList: {
+        include: {
+          processGroup: true,
+        },
+      },
     },
   });
   if (!data) return NoRecordFound("process");

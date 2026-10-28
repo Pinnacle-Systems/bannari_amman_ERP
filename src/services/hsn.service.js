@@ -38,7 +38,7 @@ async function getOne(id) {
   const childRecordYarn = await prisma.YarnMaster.count({
     where: { hsnId: parseInt(id) },
   });
-  const childRecordFabric = await prisma.fabricMasters.count({
+  const childRecordFabric = await prisma.fabricMaster.count({
     where: { hsnId: parseInt(id) },
   });
   const data = await prisma.hsn.findUnique({

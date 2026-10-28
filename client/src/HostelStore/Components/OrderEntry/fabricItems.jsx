@@ -10,6 +10,7 @@ import { VIEW } from "../../../icons";
 import Modal from "../../../UiComponents/Modal";
 import TaxDetailsFullTemplate from "../TaxDetailsCompleteTemplate";
 import YarnDetails from "./yarnDetails.jsx";
+import FabricProcess from "./fabricProcess.jsx";
 import Swal from "sweetalert2";
 import { Gsm, UomMaster, ColorMaster } from "..";
 import {
@@ -27,6 +28,9 @@ const FabricItems = ({
   enrichedItems,
   setFabricItems,
   readOnly,
+  isNewFieldsReadOnly,
+  childRecord,
+  orderType,
   taxTemplateId,
   id,
   isCurrencySymbol,
@@ -45,7 +49,15 @@ const FabricItems = ({
   gaugeList,
   fabricList,
   yarnList,
+  processList,
 }) => {
+  const newFieldsReadOnly =
+    isNewFieldsReadOnly !== undefined
+      ? isNewFieldsReadOnly
+      : Boolean(
+          readOnly &&
+          (orderType === "AGAINSTPI" ? childRecord?.current > 0 : true),
+        );
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
   console.log(orderFabricItems, "orderFabricItems");
@@ -77,7 +89,8 @@ const FabricItems = ({
     discountType: "",
     discountvalue: "",
     discounttype: "",
-    yarnDetails: [],
+    fabricYarnDetails: [],
+    fabricProcess: [],
   };
 
   const [contextMenu, setContextMenu] = useState(null);
@@ -86,6 +99,10 @@ const FabricItems = ({
     useState(null);
   const [currentYarnSelectedIndex, setCurrentYarnSelectedIndex] =
     useState(null);
+  const [
+    currentFabricProcessSelectedIndex,
+    setCurrentFabricProcessSelectedIndex,
+  ] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
 
@@ -157,9 +174,11 @@ const FabricItems = ({
         newItems[index].requiredQty = "";
       }
 
-      if (Array.isArray(newItems[index].yarnDetails)) {
+      const rawYarnDetails =
+        newItems[index].fabricYarnDetails || newItems[index].yarnDetails;
+      if (Array.isArray(rawYarnDetails)) {
         const reqNum = parseFloat(newItems[index].requiredQty) || 0;
-        newItems[index].yarnDetails = newItems[index].yarnDetails.map((yd) => {
+        newItems[index].fabricYarnDetails = rawYarnDetails.map((yd) => {
           const pct = parseFloat(yd.percentage);
           return {
             ...yd,
@@ -203,9 +222,10 @@ const FabricItems = ({
         }
       }
 
-      if (Array.isArray(newItems[index].yarnDetails)) {
+      const rawYarnDetails = newItems[index].fabricYarnDetails;
+      if (Array.isArray(rawYarnDetails)) {
         const reqNum = parseFloat(newItems[index].requiredQty) || 0;
-        newItems[index].yarnDetails = newItems[index].yarnDetails.map((yd) => {
+        newItems[index].fabricYarnDetails = rawYarnDetails.map((yd) => {
           const pct = parseFloat(yd.percentage);
           return {
             ...yd,
@@ -451,7 +471,7 @@ const FabricItems = ({
         onClose={() => {
           setCurrentYarnSelectedIndex(null);
         }}
-        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl w-[1300px] h-[520px] max-w-[96vw] max-h-[92vh]"
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl w-[1280px] h-[760px] max-w-[98vw] max-h-[96vh]"
       >
         <YarnDetails
           currentIndex={currentYarnSelectedIndex}
@@ -459,9 +479,28 @@ const FabricItems = ({
           setFabricItems={setFabricItems}
           fabricList={fabricList}
           yarnList={yarnList}
-          readOnly={readOnly}
+          processList={processList}
+          readOnly={newFieldsReadOnly}
           colorList={colorList}
           onClose={() => setCurrentYarnSelectedIndex(null)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={Number.isInteger(currentFabricProcessSelectedIndex)}
+        onClose={() => {
+          setCurrentFabricProcessSelectedIndex(null);
+        }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl w-[820px] h-[480px] max-w-[94vw] max-h-[90vh]"
+      >
+        <FabricProcess
+          currentIndex={currentFabricProcessSelectedIndex}
+          orderFabricItems={orderFabricItems}
+          setFabricItems={setFabricItems}
+          fabricList={fabricList}
+          processList={processList}
+          readOnly={newFieldsReadOnly}
+          onClose={() => setCurrentFabricProcessSelectedIndex(null)}
         />
       </Modal>
 
@@ -493,7 +532,7 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="w-[2302px] min-w-[2302px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
+          tableClassName="w-[2254px] min-w-[2254px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
@@ -523,31 +562,31 @@ const FabricItems = ({
               key: "color",
               label: "Color",
               className:
-                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-64 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "design",
               label: "Design",
               className:
-                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gauge",
               label: "Gauge",
               className:
-                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-20 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "loop",
               label: "Loop Length",
               className:
-                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gsm",
               label: "GSM",
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "kDia",
@@ -607,6 +646,12 @@ const FabricItems = ({
               label: "Yarn",
               className:
                 "w-14 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+            },
+            {
+              key: "process",
+              label: "Process",
+              className:
+                "w-16 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "price",
@@ -671,6 +716,7 @@ const FabricItems = ({
                   .toFixed(3)}
               </td>
               <td className="w-14 border-r border-b border-gray-300 bg-slate-50" />
+              <td className="w-16 border-r border-b border-gray-300 bg-slate-50" />
               <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderFabricItems
@@ -751,7 +797,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
+                  className="w-64 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -770,7 +816,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
+                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.designId}
@@ -789,7 +835,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
+                  className="w-20 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem?.gaugeId}
@@ -808,7 +854,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
+                  className="w-28 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.loopLengthId}
@@ -829,7 +875,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={3}
                   data-grid-editable="true"
-                  className="w-28 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.gsmId}
@@ -972,7 +1018,7 @@ const FabricItems = ({
                         );
                       }
                     }}
-                    readOnly={readOnly}
+                    readOnly={newFieldsReadOnly}
                   />
                 </td>
                 <td
@@ -1003,7 +1049,7 @@ const FabricItems = ({
                         );
                       }
                     }}
-                    readOnly={readOnly}
+                    readOnly={newFieldsReadOnly}
                   />
                 </td>
                 <td
@@ -1018,6 +1064,23 @@ const FabricItems = ({
                     onClick={() => {
                       setCurrentYarnSelectedIndex(originalIndex);
                     }}
+                  >
+                    {VIEW}
+                  </button>
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-16 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
+                >
+                  <button
+                    type="button"
+                    disabled={!rowItem.fabricId}
+                    className="text-indigo-600 w-full flex items-center justify-center hover:text-indigo-800 disabled:text-gray-300 table-data-input"
+                    onClick={() => {
+                      setCurrentFabricProcessSelectedIndex(originalIndex);
+                    }}
+                    title="Fabric Process Details"
                   >
                     {VIEW}
                   </button>

@@ -66,7 +66,6 @@ import {
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
 
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
-import { useDispatch } from "react-redux";
 
 import PoSummary from "../PurchaseOrder/PoSummary";
 import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
@@ -93,6 +92,8 @@ import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterSer
 import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
 import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
 import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
+import { useGetProcessMasterQuery } from "../../../redux/services/ProcessMasterService";
+
 import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
 import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 import { invalidateOrderEntryModule } from "../../../redux/Dispatch/OrderInvalidateTags.js";
@@ -121,7 +122,8 @@ const EMPTY_FABRIC_ROW = {
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
-  yarnDetails: [],
+  fabricYarnDetails: [],
+  fabricProcess: [],
 };
 
 const EMPTY_YARN_ROW = {
@@ -271,6 +273,7 @@ const OrderEntryForm = ({
   const { data: colorList } = useGetColorMasterQuery({ params });
 
   const { data: yarnList } = useGetYarnMasterQuery({ params });
+  const { data: processList } = useGetProcessMasterQuery({ params });
 
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
@@ -356,11 +359,12 @@ const OrderEntryForm = ({
             : item?.qty != null
               ? (
                   Number(item?.qty) +
-                  (Number(item?.qty) * (Number(item?.wastePercentage) || 0)) / 100
+                  (Number(item?.qty) * (Number(item?.wastePercentage) || 0)) /
+                    100
                 ).toFixed(3)
               : "",
-        yarnDetails: Array.isArray(item?.yarnDetails)
-          ? item.yarnDetails.map((yd) => {
+        fabricYarnDetails: Array.isArray(item?.fabricYarnDetails)
+          ? item.fabricYarnDetails?.map((yd) => {
               const reqNum =
                 item?.requiredQty != null
                   ? Number(item?.requiredQty)
@@ -373,13 +377,23 @@ const OrderEntryForm = ({
               const pct = parseFloat(yd.percentage);
               return {
                 ...yd,
+                process: yd?.process || "No",
+                yarnProcessDetails: Array.isArray(yd?.yarnProcessDetails)
+                  ? yd.yarnProcessDetails?.map((yp) => ({
+                      ...yp,
+                      dyeing: yp?.dyeing || "No",
+                    }))
+                  : [],
                 yarnQty:
                   reqNum > 0 && !isNaN(pct)
                     ? ((reqNum * pct) / 100).toFixed(3)
                     : yd.yarnQty,
               };
             })
-          : item?.yarnDetails,
+          : item?.fabricYarnDetails || [],
+        fabricProcess: Array.isArray(item?.fabricProcess)
+          ? item.fabricProcess
+          : [],
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -443,7 +457,25 @@ const OrderEntryForm = ({
     carriageCharge,
     carriageTax,
     bankId,
-    orderFabricItems: orderFabricItems?.filter((i) => i.fabricId),
+    orderFabricItems: orderFabricItems
+      ?.filter((i) => i.fabricId)
+      .map((item) => ({
+        ...item,
+        fabricYarnDetails: (item.fabricYarnDetails || [])
+          .filter((yd) => yd.yarnId)
+          .map((yd) => ({
+            ...yd,
+            yarnProcessDetails: (yd.yarnProcessDetails || [])
+              .filter((yp) => yp.processId)
+              .map((yp) => ({
+                ...yp,
+                yarnProcessColors: (yp.yarnProcessColors || []).filter(
+                  (yc) => yc.colorId,
+                ),
+              })),
+          })),
+        fabricProcess: (item.fabricProcess || []).filter((fp) => fp.processId),
+      })),
     orderYarnItems: orderYarnItems?.filter((i) => i.yarnId),
     termsAndCondition,
     termsId,
@@ -2404,6 +2436,9 @@ const OrderEntryForm = ({
                 childRecord?.current > 0 ||
                 orderType === "AGAINSTPI"
               }
+              isNewFieldsReadOnly={Boolean(
+                readOnly || childRecord?.current > 0,
+              )}
               uomList={uomList}
               hsnList={hsnList}
               colorList={colorList}
@@ -2415,6 +2450,7 @@ const OrderEntryForm = ({
               gaugeList={gaugeList}
               fabricList={fabricList}
               yarnList={yarnList}
+              processList={processList}
               id={id}
               termsRef={termsRef}
               childRecord={childRecord}

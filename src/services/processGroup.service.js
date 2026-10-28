@@ -33,7 +33,14 @@ async function getOne(id) {
 }
 
 async function create(body) {
-  const { name, companyId, active = true, processGroupList, branchId } = body;
+  const {
+    name,
+    companyId,
+    active = true,
+    processGroupList,
+    branchId,
+    isYarnProcess,
+  } = body;
   const result = await prisma.$transaction(async (tx) => {
     const processGroup = await tx.processGroup.create({
       data: {
@@ -41,6 +48,7 @@ async function create(body) {
         active,
         companyId: parseInt(companyId),
         branchId: parseInt(branchId),
+        isYarnProcess: isYarnProcess || false,
       },
     });
     if (processGroupList?.length) {
@@ -68,7 +76,7 @@ function findRemovedItems(dataFound, processGroupLists) {
 }
 
 async function update(id, body) {
-  const { name, active, companyId, processGroupList } = body;
+  const { name, active, companyId, processGroupList, isYarnProcess } = body;
 
   const result = await prisma.$transaction(async (tx) => {
     // Step 1: Check if SizeTemplate exists
@@ -85,6 +93,7 @@ async function update(id, body) {
         name,
         active,
         companyId: companyId ? parseInt(companyId) : null,
+        isYarnProcess: isYarnProcess || false,
       },
     });
 

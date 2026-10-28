@@ -47,7 +47,7 @@ async function create(req, res, next) {
         res.statusCode = 200;
         res.json({
           statusCode: 1,
-          message: `${error.meta.target.split("_")[1].toUpperCase()} Already exists`,
+          message: `${error.meta.target?.split("_")[1]?.toUpperCase()} Already exists`,
         });
         console.log(res.statusCode);
       }

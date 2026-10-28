@@ -532,7 +532,7 @@ export default function YarnMaster({
       header: "Yarn Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className: "font-medium text-gray-900 text-left uppercase w-[650px]",
     },
 
     {
@@ -569,7 +569,9 @@ export default function YarnMaster({
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
                 <div className="flex gap-x-4 my-2">
-                  <div className="w-[25%]">
+                  {/* Counts Name */}
+
+                  {/* <div className="w-[25%]">
                     <DropdownWithModal
                       name="Counts Name"
                       options={dropDownListObject(
@@ -590,8 +592,11 @@ export default function YarnMaster({
                       addNewModalWidth="w-[40%] h-[45%]"
                       ref={countryNameRef}
                     />
-                  </div>
-                  <div className="w-[40%]">
+                  </div> */}
+
+                  {/* Content Name */}
+
+                  {/* <div className="w-[40%]">
                     <DropdownWithModal
                       name="Content Name"
                       options={dropDownListObject(
@@ -611,8 +616,9 @@ export default function YarnMaster({
                       childComponent={ContentMaster}
                       addNewModalWidth="w-[40%] h-[45%]"
                     />
-                  </div>
-                  <div className="w-[50%]">
+                  </div> */}
+
+                  <div className="w-[80%]">
                     <TextInputNew
                       name="Yarn Name"
                       type="text"
@@ -639,7 +645,7 @@ export default function YarnMaster({
                   </div> */}
                 </div>
                 <div className="flex gap-x-8">
-                  <div className="w-[17%] mb-3">
+                  <div className="w-[27%] mb-3">
                     <DropdownWithModal
                       name="Hsn"
                       options={dropDownListObject(
@@ -660,7 +666,7 @@ export default function YarnMaster({
                       required={true}
                     />
                   </div>
-                  <div className="w-[10%]">
+                  <div className="w-[15%]">
                     <TextInputNew
                       name="Tax percentage %"
                       type="text"
@@ -993,7 +999,7 @@ export default function YarnMaster({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[65vw] h-[60vh]"}
+            widthClass={"w-[49vw] h-[60vh]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

@@ -332,7 +332,7 @@ export default function Form({
       header: "Company (Branch) / Location",
       accessor: (item) =>
         `${item.Location?.branchName ? ` ${item.Location.branchName} /` : ""} ${item.storeName}`,
-      className: "font-medium text-gray-900  w-[250px]  py-1  px-2",
+      className: "font-medium text-gray-900  w-[450px]  py-1  px-2",
       search: "Location Name",
     },
     {
