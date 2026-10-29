@@ -368,7 +368,7 @@ export default function Form({
       header: "Is Yarn Process",
       accessor: (item) => (
         <span
-          className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+          className={` px-2 py-0.5 rounded text-[10px] font-semibold ${
             item.isYarnProcess
               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
               : "bg-slate-50 text-slate-500 border border-slate-200"
@@ -377,7 +377,7 @@ export default function Form({
           {item.isYarnProcess ? "Yes" : "No"}
         </span>
       ),
-      className: "font-medium text-gray-900 text-center w-[30px] py-1",
+      className: "font-medium text-gray-900 text-center w-48 py-1",
     },
     {
       header: "Status",
@@ -462,7 +462,9 @@ export default function Form({
                       zIndex: 99999,
                     }),
                   }}
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+                  menuPortalTarget={
+                    typeof document !== "undefined" ? document.body : null
+                  }
                 />
               </div>
               <div className="w-[70%] mt-3 flex items-center gap-2">

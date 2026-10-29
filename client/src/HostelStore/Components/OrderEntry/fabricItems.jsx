@@ -539,7 +539,7 @@ const FabricItems = ({
               key: "serial",
               label: "S.No",
               className:
-                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-0 bg-slate-50 z-[32]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-0 bg-slate-50 z-[35]",
             },
             {
               key: "desc",
@@ -549,7 +549,7 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[320px] min-w-[320px] max-w-[320px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-[40px] bg-slate-50 z-[31]",
+                "w-[320px] min-w-[320px] max-w-[320px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-slate-50 z-[34]",
             },
             {
               key: "hsn",
@@ -1059,7 +1059,11 @@ const FabricItems = ({
                 >
                   <button
                     type="button"
-                    disabled={!rowItem.fabricId}
+                    disabled={
+                      !rowItem.fabricId ||
+                      !rowItem.requiredQty ||
+                      parseFloat(rowItem.requiredQty) <= 0
+                    }
                     className="text-indigo-600 w-full flex items-center justify-center hover:text-indigo-800 disabled:text-gray-300 table-data-input"
                     onClick={() => {
                       setCurrentYarnSelectedIndex(originalIndex);

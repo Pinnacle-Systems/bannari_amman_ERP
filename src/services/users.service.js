@@ -124,8 +124,6 @@ async function login(req) {
     { expiresIn: deviceby == "android" ? "30m" : "24h" },
   );
 
-  console.log(token, "token");
-
   return {
     statusCode: 0,
     message: "Login Successfull",
@@ -232,7 +230,6 @@ async function create(body) {
       active,
     },
   });
-  console.log("data", data);
   return { statusCode: 0, data };
 }
 

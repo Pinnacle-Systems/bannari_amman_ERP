@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import secureLocalStorage from "react-secure-storage";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { Check, Power } from "lucide-react";
-import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
+import {
+  ReusableTable,
+  TextInputNew,
+  ToggleButton,
+  DropdownInput,
+} from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
-import { statusDropdown } from "../../../Utils/DropdownData";
+import { statusDropdown, processData } from "../../../Utils/DropdownData";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import {
   useAddProcessMasterMutation,
@@ -32,6 +36,7 @@ export default function Form({
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
   const [name, setName] = useState("");
+  const [process, setProcess] = useState("");
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
@@ -71,6 +76,7 @@ export default function Form({
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name ? data.name : "");
+      setProcess(data?.process ? data.process : "");
       setActive(id ? (data?.active ? data.active : false) : true);
       setIsOutsideJob(data?.isOutsideJob ? data?.isOutsideJob : false);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
@@ -87,6 +93,7 @@ export default function Form({
   const data = {
     id,
     name,
+    process,
     active,
     companyId,
     branchId,
@@ -243,6 +250,12 @@ export default function Form({
     },
 
     {
+      header: "Process",
+      accessor: (item) => item?.process,
+      className: "font-medium text-gray-900 text-left uppercase w-32",
+    },
+
+    {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
       //   cellClass: () => "font-medium text-gray-900",
@@ -288,17 +301,29 @@ export default function Form({
                     ref={countryNameRef}
                   />
                 </div>
-                <div className="flex gap-x-10 items-center mt-5">
-                  <ToggleButton
-                    name=""
-                    options={statusDropdown}
-                    value={active}
-                    setActive={setActive}
-                    // required={true}
-                    readOnly={readOnly}
-                    ref={toggleButtonRef}
-                    onKeyDown={handlers.handleToggleKeyDown}
-                  />
+                <div className="flex gap-x-6">
+                  <div className="my-2 w-[45%]">
+                    <DropdownInput
+                      name="Process"
+                      value={process}
+                      setValue={setProcess}
+                      options={processData}
+                      readOnly={readOnly}
+                      disabled={childRecord.current > 0}
+                    />
+                  </div>
+                  <div className="flex gap-x-10 items-center">
+                    <ToggleButton
+                      name="Status"
+                      options={statusDropdown}
+                      value={active}
+                      setActive={setActive}
+                      // required={true}
+                      readOnly={readOnly}
+                      ref={toggleButtonRef}
+                      onKeyDown={handlers.handleToggleKeyDown}
+                    />
+                  </div>
                 </div>
               </fieldset>
             </div>
@@ -442,7 +467,7 @@ export default function Form({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[600px] h-[350px]"}
+            widthClass={"w-[600px] h-[400px]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

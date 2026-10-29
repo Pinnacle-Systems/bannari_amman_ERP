@@ -468,6 +468,7 @@ const mapFabricYarnDetails = (rawYarns) => {
           return {
             rowId: yp.rowId ? String(yp.rowId) : null,
             processId: yp.processId ? parseInt(yp.processId) : null,
+            colorId: yp.colorId ? parseInt(yp.colorId) : null,
             lossPercentage:
               yp.lossPercentage != null && yp.lossPercentage !== ""
                 ? parseFloat(yp.lossPercentage)
@@ -687,7 +688,7 @@ async function create(body) {
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-        customerPoNo: customerPoNo || null,
+        customerPoNo: customerPoNo || "",
         termsAndCondition,
         termsId: termsId ? parseInt(termsId) : null,
         remarks,
@@ -909,7 +910,7 @@ async function update(id, body, files) {
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-        customerPoNo: customerPoNo || null,
+        customerPoNo: customerPoNo || "",
         termsAndCondition,
         termsId: termsId ? parseInt(termsId) : null,
         remarks,

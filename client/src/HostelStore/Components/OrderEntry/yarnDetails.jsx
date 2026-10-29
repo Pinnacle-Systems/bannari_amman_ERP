@@ -370,7 +370,7 @@ const YarnDetails = ({
             >
               <TransactionGrid
                 title=""
-                tableClassName="w-[] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
+                tableClassName="w-[1166px] min-w-[1166px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
                 containerClassName="h-full min-h-0 min-w-0 flex-1 !p-0 !border-0 !rounded-none shadow-none"
                 borderColor="border-transparent"
                 className="w-full flex-1 min-h-0 min-w-0 overflow-auto !my-0"
@@ -379,7 +379,7 @@ const YarnDetails = ({
                     key: "serial",
                     label: "S.No",
                     className:
-                      "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-0 bg-slate-50 z-[32]",
+                      "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-0 bg-slate-50 z-[35]",
                   },
                   {
                     key: "yarnName",
@@ -436,7 +436,7 @@ const YarnDetails = ({
                 }))}
                 footer={
                   <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[11px]">
-                    <td className="w-[40px] min-w-[40px] max-w-[40px] text-center border-r border-b border-gray-300 bg-slate-50" />
+                    <td className="w-[40px] min-w-[40px] max-w-[40px] text-center border-r border-b border-gray-300 bg-slate-50 sticky left-0 z-[22]" />
                     <td
                       className="text-right px-2 border-r border-b border-gray-300 bg-slate-50"
                       colSpan={2}

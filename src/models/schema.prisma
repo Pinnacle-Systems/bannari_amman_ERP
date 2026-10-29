@@ -1139,6 +1139,7 @@ model Color {
   poYarnItems            PoYarnItems[]
   fabricYarnDetails      FabricYarnDetails[]
   yarnProcessColors      YarnProcessColors[]
+  yarnProcessDetails     YarnProcessDetails[]
 }
 
 model DeliveryInvoice {
@@ -2203,6 +2204,8 @@ model YarnProcessDetails {
   process             Process?            @relation(fields: [processId], references: [id])
   lossPercentage      Float?
   dyeing              String?
+  colorId             Int?
+  color               Color?              @relation(fields: [colorId], references: [id])
   yarnProcessColors   YarnProcessColors[]
 }
 
@@ -3210,6 +3213,7 @@ model Process {
   companyId          Int?
   Branch             Branch?              @relation(fields: [branchId], references: [id])
   branchId           Int?
+  process            String?
   processGroupList   ProcessGroupList[]
   yarnProcessDetails YarnProcessDetails[]
   fabricProcess      FabricProcess[]

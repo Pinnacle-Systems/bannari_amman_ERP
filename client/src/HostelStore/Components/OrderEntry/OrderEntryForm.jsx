@@ -421,7 +421,7 @@ const OrderEntryForm = ({
       setCarriageTax(data?.carriageTax?.toFixed(2) || "");
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
-      setCustomerPoNo(data?.customerPoNo);
+      setCustomerPoNo(data?.customerPoNo || "");
       setOrderGridType(data?.orderGridType || "FABRIC");
     },
     [id],
@@ -1013,7 +1013,7 @@ const OrderEntryForm = ({
               </div>
               <div className={narrowFieldWrap}>
                 <DropdownInput
-                  name="Item Type"
+                  name="Sales Type"
                   options={gridTypes}
                   value={orderGridType}
                   setValue={(value) => {
@@ -1267,7 +1267,7 @@ const OrderEntryForm = ({
               </div>
 
               <div className={narrowFieldWrap}>
-                <DropdownWithModal
+                <DropdownInput
                   name="Pay Term"
                   options={dropDownListObject(
                     id
@@ -1282,9 +1282,9 @@ const OrderEntryForm = ({
                   readOnly={readOnly || orderType === "AGAINSTPI"}
                   className={`${compactFieldClass} w-full max-w-none`}
                   dropdownMinWidth={240}
-                  addNewLabel="+ Add New Pay Term"
-                  childComponent={PayTermMaster}
-                  addNewModalWidth="w-[40%] h-[66%]"
+                  // addNewLabel="+ Add New Pay Term"
+                  // childComponent={PayTermMaster}
+                  // addNewModalWidth="w-[40%] h-[66%]"
                   disabled={
                     childRecord.current > 0 ||
                     readOnly ||

@@ -24,13 +24,20 @@ const FabricProcess = ({
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
 
-  const processList = propProcessList;
-
   const currentFabricItem = orderFabricItems?.[currentIndex];
   const selectedFabric = fabricList?.data?.find(
     (f) => f.id === currentFabricItem?.fabricId,
   );
   const fabricName = selectedFabric?.name || "";
+
+  // Check if any yarn row in yarnDetails for this fabric item has process set to "Yes"
+  const isYarnProcessYes = useMemo(() => {
+    const yarnDetails = currentFabricItem?.fabricYarnDetails;
+    if (!Array.isArray(yarnDetails) || yarnDetails.length === 0) return false;
+    return yarnDetails.some(
+      (yd) => String(yd?.process || "").trim().toLowerCase() === "yes",
+    );
+  }, [currentFabricItem?.fabricYarnDetails]);
 
   const childRows = useMemo(() => {
     const existing = currentFabricItem?.fabricProcess;
@@ -50,6 +57,36 @@ const FabricProcess = ({
         .filter((id) => id !== "" && id !== undefined && id !== null),
     );
   }, [childRows]);
+
+  // If yarnDetails process is "Yes", filter to matching process "DY_DF".
+  // If "No", GY_GF, GF_DF, DF_DF only should come.
+  const NO_PROCESS_TYPES = useMemo(
+    () => new Set(["GY_GF", "GF_DF", "DF_DF"]),
+    [],
+  );
+
+  const processList = useMemo(() => {
+    if (!Array.isArray(propProcessList?.data)) {
+      return propProcessList;
+    }
+    return {
+      ...propProcessList,
+      data: propProcessList.data.filter((p) => {
+        const procCode = String(p?.process || "")
+          .trim()
+          .toUpperCase()
+          .replace("-", "_");
+
+        if (isYarnProcessYes) {
+          return procCode === "DY_DF" || selectedProcessIds.has(p?.id);
+        } else {
+          return (
+            NO_PROCESS_TYPES.has(procCode) || selectedProcessIds.has(p?.id)
+          );
+        }
+      }),
+    };
+  }, [propProcessList, isYarnProcessYes, selectedProcessIds, NO_PROCESS_TYPES]);
 
   const updateParent = (updatedRows) => {
     const newFabricItems = [...orderFabricItems];
@@ -131,13 +168,24 @@ const FabricProcess = ({
             <h3 className="font-bold text-sm text-slate-800 tracking-tight leading-tight">
               Fabric Process Details
             </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              {fabricName ? `${fabricName} — ` : ""}Row #{currentIndex + 1}
-              {currentFabricItem?.requiredQty
-                ? ` (Required Qty: ${Number(currentFabricItem.requiredQty).toFixed(3)})`
-                : currentFabricItem?.qty
-                  ? ` (Qty: ${Number(currentFabricItem.qty).toFixed(3)})`
-                  : ""}
+            <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+              <span>
+                {fabricName ? `${fabricName} — ` : ""}Row #{currentIndex + 1}
+                {currentFabricItem?.requiredQty
+                  ? ` (Required Qty: ${Number(currentFabricItem.requiredQty).toFixed(3)})`
+                  : currentFabricItem?.qty
+                    ? ` (Qty: ${Number(currentFabricItem.qty).toFixed(3)})`
+                    : ""}
+              </span>
+              {isYarnProcessYes ? (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
+                  Yarn Process: Yes (DY_DF)
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 border border-slate-300 font-medium">
+                  Yarn Process: No (GY_GF, GF_DF, DF_DF)
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -178,7 +226,7 @@ const FabricProcess = ({
                 key: "serial",
                 label: "S.No",
                 className:
-                  "w-[45px] min-w-[45px] max-w-[45px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-0 bg-slate-50 z-[32]",
+                  "w-[45px] min-w-[45px] max-w-[45px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-0 bg-slate-50 z-[35]",
               },
               {
                 key: "processId",
@@ -209,7 +257,7 @@ const FabricProcess = ({
             }))}
             footer={
               <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[11px]">
-                <td className="w-[45px] min-w-[45px] max-w-[45px] text-center border-r border-b border-gray-300 bg-slate-50" />
+                <td className="w-[45px] min-w-[45px] max-w-[45px] text-center border-r border-b border-gray-300 bg-slate-50 sticky left-0 z-[22]" />
                 <td className="text-right px-2 border-r border-b border-gray-300 bg-slate-50">
                   Total Configured Processes
                 </td>
@@ -257,7 +305,11 @@ const FabricProcess = ({
                         )
                         .map((i) => ({ label: i.name, value: i.id }))}
                       readOnly={readOnly}
-                      placeholder="Select Process..."
+                      placeholder={
+                        isYarnProcessYes
+                          ? "Select DY_DF Process..."
+                          : "Select Process (GY_GF, GF_DF, DF_DF)..."
+                      }
                       addNew={true}
                       childComponent={ProcessMaster}
                       addNewModalWidth="w-[65vw] h-[60vh]"

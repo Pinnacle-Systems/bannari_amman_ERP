@@ -16,6 +16,11 @@ async function get(req) {
           processGroup: true,
         },
       },
+      _count: {
+        select: {
+          processGroupList: true,
+        },
+      },
     },
     orderBy: {
       id: "asc",
@@ -25,8 +30,7 @@ async function get(req) {
     statusCode: 0,
     data: data.map((process) => ({
       ...process,
-      // childRecord:
-      //   process._count.processGroupList +
+      childRecord: process._count.processGroupList,
       //   process._count.laminationDetails +
       //   process._count.varnishDetails +
       //   process._count.machineDetails +
@@ -58,7 +62,7 @@ async function getOne(id) {
 }
 
 async function create(body) {
-  const { name, companyId, active = true, branchId } = await body;
+  const { name, companyId, active = true, branchId, process } = await body;
 
   const data = await prisma.process.create({
     data: {
@@ -66,6 +70,7 @@ async function create(body) {
       active,
       companyId: parseInt(companyId),
       branchId: parseInt(branchId),
+      process,
     },
   });
 
@@ -759,7 +764,7 @@ async function UpdatePushProcess(req) {
 }
 
 async function update(id, body) {
-  const { name, active } = await body;
+  const { name, active, process } = await body;
   const dataFound = await prisma.process.findUnique({
     where: {
       id: parseInt(id),
@@ -773,6 +778,7 @@ async function update(id, body) {
     data: {
       name,
       active,
+      process,
     },
   });
   return { statusCode: 0, data };
