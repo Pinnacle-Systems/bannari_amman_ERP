@@ -71,11 +71,23 @@ const LoopLengthMasterApi = createApi({
       }),
       invalidatesTags: ["LoopLengthMaster"],
     }),
+    searchLoopLengthMaster: builder.query({
+      query: (params) => ({
+        url: `${LOOP_LENGTH_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["LoopLengthMaster"],
+    }),
   }),
 });
 
 export const {
   useGetLoopLengthMasterQuery,
+  useSearchLoopLengthMasterQuery,
   useGetLoopLengthMasterByIdQuery,
   useLazyGetLoopLengthMasterByIdQuery,
   useAddLoopLengthMasterMutation,

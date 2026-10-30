@@ -11,6 +11,7 @@ import {
   useDeleteContentMasterMutation,
   useGetContentMasterByIdQuery,
   useGetContentMasterQuery,
+  useSearchContentMasterQuery,
   useUpdateContentMasterMutation,
 } from "../../../redux/services/contentMasterService";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
@@ -58,17 +59,41 @@ export default function ContentMaster({
   }, [defaultName, id]);
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchContentName, setSearchContentName] = useState("");
+  const [debouncedContentName, setDebouncedContentName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedContentName(searchContentName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchContentName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedContentName, statusFilter]);
 
   const params = {
     companyId: secureLocalStorage.getItem(
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
   };
+
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedContentName ? { name: debouncedContentName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetContentMasterQuery({ params, searchParams: searchValue });
+  } = useSearchContentMasterQuery(queryParams);
   const {
     data: singleData,
     isFetching: isSingleFetching,
@@ -276,21 +301,34 @@ export default function ContentMaster({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Content Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchContentName,
+      onFilterChange: setSearchContentName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className:
+        "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -480,11 +518,15 @@ export default function ContentMaster({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable
           columns={columns}
-          data={allData?.data}
+          data={allData?.data || []}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 

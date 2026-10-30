@@ -2,12 +2,48 @@ import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
 async function get(req) {
-  const { companyId, active } = req.query;
+  const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } = req.query;
 
-  let data = await prisma.styleItem.findMany({
-    where: {
-      active: active ? Boolean(active) : undefined,
-    },
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const where = {
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+  };
+
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await prisma.styleItem.count({ where });
+
+  const data = await prisma.styleItem.findMany({
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
         select: {
@@ -32,16 +68,123 @@ async function get(req) {
       },
       ItemSubGroup: true,
     },
+    orderBy: {
+      id: "asc",
+    },
   });
+
   return {
     statusCode: 0,
-    data: (data = data.map((color) => ({
-      ...color,
+    data: data.map((item) => ({
+      ...item,
       childRecord:
-        color?._count.poItems +
-        color?._count.inwardItems +
-        color?._count.proformaInvoiceItems,
-    }))),
+        item?._count.poItems +
+        item?._count.inwardItems +
+        item?._count.proformaInvoiceItems,
+    })),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
+  };
+}
+
+async function search(req) {
+  const {
+    name,
+    active,
+    page,
+    pageNumber,
+    limit,
+    pageSize,
+    dataPerPage,
+  } = req.query;
+
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const where = {
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+    ...(name && name.trim() !== ""
+      ? { name: { contains: name.trim(), mode: "insensitive" } }
+      : {}),
+  };
+
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await prisma.styleItem.count({ where });
+
+  const data = await prisma.styleItem.findMany({
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
+    include: {
+      _count: {
+        select: {
+          poItems: true,
+          inwardItems: true,
+          proformaInvoiceItems: true,
+        },
+      },
+      SizeTemplate: {
+        select: {
+          SizeTemplateList: {
+            select: {
+              sizeId: true,
+            },
+          },
+        },
+      },
+      ItemGroup: {
+        select: {
+          name: true,
+        },
+      },
+      ItemSubGroup: true,
+    },
+    orderBy: {
+      id: "asc",
+    },
+  });
+
+  return {
+    statusCode: 0,
+    data: data.map((item) => ({
+      ...item,
+      childRecord:
+        item?._count.poItems +
+        item?._count.inwardItems +
+        item?._count.proformaInvoiceItems,
+    })),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
   };
 }
 
@@ -171,4 +314,4 @@ async function remove(id) {
   return { statusCode: 0, data };
 }
 
-export { get, getOne, getSearch, create, update, remove };
+export { get, getOne, getSearch, search, create, update, remove };

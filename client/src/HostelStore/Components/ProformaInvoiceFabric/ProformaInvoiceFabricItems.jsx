@@ -788,9 +788,9 @@ const ProformaInvoiceFabricItems = ({
                     onChange={(val) =>
                       handleInputChange(val, originalIndex, "uomId")
                     }
-                    options={(uomList?.data || [])
-                      .filter((i) => (id ? true : i.active))
-                      .map((i) => ({ label: i.name, value: i.id }))}
+                    options={(uomList || [])
+                      ?.filter((i) => (id ? true : i.active))
+                      ?.map((i) => ({ label: i.name, value: i.id }))}
                     readOnly={readOnly}
                     addNew={true}
                     placeholder=""

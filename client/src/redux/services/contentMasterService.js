@@ -81,11 +81,23 @@ const ContentMasterApi = createApi({
       }),
       invalidatesTags: ["ContentMaster"],
     }),
+    searchContentMaster: builder.query({
+      query: (params) => ({
+        url: `${CONTENT_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["ContentMaster"],
+    }),
   }),
 });
 
 export const {
   useGetContentMasterQuery,
+  useSearchContentMasterQuery,
   useGetContentMasterByIdQuery,
   useLazyGetContentMasterByIdQuery,
   useAddContentMasterMutation,

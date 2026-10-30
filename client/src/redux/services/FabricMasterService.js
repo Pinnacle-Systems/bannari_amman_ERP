@@ -71,11 +71,23 @@ const FabricMasterApi = createApi({
       }),
       invalidatesTags: ["FabricMaster"],
     }),
+    searchFabricMaster: builder.query({
+      query: (params) => ({
+        url: `${FABRIC_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["FabricMaster"],
+    }),
   }),
 });
 
 export const {
   useGetFabricMasterQuery,
+  useSearchFabricMasterQuery,
   useGetFabricMasterByIdQuery,
   useLazyGetFabricMasterByIdQuery,
   useAddFabricMasterMutation,

@@ -259,6 +259,9 @@ const OrderEntryForm = ({
   });
 
   const { data: uomList } = useGetUomQuery({ params });
+  const filteredUomList = uomList?.data?.filter(
+    (val) => val?.isFabricUom == true,
+  );
   const { data: sizeList } = useGetSizeMasterQuery({ params });
   const { data: gsmList } = useGetGsmMasterQuery({ params });
   const { data: fabricPIList } = useGetPIListQuery({
@@ -2440,7 +2443,7 @@ const OrderEntryForm = ({
               isNewFieldsReadOnly={Boolean(
                 readOnly || childRecord?.current > 0,
               )}
-              uomList={uomList}
+              uomList={filteredUomList}
               hsnList={hsnList}
               colorList={colorList}
               gsmList={gsmList}

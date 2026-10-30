@@ -184,6 +184,10 @@ const ProformaInvoiceFabricForm = ({
   });
   const { data: gsmList } = useGetGsmMasterQuery({ params: { companyId } });
   const { data: uomList } = useGetUomQuery({ params: { companyId } });
+
+  const filteredUomList = uomList?.data?.filter(
+    (val) => val?.isFabricUom == true,
+  );
   const { data: hsnList } = useGetHsnMasterQuery({ params: { companyId } });
   const { data: colorList } = useGetColorMasterQuery({ params: { companyId } });
   const { data: designList } = useGetDesignMasterQuery({
@@ -1542,7 +1546,7 @@ const ProformaInvoiceFabricForm = ({
             currencyList={currencyList}
             payTermList={payTermList}
             carriageFinalAmt={carriageFinalAmt}
-            uomList={uomList}
+            uomList={filteredUomList}
             hsnList={hsnList}
             colorList={colorList}
             gsmList={gsmList}
@@ -1582,7 +1586,7 @@ const ProformaInvoiceFabricForm = ({
             termsRef={termsRef}
             isCustomerExport={isCustomerExport}
             isSupplierOutside={isSupplierOutside}
-            uomList={uomList}
+            uomList={filteredUomList}
             hsnList={hsnList}
             colorList={colorList}
             gsmList={gsmList}

@@ -1,11 +1,13 @@
 import { Router } from 'express';
 const router = Router();
-import { get, getOne, getSearch,  create, update, remove} from '../controllers/itemGroup.controller.js';
+import { get, getOne, getSearch, search, create, update, remove} from '../controllers/itemGroup.controller.js';
 
 
 router.post('/', create);
 
 router.get('/', get);
+
+router.get('/search', search);
 
 router.get('/:id', getOne);
 

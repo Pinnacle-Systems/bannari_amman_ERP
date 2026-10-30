@@ -1872,7 +1872,11 @@ export const ReusableTable = ({
                                 column.onFilterChange?.(e.target.value)
                               }
                               placeholder={column.filterPlaceholder || "Search..."}
-                              className="w-24 sm:w-28 pl-5 pr-5 py-0.5 text-xs font-normal normal-case bg-white border border-gray-300 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-xs"
+                              className={`${
+                                column.filterWidth
+                                  ? column.filterWidth
+                                  : "w-24 sm:w-28"
+                              } pl-5 pr-5 py-0.5 text-xs font-normal normal-case bg-white border border-gray-300 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-xs`}
                             />
                             {column.filterValue && (
                               <button

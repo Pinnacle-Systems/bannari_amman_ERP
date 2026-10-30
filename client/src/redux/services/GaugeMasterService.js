@@ -71,11 +71,23 @@ const GaugeMasterApi = createApi({
       }),
       invalidatesTags: ["GaugeMaster"],
     }),
+    searchGaugeMaster: builder.query({
+      query: (params) => ({
+        url: `${GAUGE_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["GaugeMaster"],
+    }),
   }),
 });
 
 export const {
   useGetGaugeMasterQuery,
+  useSearchGaugeMasterQuery,
   useGetGaugeMasterByIdQuery,
   useLazyGetGaugeMasterByIdQuery,
   useAddGaugeMasterMutation,

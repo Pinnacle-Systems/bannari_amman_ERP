@@ -659,9 +659,9 @@ model Uom {
   active                 Boolean                  @default(true)
   Company                Company?                 @relation(fields: [companyId], references: [id])
   companyId              Int?
+  isFabricUom            Boolean?                 @default(false)
   Product                Product[]
   ProductUomPriceDetails ProductUomPriceDetails[]
-
   PoReturnItems          PoReturnItems[]
   SalesBillItems         SalesBillItems[]
   SalesReturnItems       SalesReturnItems[]

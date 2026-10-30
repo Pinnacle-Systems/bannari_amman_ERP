@@ -280,6 +280,7 @@ export default function Form({
       filterValue: searchName,
       onFilterChange: setSearchName,
       filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {

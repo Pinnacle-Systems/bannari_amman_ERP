@@ -5,6 +5,7 @@ import {
   useDeleteColorMasterMutation,
   useGetColorMasterByIdQuery,
   useGetColorMasterQuery,
+  useSearchColorMasterQuery,
   useLazyGetColorMasterByIdQuery,
   useUpdateColorMasterMutation,
 } from "../../../redux/services/ColorMasterService";
@@ -35,14 +36,37 @@ export default function Form({ onSuccess, defaultName = "" }) {
   const [errors, setErrors] = useState({});
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
+  const [searchColor, setSearchColor] = useState("");
+  const [debouncedColor, setDebouncedColor] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
   const childRecord = useRef(0);
   const [dispatchInvalidate] = useInvalidateTags();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedColor(searchColor);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchColor]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedColor, statusFilter]);
 
   const params = {
     companyId: secureLocalStorage.getItem(
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
+  };
+
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedColor ? { name: debouncedColor } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
   };
 
   const [trigger, { data: LazyData }] = useLazyGetColorMasterByIdQuery();
@@ -51,7 +75,7 @@ export default function Form({ onSuccess, defaultName = "" }) {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetColorMasterQuery({ params, searchParams: searchValue });
+  } = useSearchColorMasterQuery(queryParams);
   const {
     data: singleData,
     isFetching: isSingleFetching,
@@ -271,21 +295,32 @@ export default function Form({ onSuccess, defaultName = "" }) {
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Color",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left pl-2 uppercase w-96",
+      className: "font-medium text-gray-900 text-left pl-2 uppercase w-80 min-w-[320px]",
+      filterType: "search",
+      filterValue: searchColor,
+      onFilterChange: setSearchColor,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -403,7 +438,11 @@ export default function Form({ onSuccess, defaultName = "" }) {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 

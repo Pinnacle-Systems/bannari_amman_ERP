@@ -74,11 +74,23 @@ const ColorMasterApi = createApi({
             }),
             invalidatesTags: ["ColorMaster"],
         }),
+        searchColorMaster: builder.query({
+            query: (params) => ({
+                url: `${COLOR_API}/search`,
+                method: "GET",
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                },
+                params,
+            }),
+            providesTags: ["ColorMaster"],
+        }),
     }),
 });
 
 export const {
     useGetColorMasterQuery,
+    useSearchColorMasterQuery,
     useGetColorMasterByIdQuery,
     useLazyGetColorMasterByIdQuery,
     useAddColorMasterMutation,

@@ -71,11 +71,23 @@ const YarnBlendMasterApi = createApi({
       }),
       invalidatesTags: ["YarnBlendMaster"],
     }),
+    searchYarnBlendMaster: builder.query({
+      query: (params) => ({
+        url: `${YARN_BLEND_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["YarnBlendMaster"],
+    }),
   }),
 });
 
 export const {
   useGetYarnBlendMasterQuery,
+  useSearchYarnBlendMasterQuery,
   useGetYarnBlendMasterByIdQuery,
   useLazyGetYarnBlendMasterByIdQuery,
   useAddYarnBlendMasterMutation,
