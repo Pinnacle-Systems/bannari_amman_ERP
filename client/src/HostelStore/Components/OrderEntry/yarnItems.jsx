@@ -244,7 +244,8 @@ const YarnItems = ({
                   Description of Goods<span className="text-red-500">*</span>
                 </>
               ),
-              className: "w-72 px-2 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-[480px] px-2 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "hsn",
@@ -254,26 +255,22 @@ const YarnItems = ({
             {
               key: "color",
               label: "Color",
-              className:
-                "w-60 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-80 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "uom",
               label: "UOM",
-              className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "noOfbags",
               label: "No of Bags",
-              className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "weightPerBag",
               label: "Weight per Bag",
-              className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "qty",
@@ -282,8 +279,7 @@ const YarnItems = ({
                   Total Weight<span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -293,26 +289,22 @@ const YarnItems = ({
                   <span className="text-red-500">*</span>
                 </>
               ),
-              className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "gross",
               label: "Gross",
-              className:
-                "w-32 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-32 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "tax",
               label: "Tax",
-              className:
-                "w-16 px-1 py-2 text-center font-medium text-[11px]",
+              className: "w-16 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "actions",
               label: "Actions",
-              className:
-                "w-16 px-2 py-2 text-center font-medium text-[11px]",
+              className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
             },
           ]}
           rows={
@@ -395,7 +387,7 @@ const YarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="grid-editable-cell border border-gray-300 text-[11px] "
                 >
                   <FxSelect
                     value={rowItem.hsnId}

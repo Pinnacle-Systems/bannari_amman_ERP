@@ -532,7 +532,7 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="w-[2254px] min-w-[2254px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
+          tableClassName="w-[2294px] min-w-[2294px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
@@ -549,13 +549,13 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[320px] min-w-[320px] max-w-[320px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-slate-50 z-[34]",
+                "w-[360px] min-w-[360px] max-w-[360px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-slate-50 z-[34]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[360px] bg-slate-50 z-[30]",
+                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[400px] bg-slate-50 z-[30]",
             },
 
             {
@@ -693,8 +693,8 @@ const FabricItems = ({
           footer={
             <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
               <td className="w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-[22] bg-slate-50 border-r border-b border-gray-300" />
-              <td className="w-[320px] min-w-[320px] max-w-[320px] sticky left-[40px] z-[21] bg-slate-50 border-r border-b border-gray-300" />
-              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[360px] z-[20] bg-slate-50 border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
+              <td className="w-[360px] min-w-[360px] max-w-[360px] sticky left-[40px] z-[21] bg-slate-50 border-r border-b border-gray-300" />
+              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[400px] z-[20] bg-slate-50 border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
               <td
                 className="text-right px-2 border-r border-b border-gray-300 bg-slate-50"
                 colSpan={8}
@@ -758,7 +758,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="w-[320px] min-w-[320px] max-w-[320px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
+                  className="w-[360px] min-w-[360px] max-w-[360px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -779,7 +779,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px] px-2 sticky left-[360px] bg-white group-hover:bg-gray-50 z-[10]"
+                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px] px-2 sticky left-[400px] bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}

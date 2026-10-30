@@ -87,7 +87,6 @@ async function login(req) {
 
   const isMatched = await bcrypt.compare(password, data.password);
   if (!isMatched) return { statusCode: 1, message: "Invalid Password" };
-  console.log(data.role?.company?.name, "compay Name");
 
   if (data.role?.company?.name) {
     const subscriptionResult = await getSubscriptionDetails(
@@ -109,7 +108,6 @@ async function login(req) {
       return subscriptionResult;
     }
   }
-  console.log(data, "data");
 
   const token = jwt.sign(
     {

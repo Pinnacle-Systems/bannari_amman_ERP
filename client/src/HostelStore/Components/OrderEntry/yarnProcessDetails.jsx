@@ -74,13 +74,6 @@ const YarnProcessDetails = ({
     return Array.from({ length: DEFAULT_ROWS }, () => createEmptyRow());
   }, [orderFabricItems, currentFabricIndex, currentYarnIndex]);
 
-  const selectedProcessIds = useMemo(() => {
-    return new Set(
-      childRows
-        .map((r) => r.processId ?? r.process)
-        .filter((id) => id !== "" && id !== undefined && id !== null),
-    );
-  }, [childRows]);
 
   const isProcessRowSelected =
     Number.isInteger(selectedProcessRowIndex) &&
@@ -137,22 +130,50 @@ const YarnProcessDetails = ({
 
   // Top Table Handlers (Process Rows)
   const handleRowChange = (val, field, rowIndex) => {
-    if ((field === "processId" || field === "process") && val) {
-      const isDuplicate = childRows.some(
-        (row, idx) =>
-          idx !== rowIndex &&
-          String(row.processId ?? row.process) === String(val),
-      );
-      if (isDuplicate) {
-        Swal.fire({
-          icon: "warning",
-          title: "Duplicate Process",
-          text: "This process is already selected. Please select a different process.",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-        return;
+    if (field === "processId" || field === "process") {
+      const currentColorId = childRows[rowIndex]?.colorId;
+      if (val && currentColorId) {
+        const isDuplicate = childRows.some(
+          (row, idx) =>
+            idx !== rowIndex &&
+            String(row.processId ?? row.process) === String(val) &&
+            String(row.colorId ?? "") === String(currentColorId),
+        );
+        if (isDuplicate) {
+          Swal.fire({
+            icon: "warning",
+            title: "Duplicate Combination",
+            text: "This process and color combination is already selected. Please select a different process or color.",
+            confirmButtonColor: "#4f46e5",
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          return;
+        }
+      }
+    }
+
+    if (field === "colorId") {
+      const currentProcessId =
+        childRows[rowIndex]?.processId ?? childRows[rowIndex]?.process;
+      if (val && currentProcessId) {
+        const isDuplicate = childRows.some(
+          (row, idx) =>
+            idx !== rowIndex &&
+            String(row.processId ?? row.process) === String(currentProcessId) &&
+            String(row.colorId ?? "") === String(val),
+        );
+        if (isDuplicate) {
+          Swal.fire({
+            icon: "warning",
+            title: "Duplicate Combination",
+            text: "This process and color combination is already selected. Please select a different process or color.",
+            confirmButtonColor: "#4f46e5",
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          return;
+        }
       }
     }
 
@@ -414,9 +435,9 @@ const YarnProcessDetails = ({
                 </span>
               )}
             </span>
-            <span className="text-[10px] text-slate-400 font-normal">
+            {/* <span className="text-[10px] text-slate-400 font-normal">
               Set Dyeing to "Yes" to configure yarn dyed color details
-            </span>
+            </span> */}
           </div>
 
           <div
@@ -556,11 +577,6 @@ const YarnProcessDetails = ({
                         }
                         options={(filterProcessList || [])
                           .filter((i) => (readOnly ? true : i.active))
-                          .filter(
-                            (i) =>
-                              i.id === (rowItem.processId ?? rowItem.process) ||
-                              !selectedProcessIds.has(i.id),
-                          )
                           .map((i) => ({ label: i.name, value: i.id }))}
                         readOnly={readOnly}
                         placeholder=""

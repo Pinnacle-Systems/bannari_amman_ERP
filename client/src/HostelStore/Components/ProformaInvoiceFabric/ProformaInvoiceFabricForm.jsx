@@ -65,6 +65,7 @@ import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterSer
 import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
 import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
 import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
+import { BankMaster } from "../../../Basic/components/index.js";
 
 const EMPTY_ROW = {
   fabricId: "",
@@ -710,7 +711,7 @@ const ProformaInvoiceFabricForm = ({
   }, [enrichedData, isCustomerExport, carriageFinalAmt]);
 
   const versionDropdown = (
-    <div className="flex items-center bg-[#102438]/90 border border-[#28496D] px-1.5 py-0 rounded-md shadow-xs h-6">
+    <div className="inline-flex items-center bg-[#102438] border border-[#28496D] px-1.5 py-0 rounded-md shadow-lg h-6">
       <div className="relative flex items-center">
         <select
           value={selectedQuoteVersion}
@@ -773,15 +774,15 @@ const ProformaInvoiceFabricForm = ({
           <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none" />
           {/* Header of Sidebar */}
           <div className="px-3.5 pt-2.5 pb-2.5 border-b border-[#20456C] flex-none">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
                     Fabric Proforma Invoice
                   </span>
-                  {id && <ModeChip id={id} readOnly={effectiveReadOnly} />}
+                  {/* {id && <ModeChip id={id} readOnly={effectiveReadOnly} />} */}
                 </div>
-                <div className="flex items-center gap-2 flex-nowrap mt-1 h-7">
+                <div className="mt-1 h-6 flex items-center">
                   <h2
                     onClick={() => {
                       if (id) setShowVersionDropdown((prev) => !prev);
@@ -795,23 +796,21 @@ const ProformaInvoiceFabricForm = ({
                   >
                     {docId && docId !== "New" ? docId : "New PI"}
                   </h2>
-                  {id && (
-                    <div
-                      className={`flex items-center flex-shrink-0 transition-opacity duration-150 ${
-                        showVersionDropdown
-                          ? "opacity-100 visible"
-                          : "opacity-0 invisible pointer-events-none"
-                      }`}
-                    >
-                      {versionDropdown}
-                    </div>
-                  )}
+                </div>
+                <div
+                  className={`mt-1 h-6 flex items-center transition-opacity duration-150 ${
+                    id && showVersionDropdown
+                      ? "opacity-100 visible pointer-events-auto"
+                      : "opacity-0 invisible pointer-events-none"
+                  }`}
+                >
+                  {versionDropdown}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="w-8 h-8 rounded-lg bg-white/15 hover:bg-sky-600 active:bg-sky-700 text-white border border-white/25 hover:border-sky-400 shadow-md flex items-center justify-center transition active:scale-95 flex-shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-white/15 hover:bg-sky-600 active:bg-sky-700 text-white border border-white/25 hover:border-sky-400 shadow-md flex items-center justify-center transition active:scale-95 flex-shrink-0 cursor-pointer mt-1"
                 title="Collapse Basic Details"
               >
                 <FiChevronLeft
@@ -1035,14 +1034,14 @@ const ProformaInvoiceFabricForm = ({
                 : "Click to expand Basic Details"
             }
           >
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2.5">
               <FiLayers
-                className={`w-3.5 h-3.5 ${
+                className={`w-4 h-4 ${
                   docId && docId !== "New" ? "text-sky-300" : "text-[#7098BC]"
                 }`}
               />
               <span
-                className={`text-[10px] font-bold uppercase whitespace-nowrap ${
+                className={`text-[13px] font-bold uppercase whitespace-nowrap ${
                   docId && docId !== "New"
                     ? "text-sky-200 tracking-wider font-extrabold"
                     : "text-[#7098BC] tracking-widest"
@@ -1224,7 +1223,7 @@ const ProformaInvoiceFabricForm = ({
             />
           </div>
           <div className="min-w-0">
-            <DropdownInput
+            <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
                 id
@@ -1239,6 +1238,9 @@ const ProformaInvoiceFabricForm = ({
               readOnly={effectiveReadOnly}
               disabled={readOnly}
               className={compactFieldClass}
+              addNewLabel="+ Add New Bank"
+              childComponent={BankMaster}
+              addNewModalWidth="w-[45%] h-[64%]"
             />
           </div>
         </div>

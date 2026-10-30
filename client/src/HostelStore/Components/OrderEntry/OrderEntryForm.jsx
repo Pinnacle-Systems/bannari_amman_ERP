@@ -377,6 +377,7 @@ const OrderEntryForm = ({
               const pct = parseFloat(yd.percentage);
               return {
                 ...yd,
+                percentage: yd?.percentage?.toFixed(2),
                 process: yd?.process || "No",
                 yarnProcessDetails: Array.isArray(yd?.yarnProcessDetails)
                   ? yd.yarnProcessDetails?.map((yp) => ({
@@ -1413,14 +1414,14 @@ const OrderEntryForm = ({
                 : "Click to expand Basic Details"
             }
           >
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2.5">
               <FiLayers
-                className={`w-3.5 h-3.5 ${
+                className={`w-4 h-4 ${
                   docId && docId !== "New" ? "text-sky-300" : "text-[#7098BC]"
                 }`}
               />
               <span
-                className={`text-[10px] font-bold uppercase whitespace-nowrap ${
+                className={`text-[13px] font-bold uppercase whitespace-nowrap ${
                   docId && docId !== "New"
                     ? "text-sky-200 tracking-wider font-extrabold"
                     : "text-[#7098BC] tracking-widest"

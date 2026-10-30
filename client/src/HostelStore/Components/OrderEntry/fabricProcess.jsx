@@ -58,8 +58,13 @@ const FabricProcess = ({
     );
   }, [childRows]);
 
-  // If yarnDetails process is "Yes", filter to matching process "DY_DF".
+  // If yarnDetails process is "Yes", filter to matching processes "DY_DF" and "DF_DF".
   // If "No", GY_GF, GF_DF, DF_DF only should come.
+  const YES_PROCESS_TYPES = useMemo(
+    () => new Set(["DY_DF", "DF_DF"]),
+    [],
+  );
+
   const NO_PROCESS_TYPES = useMemo(
     () => new Set(["GY_GF", "GF_DF", "DF_DF"]),
     [],
@@ -78,7 +83,9 @@ const FabricProcess = ({
           .replace("-", "_");
 
         if (isYarnProcessYes) {
-          return procCode === "DY_DF" || selectedProcessIds.has(p?.id);
+          return (
+            YES_PROCESS_TYPES.has(procCode) || selectedProcessIds.has(p?.id)
+          );
         } else {
           return (
             NO_PROCESS_TYPES.has(procCode) || selectedProcessIds.has(p?.id)
@@ -86,7 +93,13 @@ const FabricProcess = ({
         }
       }),
     };
-  }, [propProcessList, isYarnProcessYes, selectedProcessIds, NO_PROCESS_TYPES]);
+  }, [
+    propProcessList,
+    isYarnProcessYes,
+    selectedProcessIds,
+    YES_PROCESS_TYPES,
+    NO_PROCESS_TYPES,
+  ]);
 
   const updateParent = (updatedRows) => {
     const newFabricItems = [...orderFabricItems];
@@ -179,7 +192,7 @@ const FabricProcess = ({
               </span>
               {isYarnProcessYes ? (
                 <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
-                  Yarn Process: Yes (DY_DF)
+                  Yarn Process: Yes (DY_DF, DF_DF)
                 </span>
               ) : (
                 <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 border border-slate-300 font-medium">
@@ -307,7 +320,7 @@ const FabricProcess = ({
                       readOnly={readOnly}
                       placeholder={
                         isYarnProcessYes
-                          ? "Select DY_DF Process..."
+                          ? "Select Process (DY_DF, DF_DF)..."
                           : "Select Process (GY_GF, GF_DF, DF_DF)..."
                       }
                       addNew={true}
