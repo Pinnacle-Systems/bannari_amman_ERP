@@ -16,6 +16,7 @@ import {
   useDeleteProcessMasterMutation,
   useGetProcessMasterByIdQuery,
   useGetProcessMasterQuery,
+  useSearchProcessMasterQuery,
   useLazyGetProcessMasterByIdQuery,
   useUpdateProcessMasterMutation,
 } from "../../../redux/services/ProcessMasterService";
@@ -40,19 +41,49 @@ export default function Form({
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
-  const [searchValue, setSearchValue] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchProcess, setSearchProcess] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [debouncedName, setDebouncedName] = useState("");
+  const [debouncedProcess, setDebouncedProcess] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedName(searchName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchName]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProcess(searchProcess);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchProcess]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedName, debouncedProcess, statusFilter]);
+
   const childRecord = useRef(0);
 
   const { branchId, companyId } = getCommonParams();
-  const params = {
+  const queryParams = {
     branchId,
     companyId,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedName ? { name: debouncedName } : {}),
+    ...(debouncedProcess ? { process: debouncedProcess } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
   };
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetProcessMasterQuery({ params, searchParams: searchValue });
+  } = useSearchProcessMasterQuery(queryParams);
 
   const {
     data: singleData,
@@ -219,7 +250,6 @@ export default function Form({
   const onNew = () => {
     setId("");
     setForm(true);
-    setSearchValue("");
     syncFormWithDb(undefined);
     setReadOnly(false);
   };
@@ -239,27 +269,41 @@ export default function Form({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Process Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-80",
+      className: "font-medium text-gray-900 text-left uppercase w-80 min-w-[320px]",
+      filterType: "search",
+      filterValue: searchName,
+      onFilterChange: setSearchName,
+      filterPlaceholder: "Search...",
     },
 
     {
       header: "Process",
       accessor: (item) => item?.process,
-      className: "font-medium text-gray-900 text-left uppercase w-32",
+      className: "font-medium text-gray-900 text-left uppercase w-52 min-w-[208px]",
+      filterType: "search",
+      filterValue: searchProcess,
+      onFilterChange: setSearchProcess,
+      filterPlaceholder: "Search...",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -458,7 +502,11 @@ export default function Form({
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 
@@ -493,7 +541,6 @@ export default function Form({
                         type="button"
                         onClick={() => {
                           setForm(false);
-                          setSearchValue("");
                           setId(false);
                         }}
                         className="px-3 py-1 text-red-600 hover:bg-red-600 hover:text-white border border-red-600 text-xs rounded"

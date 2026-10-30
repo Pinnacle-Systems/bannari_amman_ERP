@@ -3,6 +3,7 @@ import { prisma, Prisma } from "../lib/prisma.js";
 import {
   get as _get,
   getOne as _getOne,
+  search as _search,
   create as _create,
   update as _update,
   remove as _remove,
@@ -14,6 +15,14 @@ import {
 async function get(req, res, next) {
   try {
     res.json(await _get(req));
+  } catch (err) {
+    console.error(`Error `, err.message);
+  }
+}
+
+async function search(req, res, next) {
+  try {
+    res.json(await _search(req));
   } catch (err) {
     console.error(`Error `, err.message);
   }
@@ -164,6 +173,7 @@ async function remove(req, res, next) {
 export {
   get,
   getOne,
+  search,
   create,
   update,
   remove,

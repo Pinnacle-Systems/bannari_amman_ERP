@@ -11,7 +11,9 @@ const ProcessMasterApi = createApi({
   tagTypes: ["Process"],
   endpoints: (builder) => ({
     getProcessMaster: builder.query({
-      query: ({ params, searchParams }) => {
+      query: (arg = {}) => {
+        const params = arg?.params || (arg && !arg.searchParams ? arg : undefined);
+        const searchParams = arg?.searchParams;
         if (searchParams) {
           return {
             url: PROCESS_API + "/search/" + searchParams,
@@ -74,11 +76,23 @@ const ProcessMasterApi = createApi({
       }),
       invalidatesTags: ["Process"],
     }),
+    searchProcessMaster: builder.query({
+      query: (params) => ({
+        url: `${PROCESS_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["Process"],
+    }),
   }),
 });
 
 export const {
   useGetProcessMasterQuery,
+  useSearchProcessMasterQuery,
   useGetProcessMasterByIdQuery,
   useLazyGetProcessMasterByIdQuery,
   useAddProcessMasterMutation,
