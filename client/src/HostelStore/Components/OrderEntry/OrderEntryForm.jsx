@@ -466,7 +466,12 @@ const OrderEntryForm = ({
       .map((item) => ({
         ...item,
         fabricYarnDetails: (item.fabricYarnDetails || [])
-          .filter((yd) => yd.yarnId)
+          .filter(
+            (yd) =>
+              yd.yarnId ||
+              (yd.percentage && Number(yd.percentage) > 0) ||
+              yd.colorId,
+          )
           .map((yd) => ({
             ...yd,
             yarnProcessDetails: (yd.yarnProcessDetails || [])
@@ -596,6 +601,55 @@ const OrderEntryForm = ({
         }
         if (!item.price || Number(item.price) <= 0) {
           errors.push(`Row ${index + 1}: Price is required`);
+        }
+        const yarnDetails = (item.fabricYarnDetails || []).filter(
+          (yd) =>
+            yd.yarnId ||
+            (yd.percentage && Number(yd.percentage) > 0) ||
+            yd.colorId,
+        );
+        const totalPercentage = yarnDetails.reduce(
+          (sum, yd) => sum + (parseFloat(yd.percentage) || 0),
+          0,
+        );
+        if (yarnDetails.length === 0) {
+          errors.push(
+            `Row ${index + 1}: Yarn Details must have at least one row with percentage`,
+          );
+        } else {
+          const seenYarnColors = new Set();
+          yarnDetails.forEach((yd, yIdx) => {
+            if (!yd.yarnId) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Yarn is required`,
+              );
+            }
+            if (!yd.colorId) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Color is required`,
+              );
+            }
+            if (!yd.percentage || Number(yd.percentage) <= 0) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Percentage is required`,
+              );
+            }
+            if (yd.yarnId && yd.colorId) {
+              const yarnColorKey = `${yd.yarnId}_${yd.colorId}`;
+              if (seenYarnColors.has(yarnColorKey)) {
+                errors.push(
+                  `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Duplicate yarn and color found`,
+                );
+              } else {
+                seenYarnColors.add(yarnColorKey);
+              }
+            }
+          });
+        }
+        if (parseFloat(totalPercentage.toFixed(2)) !== 100) {
+          errors.push(
+            `Row ${index + 1}: Yarn consumption is not 100 percentage`,
+          );
         }
         const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
         if (seen.has(key)) {

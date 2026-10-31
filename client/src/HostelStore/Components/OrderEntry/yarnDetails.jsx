@@ -135,6 +135,34 @@ const YarnDetails = ({
   const handleRowChange = (val, field, rowIndex) => {
     const currentDetails = [...childRows];
 
+    if (field === "yarnId" || field === "colorId") {
+      const targetYarnId =
+        field === "yarnId" ? val : currentDetails[rowIndex]?.yarnId;
+      const targetColorId =
+        field === "colorId" ? val : currentDetails[rowIndex]?.colorId;
+
+      if (targetYarnId && targetColorId) {
+        const isDuplicate = currentDetails.some(
+          (row, idx) =>
+            idx !== rowIndex &&
+            String(row.yarnId) === String(targetYarnId) &&
+            String(row.colorId) === String(targetColorId),
+        );
+
+        if (isDuplicate) {
+          Swal.fire({
+            icon: "warning",
+            title: "Duplicate Entry",
+            text: "Same yarn and color already exists!",
+            confirmButtonColor: "#4f46e5",
+            timer: 2500,
+            timerProgressBar: true,
+          });
+          return;
+        }
+      }
+    }
+
     if (field === "percentage") {
       const pct = parseFloat(val);
 
@@ -733,7 +761,7 @@ const YarnDetails = ({
                   <Layers size={18} />
                 </div>
                 <h4 className="text-xs font-semibold text-slate-700">
-                  Yarn Process Details & Yarn Dyed Color Details
+                  Yarn Process Details
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-1 max-w-[360px] leading-relaxed">
                   {selectedRow

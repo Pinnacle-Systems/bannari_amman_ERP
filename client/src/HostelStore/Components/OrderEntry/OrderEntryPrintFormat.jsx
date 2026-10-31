@@ -1610,16 +1610,14 @@ const OrderEntryPrintFormat = ({
                           </View>
                         ))}
                       {!isExport &&
-                        resolvedTaxDetails?.roundOff !== 0 &&
-                        resolvedTaxDetails?.roundOff !== undefined && (
+                        parseFloat(resolvedTaxDetails?.roundOff || 0) !== 0 && (
                           <View style={styles.summaryRow}>
                             <Text style={styles.summaryLabel}>Round Off</Text>
                             <Text style={styles.summaryColon}>:</Text>
                             <Text style={styles.summaryValue}>
-                              {resolvedTaxDetails?.roundOff > 0 ? "+" : ""}
                               {currencySymbol}{" "}
                               {formatCurrencyAmount(
-                                Math.abs(resolvedTaxDetails?.roundOff || 0),
+                                resolvedTaxDetails?.roundOff || 0,
                                 currencyCode || currencySymbol,
                               )}
                             </Text>

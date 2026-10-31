@@ -1369,20 +1369,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                             </Text>
                           </View>
                         ))}
-                      {!isExport && taxDetails?.roundOff !== 0 && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>Round Off</Text>
-                          <Text style={styles.summaryColon}>:</Text>
-                          <Text style={styles.summaryValue}>
-                            {taxDetails?.roundOff > 0 ? "+" : ""}
-                            {currencySymbol}{" "}
-                            {formatCurrencyAmount(
-                              Math.abs(taxDetails?.roundOff || 0),
-                              currencyCode || currencySymbol,
-                            )}
-                          </Text>
-                        </View>
-                      )}
+                      {!isExport &&
+                        parseFloat(taxDetails?.roundOff || 0) !== 0 && (
+                          <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Round Off</Text>
+                            <Text style={styles.summaryColon}>:</Text>
+                            <Text style={styles.summaryValue}>
+                              {currencySymbol}{" "}
+                              {formatCurrencyAmount(
+                                taxDetails?.roundOff || 0,
+                                currencyCode || currencySymbol,
+                              )}
+                            </Text>
+                          </View>
+                        )}
 
                       {!isExport && (
                         <View style={styles.summaryRow}>
