@@ -482,7 +482,6 @@ async function update(id, body, files) {
         isApproved: isApproved === "true" || isApproved === true,
       }),
       carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-      payTermId: payTermId ? parseInt(payTermId) : null,
 
       fabricItems: isTableChanged
         ? {
