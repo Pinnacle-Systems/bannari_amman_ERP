@@ -1,6 +1,15 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const sizeTemplateChildRecordSelect = {
+  styleItems: true,
+  orderItems: true,
+};
+
+const getSizeTemplateChildRecordCount = (counts) => {
+  return (counts?.styleItems ?? 0) + (counts?.orderItems ?? 0);
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   let data = await prisma.sizeTemplate.findMany({
@@ -10,27 +19,20 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-        },
+        select: sizeTemplateChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.styleItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getSizeTemplateChildRecordCount(item._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.styleItem.count({
-    where: { sizeTemplateId: parseInt(id) },
-  });
   const data = await prisma.sizeTemplate.findUnique({
     where: {
       id: parseInt(id),
@@ -43,10 +45,19 @@ async function getOne(id) {
           Size: true,
         },
       },
+      _count: {
+        select: sizeTemplateChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("sizeTemplate");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getSizeTemplateChildRecordCount(data._count),
+    },
+  };
 }
 
 async function getSearch(req) {

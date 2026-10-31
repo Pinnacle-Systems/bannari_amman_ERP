@@ -1,6 +1,21 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const loopLengthChildRecordSelect = {
+  fabricItems: true,
+  orderFabricItems: true,
+  poFabricItems: true,
+};
+
+const getLoopLengthChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.fabricItems || 0) +
+    (counts.orderFabricItems || 0) +
+    (counts.poFabricItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.loopLength.findMany({
@@ -10,9 +25,7 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          fabricItems: true,
-        },
+        select: loopLengthChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -21,24 +34,30 @@ async function get(req) {
     statusCode: 0,
     data: data.map((loopLength) => ({
       ...loopLength,
-      childRecord: loopLength._count.fabricItems,
+      childRecord: getLoopLengthChildRecordCount(loopLength?._count),
     })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.fabricItems.count({
-    where: {
-      loopLengthId: parseInt(id),
-    },
-  });
   const data = await prisma.loopLength.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: loopLengthChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("LoopLength Master");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getLoopLengthChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -161,9 +180,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          fabricItems: true,
-        },
+        select: loopLengthChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -173,7 +190,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((loopLength) => ({
       ...loopLength,
-      childRecord: loopLength._count.fabricItems,
+      childRecord: getLoopLengthChildRecordCount(loopLength?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

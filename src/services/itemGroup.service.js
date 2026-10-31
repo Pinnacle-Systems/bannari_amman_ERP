@@ -1,6 +1,45 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const itemGroupChildRecordSelect = {
+  styleItems: true,
+  poItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  purchaseReturnItems: true,
+  inwardItems: true,
+  stocks: true,
+  orderItems: true,
+  ItemSubGroup: true,
+  proformaInvoiceItems: true,
+  SalesOrderItems: true,
+  PackingItems: true,
+  SalesDeliveryItems: true,
+  SalesReturnItems: true,
+  SalesBillEntryItems: true,
+};
+
+const getItemGroupChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.styleItems || 0) +
+    (counts.poItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.stocks || 0) +
+    (counts.orderItems || 0) +
+    (counts.ItemSubGroup || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.PackingItems || 0) +
+    (counts.SalesDeliveryItems || 0) +
+    (counts.SalesReturnItems || 0) +
+    (counts.SalesBillEntryItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.itemGroup.findMany({
@@ -10,36 +49,38 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-        },
+        select: itemGroupChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.styleItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getItemGroupChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.styleItem.count({
-    where: {
-      itemGroupId: parseInt(id),
-    },
-  });
   const data = await prisma.itemGroup.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: itemGroupChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("itemGroup");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getItemGroupChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -59,20 +100,16 @@ async function getSearch(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-        },
+        select: itemGroupChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.styleItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getItemGroupChildRecordCount(item?._count),
+    })),
   };
 }
 
@@ -175,9 +212,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          styleItems: true,
-        },
+        select: itemGroupChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -187,7 +222,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((item) => ({
       ...item,
-      childRecord: item._count.styleItems,
+      childRecord: getItemGroupChildRecordCount(item?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

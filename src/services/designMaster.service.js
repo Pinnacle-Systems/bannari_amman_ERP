@@ -1,6 +1,21 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const designMasterChildRecordSelect = {
+  fabricItems: true,
+  orderFabricItems: true,
+  poFabricItems: true,
+};
+
+const getDesignMasterChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.fabricItems || 0) +
+    (counts.orderFabricItems || 0) +
+    (counts.poFabricItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.designMaster.findMany({
@@ -10,9 +25,7 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          fabricItems: true,
-        },
+        select: designMasterChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -21,26 +34,29 @@ async function get(req) {
     statusCode: 0,
     data: data.map((designMaster) => ({
       ...designMaster,
-      childRecord: designMaster._count.fabricItems,
+      childRecord: getDesignMasterChildRecordCount(designMaster?._count),
     })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.fabricItems.count({
-    where: {
-      designId: parseInt(id),
-    },
-  });
   const data = await prisma.designMaster.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: designMasterChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("Design Master");
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord: childRecord } },
+    data: {
+      ...data,
+      childRecord: getDesignMasterChildRecordCount(data?._count),
+    },
   };
 }
 
@@ -164,9 +180,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          fabricItems: true,
-        },
+        select: designMasterChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -176,7 +190,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((designMaster) => ({
       ...designMaster,
-      childRecord: designMaster._count.fabricItems,
+      childRecord: getDesignMasterChildRecordCount(designMaster?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

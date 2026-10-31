@@ -2,6 +2,63 @@ import { prisma } from "../lib/prisma.js";
 
 import { NoRecordFound } from "../configs/Responses.js";
 
+const hsnChildRecordSelect = {
+  DeliveryChallanItems: true,
+  DeliveryInvoiceItems: true,
+  poItems: true,
+  inwardItems: true,
+  stocks: true,
+  styleItems: true,
+  purchaseReturnItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  proformaInvoiceItems: true,
+  orderItems: true,
+  salesDeliveryItems: true,
+  SalesOrderItems: true,
+  PackingItems: true,
+  SalesReturnItems: true,
+  SalesBillEntryItems: true,
+  YarnMaster: true,
+  fabricMasters: true,
+  fabricItems: true,
+  yarnItems: true,
+  orderYarnItems: true,
+  orderFabricItems: true,
+  poFabricItems: true,
+  poYarnItems: true,
+};
+
+const getHsnChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.DeliveryChallanItems || 0) +
+    (counts.DeliveryInvoiceItems || 0) +
+    (counts.poItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.stocks || 0) +
+    (counts.styleItems || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.orderItems || 0) +
+    (counts.salesDeliveryItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.PackingItems || 0) +
+    (counts.SalesReturnItems || 0) +
+    (counts.SalesBillEntryItems || 0) +
+    (counts.YarnMaster || 0) +
+    (counts.fabricMasters || 0) +
+    (counts.fabricItems || 0) +
+    (counts.yarnItems || 0) +
+    (counts.orderYarnItems || 0) +
+    (counts.orderFabricItems || 0) +
+    (counts.poFabricItems || 0) +
+    (counts.poYarnItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   let data;
@@ -11,39 +68,28 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-          YarnMaster: true,
-          fabricMasters: true,
-        },
+        select: hsnChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: (data = data.map((color) => ({
-      ...color,
-      childRecord:
-        color?._count.styleItems +
-        color?._count.YarnMaster +
-        color?._count.fabricMasters,
-    }))),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getHsnChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.styleItem.count({
-    where: { hsnId: parseInt(id) },
-  });
-  const childRecordYarn = await prisma.YarnMaster.count({
-    where: { hsnId: parseInt(id) },
-  });
-  const childRecordFabric = await prisma.fabricMaster.count({
-    where: { hsnId: parseInt(id) },
-  });
   const data = await prisma.hsn.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: hsnChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("hsn");
@@ -51,7 +97,7 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      ...{ childRecord: childRecord + childRecordYarn + childRecordFabric },
+      childRecord: getHsnChildRecordCount(data?._count),
     },
   };
 }
@@ -182,11 +228,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          styleItems: true,
-          YarnMaster: true,
-          fabricMasters: true,
-        },
+        select: hsnChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -194,12 +236,9 @@ async function search(req) {
 
   return {
     statusCode: 0,
-    data: data.map((color) => ({
-      ...color,
-      childRecord:
-        color?._count.styleItems +
-        color?._count.YarnMaster +
-        color?._count.fabricMasters,
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getHsnChildRecordCount(item?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

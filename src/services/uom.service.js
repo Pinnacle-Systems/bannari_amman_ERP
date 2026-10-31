@@ -4,8 +4,69 @@ import { NoRecordFound } from '../configs/Responses.js';
 
 
 
+const uomChildRecordSelect = {
+    Product: true,
+    ProductUomPriceDetails: true,
+    PoReturnItems: true,
+    SalesBillItems: true,
+    SalesReturnItems: true,
+    DeliveryChallanItems: true,
+    DeliveryInvoiceItems: true,
+    poItems: true,
+    inwardItems: true,
+    stocks: true,
+    purchaseReturnItems: true,
+    purchaseCancelItems: true,
+    purchaseBillEntryItems: true,
+    styleItems: true,
+    orderItems: true,
+    proformaInvoiceItems: true,
+    salesDeliveryItems: true,
+    SalesOrderItems: true,
+    PackingItems: true,
+    SalesBillEntryItems: true,
+    fabricItems: true,
+    yarnItems: true,
+    orderYarnItems: true,
+    orderFabricItems: true,
+    poFabricItems: true,
+    poYarnItems: true,
+};
+
+const getUomChildRecordCount = (counts) => {
+    if (!counts) return 0;
+    return (
+        (counts.Product || 0) +
+        (counts.ProductUomPriceDetails || 0) +
+        (counts.PoReturnItems || 0) +
+        (counts.SalesBillItems || 0) +
+        (counts.SalesReturnItems || 0) +
+        (counts.DeliveryChallanItems || 0) +
+        (counts.DeliveryInvoiceItems || 0) +
+        (counts.poItems || 0) +
+        (counts.inwardItems || 0) +
+        (counts.stocks || 0) +
+        (counts.purchaseReturnItems || 0) +
+        (counts.purchaseCancelItems || 0) +
+        (counts.purchaseBillEntryItems || 0) +
+        (counts.styleItems || 0) +
+        (counts.orderItems || 0) +
+        (counts.proformaInvoiceItems || 0) +
+        (counts.salesDeliveryItems || 0) +
+        (counts.SalesOrderItems || 0) +
+        (counts.PackingItems || 0) +
+        (counts.SalesBillEntryItems || 0) +
+        (counts.fabricItems || 0) +
+        (counts.yarnItems || 0) +
+        (counts.orderYarnItems || 0) +
+        (counts.orderFabricItems || 0) +
+        (counts.poFabricItems || 0) +
+        (counts.poYarnItems || 0)
+    );
+};
+
 async function get(req) {
-    const { companyId, active } = req.query
+    const { companyId, active } = req.query;
     let data;
     data = await prisma.uom.findMany({
         where: {
@@ -14,32 +75,38 @@ async function get(req) {
         },
         include: {
             _count: {
-                select: {
-                    styleItems: true
-                }
-            }
-        }
+                select: uomChildRecordSelect,
+            },
+        },
     });
     return {
-        statusCode: 0, data: data = data.map(color => ({
-            ...color,
-            childRecord: color?._count.styleItems > 0
+        statusCode: 0,
+        data: data.map((item) => ({
+            ...item,
+            childRecord: getUomChildRecordCount(item?._count),
         })),
     };
 }
 
-
 async function getOne(id) {
-    const childRecord = await prisma.styleItem.count({ where: { uomId: parseInt(id) } });
-    // const childRecord = 0;
     const data = await prisma.uom.findUnique({
         where: {
-            id: parseInt(id)
-        }
-    })
+            id: parseInt(id),
+        },
+        include: {
+            _count: {
+                select: uomChildRecordSelect,
+            },
+        },
+    });
     if (!data) return NoRecordFound("uom");
-    return { statusCode: 0, data: { ...data, ...{ childRecord } } };
-
+    return {
+        statusCode: 0,
+        data: {
+            ...data,
+            childRecord: getUomChildRecordCount(data?._count),
+        },
+    };
 }
 
 

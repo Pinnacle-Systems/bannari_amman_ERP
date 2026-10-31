@@ -1,6 +1,30 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const currencyChildRecordSelect = {
+  proformaInvoices: true,
+  salesDeliveries: true,
+  orderEntries: true,
+  SalesReturn: true,
+  SalesOrder: true,
+  SalesBillEntry: true,
+  Ledger: true,
+  proformaInvoiceYarns: true,
+};
+
+const getCurrencyChildRecordCount = (counts) => {
+  return (
+    (counts?.proformaInvoices ?? 0) +
+    (counts?.salesDeliveries ?? 0) +
+    (counts?.orderEntries ?? 0) +
+    (counts?.SalesReturn ?? 0) +
+    (counts?.SalesOrder ?? 0) +
+    (counts?.SalesBillEntry ?? 0) +
+    (counts?.Ledger ?? 0) +
+    (counts?.proformaInvoiceYarns ?? 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.currency.findMany({
@@ -10,30 +34,39 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          proformaInvoices: true,
-        },
+        select: currencyChildRecordSelect,
       },
     },
   });
 
-  data.forEach((item) => {
-    item.childRecord = item._count.proformaInvoices;
-  });
-  return { statusCode: 0, data };
+  return {
+    statusCode: 0,
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getCurrencyChildRecordCount(item._count),
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.proformaInvoice.count({
-    where: { currencyId: parseInt(id) },
-  });
   const data = await prisma.currency.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: currencyChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("currency");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getCurrencyChildRecordCount(data._count),
+    },
+  };
 }
 
 async function getSearch(req) {

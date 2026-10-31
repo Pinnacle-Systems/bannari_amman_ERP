@@ -2,6 +2,37 @@ import { prisma } from "../lib/prisma.js";
 
 import { NoRecordFound } from "../configs/Responses.js";
 
+const sizeChildRecordSelect = {
+  sizeTemplateLists: true,
+  poItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  purchaseReturnItems: true,
+  inwardItems: true,
+  stocks: true,
+  orderItems: true,
+  proformaInvoiceItems: true,
+  SalesOrderItems: true,
+  SalesBillEntryItems: true,
+};
+
+const getSizeChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.sizeTemplateLists || 0) +
+    (counts.poItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.stocks || 0) +
+    (counts.orderItems || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.SalesBillEntryItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.size.findMany({
@@ -11,48 +42,37 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          sizeTemplateLists: true,
-          poItems: true,
-          inwardItems: true,
-        },
+        select: sizeChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord:
-          item._count.sizeTemplateLists +
-          item._count.poItems +
-          item._count.inwardItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getSizeChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecordPo = await prisma.poItems.count({
-    where: {
-      sizeId: parseInt(id),
-    },
-  });
-  const childRecordInward = await prisma.inwardItems.count({
-    where: {
-      sizeId: parseInt(id),
-    },
-  });
   const data = await prisma.size.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: sizeChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("size");
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord: childRecordPo + childRecordInward } },
+    data: {
+      ...data,
+      childRecord: getSizeChildRecordCount(data?._count),
+    },
   };
 }
 

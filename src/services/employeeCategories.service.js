@@ -4,38 +4,55 @@ import { NoRecordFound } from '../configs/Responses.js';
 
 
 
+const employeeCategoryChildRecordSelect = {
+  Employee: true,
+};
+
+const getEmployeeCategoryChildRecordCount = (counts) => {
+  return counts?.Employee ?? 0;
+};
+
 async function get(req) {
-    const { branchId, active} = req.query
-    let data;
-     data = await prisma.employeeCategory.findMany({
-        where: {
-            active: active ? Boolean(active) : undefined,
-            branchId: branchId ? parseInt(branchId) : undefined,
-        },
-        include : {
-            _count : {
-                select : {
-                 Employee : true   
-                }
-            }
-        }
-    });
-    return { statusCode: 0,  data: data = data.map(order => ({
-            ...order,
-            childRecord: order?._count.Employee > 0
-        })), };
+  const { branchId, active } = req.query;
+  const data = await prisma.employeeCategory.findMany({
+    where: {
+      active: active ? Boolean(active) : undefined,
+      branchId: branchId ? parseInt(branchId) : undefined,
+    },
+    include: {
+      _count: {
+        select: employeeCategoryChildRecordSelect,
+      },
+    },
+  });
+  return {
+    statusCode: 0,
+    data: data.map((order) => ({
+      ...order,
+      childRecord: getEmployeeCategoryChildRecordCount(order?._count),
+    })),
+  };
 }
 
-
 async function getOne(id) {
-    const childRecord = await prisma.employee.count({ where: { employeeCategoryId: parseInt(id) } });
-    const data = await prisma.employeeCategory.findUnique({
-        where: {
-            id: parseInt(id)
-        }
-    })
-    if (!data) return NoRecordFound("Employee Category");
-    return { statusCode: 0, data: {...data, ...{childRecord}} };
+  const data = await prisma.employeeCategory.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: employeeCategoryChildRecordSelect,
+      },
+    },
+  });
+  if (!data) return NoRecordFound("Employee Category");
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getEmployeeCategoryChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

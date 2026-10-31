@@ -4,7 +4,8 @@ import { current_dateOnly, endDate, startDate } from "../utils/helper.js";
 import crypto from "crypto";
 
 async function get(req) {
-  const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } = req.query;
+  const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } =
+    req.query;
 
   let activeFilter = undefined;
   if (
@@ -35,7 +36,9 @@ async function get(req) {
     ...(activeFilter !== undefined ? { active: activeFilter } : {}),
   };
 
-  const hasPagination = Boolean(page || pageNumber || limit || pageSize || dataPerPage);
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
   const pageVal = parseInt(page || pageNumber) || 1;
   const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
   const skip = (pageVal - 1) * limitVal;
@@ -54,6 +57,8 @@ async function get(req) {
       _count: {
         select: {
           processGroupList: true,
+          yarnProcessDetails: true,
+          fabricProcess: true,
         },
       },
     },
@@ -66,7 +71,10 @@ async function get(req) {
     statusCode: 0,
     data: data.map((process) => ({
       ...process,
-      childRecord: process._count.processGroupList,
+      childRecord:
+        process._count.processGroupList +
+        process._count.yarnProcessDetails +
+        process._count.fabricProcess,
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -144,6 +152,8 @@ async function search(req) {
       _count: {
         select: {
           processGroupList: true,
+          yarnProcessDetails: true,
+          fabricProcess: true,
         },
       },
     },
@@ -156,7 +166,10 @@ async function search(req) {
     statusCode: 0,
     data: data.map((processItem) => ({
       ...processItem,
-      childRecord: processItem._count.processGroupList,
+      childRecord:
+        processItem._count.processGroupList +
+        processItem._count.yarnProcessDetails +
+        processItem._count.fabricProcess,
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -176,15 +189,29 @@ async function getOne(id) {
           processGroup: true,
         },
       },
+      _count: {
+        select: {
+          processGroupList: true,
+          yarnProcessDetails: true,
+          fabricProcess: true,
+        },
+      },
     },
   });
   if (!data) return NoRecordFound("process");
-  const processCount = await prisma.processGroupList.count({
-    where: {
-      processId: parseInt(id),
+
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      ...{
+        childRecord:
+          data?._count.processGroupList +
+          data?._count.yarnProcessDetails +
+          data?._count.fabricProcess,
+      },
     },
-  });
-  return { statusCode: 0, data: { ...data, ...{ childRecord: processCount } } };
+  };
 }
 
 async function create(body) {

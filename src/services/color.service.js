@@ -1,6 +1,49 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const colorChildRecordSelect = {
+  DeliveryChallanItems: true,
+  DeliveryInvoiceItems: true,
+  poItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  purchaseReturnItems: true,
+  inwardItems: true,
+  stocks: true,
+  fabricItems: true,
+  yarnItems: true,
+  orderYarnItems: true,
+  orderFabricItems: true,
+  poFabricItems: true,
+  poYarnItems: true,
+  fabricYarnDetails: true,
+  yarnProcessColors: true,
+  yarnProcessDetails: true,
+};
+
+const getColorChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.DeliveryChallanItems || 0) +
+    (counts.DeliveryInvoiceItems || 0) +
+    (counts.poItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.stocks || 0) +
+    (counts.fabricItems || 0) +
+    (counts.yarnItems || 0) +
+    (counts.orderYarnItems || 0) +
+    (counts.orderFabricItems || 0) +
+    (counts.poFabricItems || 0) +
+    (counts.poYarnItems || 0) +
+    (counts.fabricYarnDetails || 0) +
+    (counts.yarnProcessColors || 0) +
+    (counts.yarnProcessDetails || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } = req.query;
 
@@ -46,10 +89,7 @@ async function get(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          poItems: true,
-          inwardItems: true,
-        },
+        select: colorChildRecordSelect,
       },
     },
     orderBy: {
@@ -61,7 +101,7 @@ async function get(req) {
     statusCode: 0,
     data: data.map((color) => ({
       ...color,
-      childRecord: color?._count.poItems + color?._count.inwardItems,
+      childRecord: getColorChildRecordCount(color?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -126,10 +166,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          poItems: true,
-          inwardItems: true,
-        },
+        select: colorChildRecordSelect,
       },
     },
     orderBy: {
@@ -141,7 +178,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((color) => ({
       ...color,
-      childRecord: color?._count.poItems + color?._count.inwardItems,
+      childRecord: getColorChildRecordCount(color?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -151,21 +188,23 @@ async function search(req) {
 }
 
 async function getOne(id) {
-  const childRecordPo = await prisma.poItems.count({
-    where: { colorId: parseInt(id) },
-  });
-  const childRecordInward = await prisma.inwardItems.count({
-    where: { colorId: parseInt(id) },
-  });
   const data = await prisma.color.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: colorChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("color");
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord: childRecordPo + childRecordInward } },
+    data: {
+      ...data,
+      childRecord: getColorChildRecordCount(data?._count),
+    },
   };
 }
 

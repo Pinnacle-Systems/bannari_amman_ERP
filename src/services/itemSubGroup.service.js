@@ -1,6 +1,31 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const itemSubGroupChildRecordSelect = {
+  StyleItem: true,
+  OrderItems: true,
+  proformaInvoiceItems: true,
+  SalesOrderItems: true,
+  PackingItems: true,
+  SalesDeliveryItems: true,
+  SalesReturnItems: true,
+  SalesBillEntryItems: true,
+};
+
+const getItemSubGroupChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.StyleItem || 0) +
+    (counts.OrderItems || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.PackingItems || 0) +
+    (counts.SalesDeliveryItems || 0) +
+    (counts.SalesReturnItems || 0) +
+    (counts.SalesBillEntryItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.itemSubGroup.findMany({
@@ -12,37 +37,38 @@ async function get(req) {
       ItemGroup: true,
 
       _count: {
-        select: {
-          StyleItem: true,
-          OrderItems: true,
-        },
+        select: itemSubGroupChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.StyleItem,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getItemSubGroupChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.styleItem.count({
-    where: {
-      itemSubGroupId: parseInt(id),
-    },
-  });
   const data = await prisma.itemSubGroup.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: itemSubGroupChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("itemSubGroup");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getItemSubGroupChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -62,20 +88,16 @@ async function getSearch(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-        },
+        select: itemSubGroupChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.styleItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getItemSubGroupChildRecordCount(item?._count),
+    })),
   };
 }
 

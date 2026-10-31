@@ -8,6 +8,77 @@ import {
   getPartyPurchaseOverAllReport,
 } from "./partyLedger.js";
 
+const partyChildRecordSelect = {
+  PurchaseBillSupplier: true,
+  SalesBillSupplier: true,
+  PurchaseReturn: true,
+  SalesReturn: true,
+  Payment: true,
+  Supplier: true,
+  DeliveryTo: true,
+  DeliveryInvoice: true,
+  ledgers: true,
+  PartyBranch: true,
+  openingBalances: true,
+  PoSupplier: true,
+  PoDelivery: true,
+  purchaseInwards: true,
+  purchaseInwardReturns: true,
+  purchaseCancels: true,
+  purchaseBillEntries: true,
+  purchaseLedgers: true,
+  orderEntries: true,
+  proformaInvoices: true,
+  productionOutwards: true,
+  productionAllocationDtls: true,
+  productionInwards: true,
+  processBills: true,
+  salesDeliveries: true,
+  SalesOrder: true,
+  SalesBillEntry: true,
+  SalesDelivery: true,
+  SalesOrderDeliveryTo: true,
+  SalesBillDeliveryTo: true,
+  proformaInvoiceYarns: true,
+};
+
+const getPartyChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.PurchaseBillSupplier || 0) +
+    (counts.SalesBillSupplier || 0) +
+    (counts.PurchaseReturn || 0) +
+    (counts.SalesReturn || 0) +
+    (counts.Payment || 0) +
+    (counts.Supplier || 0) +
+    (counts.DeliveryTo || 0) +
+    (counts.DeliveryInvoice || 0) +
+    (counts.ledgers || 0) +
+    (counts.PartyBranch || 0) +
+    (counts.openingBalances || 0) +
+    (counts.PoSupplier || 0) +
+    (counts.PoDelivery || 0) +
+    (counts.purchaseInwards || 0) +
+    (counts.purchaseInwardReturns || 0) +
+    (counts.purchaseCancels || 0) +
+    (counts.purchaseBillEntries || 0) +
+    (counts.purchaseLedgers || 0) +
+    (counts.orderEntries || 0) +
+    (counts.proformaInvoices || 0) +
+    (counts.productionOutwards || 0) +
+    (counts.productionAllocationDtls || 0) +
+    (counts.productionInwards || 0) +
+    (counts.processBills || 0) +
+    (counts.salesDeliveries || 0) +
+    (counts.SalesOrder || 0) +
+    (counts.SalesBillEntry || 0) +
+    (counts.SalesDelivery || 0) +
+    (counts.SalesOrderDeliveryTo || 0) +
+    (counts.SalesBillDeliveryTo || 0) +
+    (counts.proformaInvoiceYarns || 0)
+  );
+};
+
 async function get(req) {
   const {
     companyId,
@@ -87,11 +158,7 @@ async function get(req) {
         },
       },
       _count: {
-        select: {
-          PoSupplier: true,
-          purchaseInwards: true,
-          proformaInvoices: true,
-        },
+        select: partyChildRecordSelect,
       },
       BranchType: true,
     },
@@ -114,10 +181,7 @@ async function get(req) {
     statusCode: 0,
     data: (data = data?.map((party) => ({
       ...party,
-      childRecord:
-        party?._count.PoSupplier +
-        party?._count.purchaseInwards +
-        party?._count.proformaInvoices,
+      childRecord: getPartyChildRecordCount(party?._count),
     }))),
   };
 }
@@ -215,16 +279,6 @@ export async function getNew(req) {
 }
 
 async function getOne(id) {
-  const childRecordPo = await prisma.po.count({
-    where: { supplierId: parseInt(id) },
-  });
-  const childRecordInward = await prisma.purchaseInward.count({
-    where: { supplierId: parseInt(id) },
-  });
-  const childRecordPI = await prisma.proformaInvoice.count({
-    where: { customerId: parseInt(id) },
-  });
-
   const data = await prisma.party.findUnique({
     where: {
       id: parseInt(id),
@@ -270,6 +324,9 @@ async function getOne(id) {
       },
       ledgers: true,
       openingBalances: true,
+      _count: {
+        select: partyChildRecordSelect,
+      },
     },
   });
   const isCustomerExport =
@@ -335,7 +392,7 @@ async function getOne(id) {
       totalPaymentPurchaseBill,
       totalDiscount,
       isCustomerExport,
-      childRecord: childRecordPo + childRecordInward + childRecordPI,
+      childRecord: getPartyChildRecordCount(data?._count),
       totaloutstanding,
       totalPaymentAgainstInvoice,
     },
@@ -755,11 +812,7 @@ async function search(req) {
         },
       },
       _count: {
-        select: {
-          PoSupplier: true,
-          purchaseInwards: true,
-          proformaInvoices: true,
-        },
+        select: partyChildRecordSelect,
       },
       BranchType: true,
     },
@@ -770,10 +823,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((party) => ({
       ...party,
-      childRecord:
-        party?._count.PoSupplier +
-        party?._count.purchaseInwards +
-        party?._count.proformaInvoices,
+      childRecord: getPartyChildRecordCount(party?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

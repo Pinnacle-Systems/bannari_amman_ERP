@@ -1,6 +1,47 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const styleItemChildRecordSelect = {
+  DeliveryChallanItems: true,
+  DeliveryInvoiceItems: true,
+  poItems: true,
+  inwardItems: true,
+  stocks: true,
+  purchaseReturnItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  orderItems: true,
+  proformaInvoiceItems: true,
+  productionAllocations: true,
+  salesDeliveryItems: true,
+  SalesOrderItems: true,
+  PackingItems: true,
+  SalesReturnItems: true,
+  SalesBillEntryItems: true,
+};
+
+const getStyleItemChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.DeliveryChallanItems || 0) +
+    (counts.DeliveryInvoiceItems || 0) +
+    (counts.poItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.stocks || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.orderItems || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.productionAllocations || 0) +
+    (counts.salesDeliveryItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.PackingItems || 0) +
+    (counts.SalesReturnItems || 0) +
+    (counts.SalesBillEntryItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } = req.query;
 
@@ -46,11 +87,7 @@ async function get(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          poItems: true,
-          inwardItems: true,
-          proformaInvoiceItems: true,
-        },
+        select: styleItemChildRecordSelect,
       },
       SizeTemplate: {
         select: {
@@ -77,10 +114,7 @@ async function get(req) {
     statusCode: 0,
     data: data.map((item) => ({
       ...item,
-      childRecord:
-        item?._count.poItems +
-        item?._count.inwardItems +
-        item?._count.proformaInvoiceItems,
+      childRecord: getStyleItemChildRecordCount(item?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -145,11 +179,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          poItems: true,
-          inwardItems: true,
-          proformaInvoiceItems: true,
-        },
+        select: styleItemChildRecordSelect,
       },
       SizeTemplate: {
         select: {
@@ -176,10 +206,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((item) => ({
       ...item,
-      childRecord:
-        item?._count.poItems +
-        item?._count.inwardItems +
-        item?._count.proformaInvoiceItems,
+      childRecord: getStyleItemChildRecordCount(item?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
@@ -189,21 +216,15 @@ async function search(req) {
 }
 
 async function getOne(id) {
-  const childRecordPo = await prisma.poItems.count({
-    where: { styleItemId: parseInt(id) },
-  });
-  const childRecordInward = await prisma.inwardItems.count({
-    where: { styleItemId: parseInt(id) },
-  });
-  const childRecordPI = await prisma.proformaInvoiceItem.count({
-    where: { styleItemId: parseInt(id) },
-  });
   const data = await prisma.styleItem.findUnique({
     where: {
       id: parseInt(id),
     },
     include: {
       Hsn: true,
+      _count: {
+        select: styleItemChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("styleItem");
@@ -211,7 +232,7 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      ...{ childRecord: childRecordPo + childRecordInward + childRecordPI },
+      childRecord: getStyleItemChildRecordCount(data?._count),
     },
   };
 }

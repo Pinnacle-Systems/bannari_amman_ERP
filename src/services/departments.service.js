@@ -3,75 +3,81 @@ import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from '../configs/Responses.js';
 
 
+const departmentChildRecordSelect = {
+  doctor: true,
+};
+
+const getDepartmentChildRecordCount = (counts) => {
+  return counts?.doctor ?? 0;
+};
+
 async function get(req) {
-    const { companyId, active } = req.query
+  const { companyId, active } = req.query;
 
-    let data;
-    data = await prisma.department.findMany({
-        where: {
-            companyId: companyId ? parseInt(companyId) : undefined,
-            active: active ? Boolean(active) : undefined,
-        },
-        include: {
-            _count: {
-                select: {
-                    doctor: true
-                }
-            }
-        }
-    });
+  const data = await prisma.department.findMany({
+    where: {
+      companyId: companyId ? parseInt(companyId) : undefined,
+      active: active ? Boolean(active) : undefined,
+    },
+    include: {
+      _count: {
+        select: departmentChildRecordSelect,
+      },
+    },
+  });
 
-
-
-    return {
-        statusCode: 0, data: data = data.map(order => ({
-            ...order,
-            childRecord: order?._count.doctor > 0
-        })),
-    };
+  return {
+    statusCode: 0,
+    data: data.map((order) => ({
+      ...order,
+      childRecord: getDepartmentChildRecordCount(order?._count),
+    })),
+  };
 }
-
-
 
 async function getmobile(req) {
-    const { companyId, active } = req.query
-    let data;
-    data = await prisma.department.findMany({
-        where: {
-            companyId: companyId ? parseInt(companyId) : undefined,
-            active: active ? Boolean(active) : undefined,
-            isTaken: true
-        },
-        include: {
-            _count: {
-                select: {
-                    doctor: true
-                }
-            }
-        }
-    });
+  const { companyId, active } = req.query;
+  const data = await prisma.department.findMany({
+    where: {
+      companyId: companyId ? parseInt(companyId) : undefined,
+      active: active ? Boolean(active) : undefined,
+      isTaken: true,
+    },
+    include: {
+      _count: {
+        select: departmentChildRecordSelect,
+      },
+    },
+  });
 
-
-
-    return {
-        statusCode: 0, data: data = data.map(order => ({
-            ...order,
-            childRecord: order?._count.doctor > 0
-        })),
-    };
+  return {
+    statusCode: 0,
+    data: data.map((order) => ({
+      ...order,
+      childRecord: getDepartmentChildRecordCount(order?._count),
+    })),
+  };
 }
 
-
-
 async function getOne(id) {
-    const childRecord = await prisma.employee.count({ where: { departmentId: parseInt(id) } });
-    const data = await prisma.department.findUnique({
-        where: {
-            id: parseInt(id)
-        }
-    })
-    if (!data) return NoRecordFound("Department");
-    return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  const data = await prisma.department.findUnique({
+    where: {
+      id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: departmentChildRecordSelect,
+      },
+    },
+  });
+  if (!data) return NoRecordFound("Department");
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getDepartmentChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

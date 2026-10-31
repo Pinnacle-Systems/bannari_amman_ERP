@@ -18,19 +18,46 @@ async function get(req) {
       _count: {
         select: {
           proformaInvoices: true,
+          salesDeliveries: true,
+          orderEntries: true,
+          SalesOrder: true,
+          SalesBillEntry: true,
+          proformaInvoiceYarns: true,
         },
       },
     },
   });
 
   data.forEach((item) => {
-    item.childRecord = item._count.proformaInvoices;
+    item.childRecord =
+      item._count.proformaInvoices +
+      item._count.salesDeliveries +
+      item._count.orderEntries +
+      item._count.SalesOrder +
+      item._count.SalesBillEntry +
+      item._count.proformaInvoiceYarns;
   });
   return { statusCode: 0, data };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.proformaInvoice.count({
+  const childRecordProformaInvoice = await prisma.proformaInvoice.count({
+    where: { bankId: parseInt(id) },
+  });
+  const childRecordSalesDelivery = await prisma.salesDelivery.count({
+    where: { bankId: parseInt(id) },
+  });
+  const childRecordOrderEntry = await prisma.orderEntry.count({
+    where: { bankId: parseInt(id) },
+  });
+  const childRecordSalesOrder = await prisma.salesOrder.count({
+    where: { bankId: parseInt(id) },
+  });
+  const childRecordProformaInvoiceYarns =
+    await prisma.proformaInvoiceYarn.count({
+      where: { bankId: parseInt(id) },
+    });
+  const childRecordSalesBillEntry = await prisma.salesBillEntry.count({
     where: { bankId: parseInt(id) },
   });
 
@@ -48,7 +75,18 @@ async function getOne(id) {
 
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord } },
+    data: {
+      ...data,
+      ...{
+        childRecord:
+          childRecordProformaInvoice +
+          childRecordSalesDelivery +
+          childRecordOrderEntry +
+          childRecordSalesOrder +
+          childRecordSalesBillEntry +
+          childRecordProformaInvoiceYarns,
+      },
+    },
   };
 }
 
@@ -96,8 +134,16 @@ async function getSearch(req) {
 }
 
 async function create(body) {
-  const { name, accNo, ifsc, swiftCode, companyId, branchId, active, bankHolderName } =
-    await body;
+  const {
+    name,
+    accNo,
+    ifsc,
+    swiftCode,
+    companyId,
+    branchId,
+    active,
+    bankHolderName,
+  } = await body;
 
   const data = await prisma.bank.create({
     data: {
@@ -105,7 +151,8 @@ async function create(body) {
       accNo,
       ifsc,
       swiftCode,
-      active, bankHolderName,
+      active,
+      bankHolderName,
       companyId: companyId ? parseInt(companyId) : null,
       branchId: branchId ? parseInt(branchId) : null,
     },
@@ -115,8 +162,16 @@ async function create(body) {
 }
 
 async function update(id, body) {
-  const { name, accNo, ifsc, swiftCode, companyId, branchId, active, bankHolderName } =
-    await body;
+  const {
+    name,
+    accNo,
+    ifsc,
+    swiftCode,
+    companyId,
+    branchId,
+    active,
+    bankHolderName,
+  } = await body;
 
   const dataFound = await prisma.bank.findUnique({
     where: {
@@ -135,7 +190,8 @@ async function update(id, body) {
       accNo,
       ifsc,
       swiftCode,
-      active, bankHolderName,
+      active,
+      bankHolderName,
       companyId: companyId ? parseInt(companyId) : null,
       branchId: branchId ? parseInt(branchId) : null,
     },

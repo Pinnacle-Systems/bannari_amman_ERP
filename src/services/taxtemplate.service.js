@@ -3,6 +3,39 @@ import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 import { exclude } from "../utils/helper.js";
 
+const taxTemplateChildRecordSelect = {
+  pos: true,
+  purchaseBillEntries: true,
+  purchaseInwards: true,
+  productionInwards: true,
+  proformaInvoices: true,
+  processBills: true,
+  salesDeliveries: true,
+  orderEntries: true,
+  SalesOrder: true,
+  SalesReturn: true,
+  SalesBillEntry: true,
+  proformaInvoiceYarns: true,
+};
+
+const getTaxTemplateChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.pos || 0) +
+    (counts.purchaseBillEntries || 0) +
+    (counts.purchaseInwards || 0) +
+    (counts.productionInwards || 0) +
+    (counts.proformaInvoices || 0) +
+    (counts.processBills || 0) +
+    (counts.salesDeliveries || 0) +
+    (counts.orderEntries || 0) +
+    (counts.SalesOrder || 0) +
+    (counts.SalesReturn || 0) +
+    (counts.SalesBillEntry || 0) +
+    (counts.proformaInvoiceYarns || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.taxTemplate.findMany({
@@ -12,21 +45,16 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          pos: true,
-          purchaseBillEntries: true,
-        },
+        select: taxTemplateChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.pos + item._count.purchaseBillEntries,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getTaxTemplateChildRecordCount(item?._count),
+    })),
   };
 }
 
@@ -37,22 +65,18 @@ async function getOne(id) {
     },
     include: {
       TaxTemplateDetails: true,
-    },
-  });
-  const childRecordPo = await prisma.po.count({
-    where: {
-      taxTemplateId: data.id,
-    },
-  });
-  const childRecordBill = await prisma.purchaseBillEntry.count({
-    where: {
-      taxTemplateId: data.id,
+      _count: {
+        select: taxTemplateChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("taxTemplate");
   return {
     statusCode: 0,
-    data: { ...data, ...{ childRecord: childRecordPo + childRecordBill } },
+    data: {
+      ...data,
+      childRecord: getTaxTemplateChildRecordCount(data?._count),
+    },
   };
 }
 
