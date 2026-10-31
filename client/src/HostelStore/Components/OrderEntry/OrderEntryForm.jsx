@@ -66,7 +66,6 @@ import {
 } from "../../../redux/uniformService/ProformaInvoiceService.js";
 
 import { useGetHsnMasterQuery } from "../../../redux/services/HsnMasterServices.js";
-import { useDispatch } from "react-redux";
 
 import PoSummary from "../PurchaseOrder/PoSummary";
 import { calculateTaxWithHSNBreakupAndInsertIntoPoItems } from "../../../Utils/taxSummary";
@@ -93,6 +92,8 @@ import { useGetDesignMasterQuery } from "../../../redux/services/DesignMasterSer
 import { useGetLoopLengthMasterQuery } from "../../../redux/services/LooplengthMasterService";
 import { useGetDiaMasterQuery } from "../../../redux/services/DiaMasterService";
 import { useGetGaugeMasterQuery } from "../../../redux/services/GaugeMasterService";
+import { useGetProcessMasterQuery } from "../../../redux/services/ProcessMasterService";
+
 import { invalidateFabricModule } from "../../../redux/Dispatch/fabircInvalidateTags.js";
 import { invalidateYarnModule } from "../../../redux/Dispatch/yarnInvalidateTags";
 import { invalidateOrderEntryModule } from "../../../redux/Dispatch/OrderInvalidateTags.js";
@@ -114,11 +115,15 @@ const EMPTY_FABRIC_ROW = {
   pricePerKg: "",
   totalPrice: "",
   qty: "",
+  wastePercentage: "",
+  requiredQty: "",
   price: "",
   amount: "",
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
+  fabricYarnDetails: [],
+  fabricProcess: [],
 };
 
 const EMPTY_YARN_ROW = {
@@ -193,7 +198,7 @@ const OrderEntryForm = ({
   const [customerId, setCustomerId] = useState("");
   const [remarks, setRemarks] = useState("");
   const [requirements, setRequirements] = useState("");
-  const [orderType, setOrderType] = useState("AGAINSTPI");
+  const [orderType, setOrderType] = useState("GENERAL");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [docId, setDocId] = useState("");
   const [summary, setSummary] = useState(false);
@@ -224,7 +229,7 @@ const OrderEntryForm = ({
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
-  const [orderGridType, setOrderGridType] = useState("FABRIC");
+  const [orderGridType, setOrderGridType] = useState("FABRIC SALES");
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
   const qrRef = useRef(null);
@@ -254,6 +259,9 @@ const OrderEntryForm = ({
   });
 
   const { data: uomList } = useGetUomQuery({ params });
+  const filteredUomList = uomList?.data?.filter(
+    (val) => val?.isFabricUom == true,
+  );
   const { data: sizeList } = useGetSizeMasterQuery({ params });
   const { data: gsmList } = useGetGsmMasterQuery({ params });
   const { data: fabricPIList } = useGetPIListQuery({
@@ -268,6 +276,7 @@ const OrderEntryForm = ({
   const { data: colorList } = useGetColorMasterQuery({ params });
 
   const { data: yarnList } = useGetYarnMasterQuery({ params });
+  const { data: processList } = useGetProcessMasterQuery({ params });
 
   const { data: taxTypeList } = useGetTaxTemplateQuery({
     params: { companyId },
@@ -320,7 +329,7 @@ const OrderEntryForm = ({
           ? moment.utc(data.docDate).format("YYYY-MM-DD")
           : moment.utc(new Date()).format("YYYY-MM-DD"),
       );
-      setOrderType(data?.orderType || "AGAINSTPI");
+      setOrderType(data?.orderType || "GENERAL");
       setCustomerId(data?.customerId || "");
       setRemarks(data?.remarks || "");
       setAttachments(data?.attachments ? data?.attachments : []);
@@ -343,6 +352,52 @@ const OrderEntryForm = ({
         pricePerKg: item?.pricePerKg?.toFixed(2),
         totalPrice: item?.totalPrice?.toFixed(2),
         qty: item?.qty?.toFixed(3),
+        wastePercentage:
+          item?.wastePercentage != null
+            ? Number(item?.wastePercentage).toFixed(2)
+            : "",
+        requiredQty:
+          item?.requiredQty != null
+            ? Number(item?.requiredQty).toFixed(3)
+            : item?.qty != null
+              ? (
+                  Number(item?.qty) +
+                  (Number(item?.qty) * (Number(item?.wastePercentage) || 0)) /
+                    100
+                ).toFixed(3)
+              : "",
+        fabricYarnDetails: Array.isArray(item?.fabricYarnDetails)
+          ? item.fabricYarnDetails?.map((yd) => {
+              const reqNum =
+                item?.requiredQty != null
+                  ? Number(item?.requiredQty)
+                  : item?.qty != null
+                    ? Number(item?.qty) +
+                      (Number(item?.qty) *
+                        (Number(item?.wastePercentage) || 0)) /
+                        100
+                    : 0;
+              const pct = parseFloat(yd.percentage);
+              return {
+                ...yd,
+                percentage: yd?.percentage?.toFixed(2),
+                process: yd?.process || "No",
+                yarnProcessDetails: Array.isArray(yd?.yarnProcessDetails)
+                  ? yd.yarnProcessDetails?.map((yp) => ({
+                      ...yp,
+                      dyeing: yp?.dyeing || "No",
+                    }))
+                  : [],
+                yarnQty:
+                  reqNum > 0 && !isNaN(pct)
+                    ? ((reqNum * pct) / 100).toFixed(3)
+                    : yd.yarnQty,
+              };
+            })
+          : item?.fabricYarnDetails || [],
+        fabricProcess: Array.isArray(item?.fabricProcess)
+          ? item.fabricProcess
+          : [],
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -362,7 +417,7 @@ const OrderEntryForm = ({
       setProFormaIYarnId(data?.proFormaYarnId || "");
       setTaxTemplateId(data?.taxTemplateId || "");
       setDiscountType(data?.discountType || "");
-      setDiscountValue(data?.discountValue);
+      setDiscountValue(data?.discountValue || "");
       setPayTermId(data?.payTermId || "");
       setBankId(data?.bankId || "");
       setCurrencyId(data?.currencyId || "");
@@ -370,8 +425,8 @@ const OrderEntryForm = ({
       setCarriageTax(data?.carriageTax?.toFixed(2) || "");
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
-      setCustomerPoNo(data?.customerPoNo);
-      setOrderGridType(data?.orderGridType || "FABRIC");
+      setCustomerPoNo(data?.customerPoNo || "");
+      setOrderGridType(data?.orderGridType || "FABRIC SALES");
     },
     [id],
   );
@@ -406,7 +461,30 @@ const OrderEntryForm = ({
     carriageCharge,
     carriageTax,
     bankId,
-    orderFabricItems: orderFabricItems?.filter((i) => i.fabricId),
+    orderFabricItems: orderFabricItems
+      ?.filter((i) => i.fabricId)
+      .map((item) => ({
+        ...item,
+        fabricYarnDetails: (item.fabricYarnDetails || [])
+          .filter(
+            (yd) =>
+              yd.yarnId ||
+              (yd.percentage && Number(yd.percentage) > 0) ||
+              yd.colorId,
+          )
+          .map((yd) => ({
+            ...yd,
+            yarnProcessDetails: (yd.yarnProcessDetails || [])
+              .filter((yp) => yp.processId)
+              .map((yp) => ({
+                ...yp,
+                yarnProcessColors: (yp.yarnProcessColors || []).filter(
+                  (yc) => yc.colorId,
+                ),
+              })),
+          })),
+        fabricProcess: (item.fabricProcess || []).filter((fp) => fp.processId),
+      })),
     orderYarnItems: orderYarnItems?.filter((i) => i.yarnId),
     termsAndCondition,
     termsId,
@@ -499,7 +577,7 @@ const OrderEntryForm = ({
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (orderGridType === "FABRIC") {
+      if (orderGridType === "FABRIC SALES") {
         if (!item.fabricId) {
           errors.push(`Row ${index + 1}: Fabric is required`);
         }
@@ -523,6 +601,55 @@ const OrderEntryForm = ({
         }
         if (!item.price || Number(item.price) <= 0) {
           errors.push(`Row ${index + 1}: Price is required`);
+        }
+        const yarnDetails = (item.fabricYarnDetails || []).filter(
+          (yd) =>
+            yd.yarnId ||
+            (yd.percentage && Number(yd.percentage) > 0) ||
+            yd.colorId,
+        );
+        const totalPercentage = yarnDetails.reduce(
+          (sum, yd) => sum + (parseFloat(yd.percentage) || 0),
+          0,
+        );
+        if (yarnDetails.length === 0) {
+          errors.push(
+            `Row ${index + 1}: Yarn Details must have at least one row with percentage`,
+          );
+        } else {
+          const seenYarnColors = new Set();
+          yarnDetails.forEach((yd, yIdx) => {
+            if (!yd.yarnId) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Yarn is required`,
+              );
+            }
+            if (!yd.colorId) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Color is required`,
+              );
+            }
+            if (!yd.percentage || Number(yd.percentage) <= 0) {
+              errors.push(
+                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Percentage is required`,
+              );
+            }
+            if (yd.yarnId && yd.colorId) {
+              const yarnColorKey = `${yd.yarnId}_${yd.colorId}`;
+              if (seenYarnColors.has(yarnColorKey)) {
+                errors.push(
+                  `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Duplicate yarn and color found`,
+                );
+              } else {
+                seenYarnColors.add(yarnColorKey);
+              }
+            }
+          });
+        }
+        if (parseFloat(totalPercentage.toFixed(2)) !== 100) {
+          errors.push(
+            `Row ${index + 1}: Yarn consumption is not 100 percentage`,
+          );
         }
         const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
         if (seen.has(key)) {
@@ -574,7 +701,7 @@ const OrderEntryForm = ({
 
   const validateData = (data) => {
     const items =
-      data.orderGridType === "FABRIC"
+      data.orderGridType === "FABRIC SALES"
         ? data?.orderFabricItems || []
         : data?.orderYarnItems || [];
     const checks = [
@@ -583,14 +710,14 @@ const OrderEntryForm = ({
       {
         condition:
           data.orderType === "AGAINSTPI" &&
-          data.orderGridType === "FABRIC" &&
+          data.orderGridType === "FABRIC SALES" &&
           !data.proFormaFabricId,
         title: "Fabric PI No is required!",
       },
       {
         condition:
           data.orderType === "AGAINSTPI" &&
-          data.orderGridType === "YARN" &&
+          data.orderGridType === "YARN SALES" &&
           !data.proFormaYarnId,
         title: "Yarn PI No is required!",
       },
@@ -763,7 +890,7 @@ const OrderEntryForm = ({
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const isFabric = orderGridType === "FABRIC";
+    const isFabric = orderGridType === "FABRIC SALES";
     const filteredItems = (
       isFabric
         ? (orderFabricItems || []).filter((i) => i.fabricId)
@@ -944,7 +1071,7 @@ const OrderEntryForm = ({
               </div>
               <div className={narrowFieldWrap}>
                 <DropdownInput
-                  name="Item Type"
+                  name="Sales Type"
                   options={gridTypes}
                   value={orderGridType}
                   setValue={(value) => {
@@ -960,7 +1087,7 @@ const OrderEntryForm = ({
 
             {/* PI Selection when AGAINSTPI */}
             <div className={narrowFieldWrap}>
-              {orderGridType === "FABRIC" ? (
+              {orderGridType === "FABRIC SALES" ? (
                 id ? (
                   <TextInput
                     name="Fabric PI No"
@@ -991,7 +1118,7 @@ const OrderEntryForm = ({
 
                       setTaxTemplateId(res?.data?.taxTemplateId || "");
                       setDiscountType(res?.data?.discountType || "");
-                      setDiscountValue(res?.data?.discountValue);
+                      setDiscountValue(res?.data?.discountValue || "");
 
                       if (res?.data?.termsId) setTermsId(res.data.termsId);
                       if (res?.data?.termsAndCondition)
@@ -1048,6 +1175,12 @@ const OrderEntryForm = ({
                           ? Number(item?.totalPrice)?.toFixed(2)
                           : "",
                         qty: item?.qty ? Number(item?.qty)?.toFixed(3) : "",
+                        wastePercentage: item?.wastePercentage
+                          ? Number(item?.wastePercentage)?.toFixed(2)
+                          : "",
+                        requiredQty: item?.requiredQty
+                          ? Number(item?.requiredQty)?.toFixed(3)
+                          : "",
                         price: item?.price
                           ? Number(item?.price)?.toFixed(2)
                           : "",
@@ -1102,7 +1235,7 @@ const OrderEntryForm = ({
 
                     setTaxTemplateId(res?.data?.taxTemplateId || "");
                     setDiscountType(res?.data?.discountType || "");
-                    setDiscountValue(res?.data?.discountValue);
+                    setDiscountValue(res?.data?.discountValue || "");
 
                     if (res?.data?.termsId) setTermsId(res.data.termsId);
                     if (res?.data?.termsAndCondition)
@@ -1192,7 +1325,7 @@ const OrderEntryForm = ({
               </div>
 
               <div className={narrowFieldWrap}>
-                <DropdownWithModal
+                <DropdownInput
                   name="Pay Term"
                   options={dropDownListObject(
                     id
@@ -1207,9 +1340,9 @@ const OrderEntryForm = ({
                   readOnly={readOnly || orderType === "AGAINSTPI"}
                   className={`${compactFieldClass} w-full max-w-none`}
                   dropdownMinWidth={240}
-                  addNewLabel="+ Add New Pay Term"
-                  childComponent={PayTermMaster}
-                  addNewModalWidth="w-[40%] h-[66%]"
+                  // addNewLabel="+ Add New Pay Term"
+                  // childComponent={PayTermMaster}
+                  // addNewModalWidth="w-[40%] h-[66%]"
                   disabled={
                     childRecord.current > 0 ||
                     readOnly ||
@@ -1338,14 +1471,14 @@ const OrderEntryForm = ({
                 : "Click to expand Basic Details"
             }
           >
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2.5">
               <FiLayers
-                className={`w-3.5 h-3.5 ${
+                className={`w-4 h-4 ${
                   docId && docId !== "New" ? "text-sky-300" : "text-[#7098BC]"
                 }`}
               />
               <span
-                className={`text-[10px] font-bold uppercase whitespace-nowrap ${
+                className={`text-[13px] font-bold uppercase whitespace-nowrap ${
                   docId && docId !== "New"
                     ? "text-sky-200 tracking-wider font-extrabold"
                     : "text-[#7098BC] tracking-widest"
@@ -1555,9 +1688,7 @@ const OrderEntryForm = ({
               value={deliveryDate}
               setValue={setDeliveryDate}
               required={true}
-              readOnly={
-                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
-              }
+              readOnly={childRecord.current > 0 || readOnly}
               min={docDate}
               type={"date"}
               className={compactFieldClass}
@@ -1909,7 +2040,7 @@ const OrderEntryForm = ({
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
           poItems={
-            orderGridType === "FABRIC" ? orderFabricItems : orderYarnItems
+            orderGridType === "FABRIC SALES" ? orderFabricItems : orderYarnItems
           }
           totals={enrichedData}
           readOnly={readOnly || isDisabled || childRecord.current > 0}
@@ -2321,7 +2452,7 @@ const OrderEntryForm = ({
               payTermList={payTermList}
               bankList={bankList}
               carriageFinalAmt={carriageFinalAmt}
-              uomList={uomList}
+              uomList={filteredUomList}
               sizeList={sizeList}
               hsnList={hsnList}
               colorList={colorList}
@@ -2352,7 +2483,7 @@ const OrderEntryForm = ({
         detailsContent={headerContent}
         detailsTitle="Transaction Details"
         gridItems={
-          orderGridType === "FABRIC" ? (
+          orderGridType === "FABRIC SALES" ? (
             <FabricItems
               orderFabricItems={orderFabricItems}
               setFabricItems={setFabricItems}
@@ -2361,7 +2492,10 @@ const OrderEntryForm = ({
                 childRecord?.current > 0 ||
                 orderType === "AGAINSTPI"
               }
-              uomList={uomList}
+              isNewFieldsReadOnly={Boolean(
+                readOnly || childRecord?.current > 0,
+              )}
+              uomList={filteredUomList}
               hsnList={hsnList}
               colorList={colorList}
               gsmList={gsmList}
@@ -2371,6 +2505,8 @@ const OrderEntryForm = ({
               loopLengthList={loopLengthList}
               gaugeList={gaugeList}
               fabricList={fabricList}
+              yarnList={yarnList}
+              processList={processList}
               id={id}
               termsRef={termsRef}
               childRecord={childRecord}

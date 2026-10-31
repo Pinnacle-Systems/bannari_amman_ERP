@@ -1,11 +1,13 @@
 import { Router } from 'express';
 const router = Router();
-import { get, getOne, getSearch,  create, update, remove} from '../controllers/gsm.controller.js';
+import { get, search, getOne, getSearch,  create, update, remove} from '../controllers/gsm.controller.js';
 
 
 router.post('/', create);
 
 router.get('/', get);
+
+router.get('/search', search);
 
 router.get('/:id', getOne);
 

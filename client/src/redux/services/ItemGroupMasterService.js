@@ -74,11 +74,23 @@ const ItemGroupMasterApi = createApi({
             }),
             invalidatesTags: ["ItemGroupMaster"],
         }),
+        searchItemGroupMaster: builder.query({
+            query: (params) => ({
+                url: `${ITEM_GROUP_API}/search`,
+                method: "GET",
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                },
+                params,
+            }),
+            providesTags: ["ItemGroupMaster"],
+        }),
     }),
 });
 
 export const {
     useGetItemGroupMasterQuery,
+    useSearchItemGroupMasterQuery,
     useGetItemGroupMasterByIdQuery,
     useLazyGetItemGroupMasterByIdQuery,
     useAddItemGroupMasterMutation,

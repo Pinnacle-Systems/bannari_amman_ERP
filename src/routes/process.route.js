@@ -3,6 +3,7 @@ const router = Router();
 import {
   get,
   getOne,
+  search,
   create,
   update,
   remove,
@@ -14,6 +15,8 @@ import {
 router.post("/", create);
 
 router.get("/", get);
+
+router.get("/search", search);
 
 router.get("/:id", getOne);
 

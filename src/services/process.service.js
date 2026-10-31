@@ -4,38 +4,164 @@ import { current_dateOnly, endDate, startDate } from "../utils/helper.js";
 import crypto from "crypto";
 
 async function get(req) {
-  const { companyId, active } = req.query;
+  const { companyId, active, page, pageNumber, limit, pageSize, dataPerPage } = req.query;
+
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const where = {
+    companyId: companyId ? parseInt(companyId) : undefined,
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+  };
+
+  const hasPagination = Boolean(page || pageNumber || limit || pageSize || dataPerPage);
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await prisma.process.count({ where });
+
   const data = await prisma.process.findMany({
-    where: {
-      companyId: companyId ? parseInt(companyId) : undefined,
-      // active: active ? Boolean(active) : undefined,
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
+    include: {
+      processGroupList: {
+        include: {
+          processGroup: true,
+        },
+      },
+      _count: {
+        select: {
+          processGroupList: true,
+        },
+      },
     },
-    // include: {
-    //   _count: {
-    //     select: {
-    //       processGroupList: true,
-    //       laminationDetails: true,
-    //       varnishDetails: true,
-    //       machineDetails: true,
-    //       processDetails: true,
-    //     },
-    //   },
-    // },
     orderBy: {
       id: "asc",
     },
   });
+
   return {
     statusCode: 0,
     data: data.map((process) => ({
       ...process,
-      // childRecord:
-      //   process._count.processGroupList +
-      //   process._count.laminationDetails +
-      //   process._count.varnishDetails +
-      //   process._count.machineDetails +
-      //   process._count.processDetails,
+      childRecord: process._count.processGroupList,
     })),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
+  };
+}
+
+async function search(req) {
+  const {
+    companyId,
+    name,
+    process,
+    active,
+    page,
+    pageNumber,
+    limit,
+    pageSize,
+    dataPerPage,
+  } = req.query;
+
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const where = {
+    companyId: companyId ? parseInt(companyId) : undefined,
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+    ...(name && name.trim() !== ""
+      ? { name: { contains: name.trim(), mode: "insensitive" } }
+      : {}),
+    ...(process && process.trim() !== ""
+      ? { process: { contains: process.trim(), mode: "insensitive" } }
+      : {}),
+  };
+
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await prisma.process.count({ where });
+
+  const data = await prisma.process.findMany({
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
+    include: {
+      processGroupList: {
+        include: {
+          processGroup: true,
+        },
+      },
+      _count: {
+        select: {
+          processGroupList: true,
+        },
+      },
+    },
+    orderBy: {
+      id: "asc",
+    },
+  });
+
+  return {
+    statusCode: 0,
+    data: data.map((processItem) => ({
+      ...processItem,
+      childRecord: processItem._count.processGroupList,
+    })),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
   };
 }
 
@@ -43,6 +169,13 @@ async function getOne(id) {
   const data = await prisma.process.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      processGroupList: {
+        include: {
+          processGroup: true,
+        },
+      },
     },
   });
   if (!data) return NoRecordFound("process");
@@ -55,7 +188,7 @@ async function getOne(id) {
 }
 
 async function create(body) {
-  const { name, companyId, active = true, branchId } = await body;
+  const { name, companyId, active = true, branchId, process } = await body;
 
   const data = await prisma.process.create({
     data: {
@@ -63,6 +196,7 @@ async function create(body) {
       active,
       companyId: parseInt(companyId),
       branchId: parseInt(branchId),
+      process,
     },
   });
 
@@ -756,7 +890,7 @@ async function UpdatePushProcess(req) {
 }
 
 async function update(id, body) {
-  const { name, active } = await body;
+  const { name, active, process } = await body;
   const dataFound = await prisma.process.findUnique({
     where: {
       id: parseInt(id),
@@ -770,6 +904,7 @@ async function update(id, body) {
     data: {
       name,
       active,
+      process,
     },
   });
   return { statusCode: 0, data };
@@ -787,6 +922,7 @@ async function remove(id) {
 export {
   get,
   getOne,
+  search,
   create,
   update,
   remove,

@@ -42,6 +42,7 @@ export default function Form({
   const [name, setName] = useState("");
   const [processGroupList, setProcessGroupList] = useState([]);
   const [active, setActive] = useState(true);
+  const [isYarnProcess, setIsYarnProcess] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const childRecord = useRef(0);
   const [errors, setErrors] = useState({});
@@ -102,6 +103,7 @@ export default function Form({
         setName("");
         setProcessGroupList([]);
         setActive(true);
+        setIsYarnProcess(false);
       } else {
         setName(data?.name || "");
         setProcessGroupList(
@@ -119,6 +121,7 @@ export default function Form({
             : [],
         );
         setActive(id ? (data?.active ?? false) : true);
+        setIsYarnProcess(Boolean(data?.isYarnProcess));
         childRecord.current = data?.childRecord ? data?.childRecord : 0;
       }
     },
@@ -141,6 +144,7 @@ export default function Form({
     id,
     name,
     active,
+    isYarnProcess,
     companyId,
     branchId,
     processGroupList: processGroupList.map((item) => item.value),
@@ -358,7 +362,22 @@ export default function Form({
     {
       header: "Process Group Name",
       accessor: (item) => item.name,
-      className: "font-medium text-gray-900  w-[200px]  py-1  px-2",
+      className: "font-medium text-gray-900 w-[200px] py-1 px-2",
+    },
+    {
+      header: "Is Yarn Process",
+      accessor: (item) => (
+        <span
+          className={` px-2 py-0.5 rounded text-[10px] font-semibold ${
+            item.isYarnProcess
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-slate-50 text-slate-500 border border-slate-200"
+          }`}
+        >
+          {item.isYarnProcess ? "Yes" : "No"}
+        </span>
+      ),
+      className: "font-medium text-gray-900 text-center w-48 py-1",
     },
     {
       header: "Status",
@@ -443,8 +462,26 @@ export default function Form({
                       zIndex: 99999,
                     }),
                   }}
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+                  menuPortalTarget={
+                    typeof document !== "undefined" ? document.body : null
+                  }
                 />
+              </div>
+              <div className="w-[70%] mt-3 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isYarnProcess"
+                  checked={isYarnProcess}
+                  onChange={(e) => setIsYarnProcess(e.target.checked)}
+                  disabled={readOnly || childRecord.current > 0}
+                  className="w-4 h-4 accent-indigo-600 rounded cursor-pointer"
+                />
+                <label
+                  htmlFor="isYarnProcess"
+                  className="text-[11px] font-bold text-gray-600 cursor-pointer select-none"
+                >
+                  Is Yarn Process
+                </label>
               </div>
               <div className="mt-5">
                 <ToggleButton

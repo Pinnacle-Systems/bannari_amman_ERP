@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { get, getPaginated, getOne, getSearch, create, update, remove } from '../controllers/employees.controller.js';
+import { get, search, getPaginated, getOne, getSearch, create, update, remove } from '../controllers/employees.controller.js';
 import multer from 'multer';
 
 const upload = multer()
@@ -8,6 +8,8 @@ const upload = multer()
 router.post('/', upload.single('image'), create);
 
 router.get('/', get);
+
+router.get('/search', search);
 
 router.get('/paginate', getPaginated);
 

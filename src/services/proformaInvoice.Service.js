@@ -39,6 +39,7 @@ async function get(req) {
     pageNumber,
     dataPerPage,
     serachDocNo,
+    searchDocNo,
     searchDocDate,
     finYearId,
     searchCustomer,
@@ -50,6 +51,10 @@ async function get(req) {
     ? getYearShortCodeForFinYear(finYearDate?.startTime, finYearDate?.endTime)
     : "";
 
+  const docNoQuery = (serachDocNo || searchDocNo)?.trim();
+  const customerQuery = searchCustomer?.trim();
+  const orderNoQuery = searchOrderNo?.trim();
+
   let data = await prisma.proformaInvoice.findMany({
     where: {
       branchId: branchId ? parseInt(branchId) : undefined,
@@ -59,14 +64,29 @@ async function get(req) {
             { createdAt: { lte: finYearDate.endTime } },
           ]
         : undefined,
-      docId: serachDocNo ? { contains: serachDocNo } : undefined,
-      customer: searchCustomer
-        ? { name: { contains: searchCustomer } }
+      docId: docNoQuery
+        ? { contains: docNoQuery, mode: "insensitive" }
+        : undefined,
+      customer: customerQuery
+        ? { name: { contains: customerQuery, mode: "insensitive" } }
+        : undefined,
+      orderEntries: orderNoQuery
+        ? {
+            some: {
+              docId: { contains: orderNoQuery, mode: "insensitive" },
+            },
+          }
         : undefined,
     },
     include: {
       customer: { select: { id: true, name: true } },
       fabricItems: true,
+      orderEntries: {
+        select: {
+          id: true,
+          // productionType: true,
+        },
+      },
 
       _count: {
         select: {
@@ -78,18 +98,20 @@ async function get(req) {
   });
 
   if (searchDocDate) {
+    const trimmedDate = searchDocDate.trim().toLowerCase();
     data = data?.filter((item) =>
-      String(getDateFromDateTime(item.docDate)).includes(searchDocDate),
+      String(getDateFromDateTime(item.docDate))
+        .toLowerCase()
+        .includes(trimmedDate),
     );
   }
 
   const totalCount = data.length;
 
-  if (pagination) {
-    data = data.slice(
-      (pageNumber - 1) * parseInt(dataPerPage),
-      pageNumber * parseInt(dataPerPage),
-    );
+  if (pagination === "true" || pagination === true) {
+    const page = parseInt(pageNumber, 10) || 1;
+    const perPage = parseInt(dataPerPage, 10) || 15;
+    data = data.slice((page - 1) * perPage, page * perPage);
   }
 
   return {

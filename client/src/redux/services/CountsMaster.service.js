@@ -71,11 +71,23 @@ const CountsMasterApi = createApi({
       }),
       invalidatesTags: ["CountsMaster"],
     }),
+    searchCountsMaster: builder.query({
+      query: (params) => ({
+        url: `${COUNTS_MASTER_API}/search`,
+        method: "GET",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+        params,
+      }),
+      providesTags: ["CountsMaster"],
+    }),
   }),
 });
 
 export const {
   useGetCountsMasterQuery,
+  useSearchCountsMasterQuery,
   useGetCountsMasterByIdQuery,
   useLazyGetCountsMasterByIdQuery,
   useAddCountsMasterMutation,

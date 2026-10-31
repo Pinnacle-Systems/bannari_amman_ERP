@@ -152,12 +152,12 @@ const index = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden flex-1 min-h-0">
+        <div className="bg-[#F1F1F0] rounded-xl shadow-sm overflow-hidden flex-1 min-h-0">
           <OrderEntryReport
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            itemsPerPage={10}
+            itemsPerPage={15}
             userData={userData?.data}
             onCreateJobCard={handleCreateJobCard}
             canApprove={canApprove}

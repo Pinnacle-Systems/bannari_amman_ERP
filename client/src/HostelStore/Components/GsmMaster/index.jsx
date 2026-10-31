@@ -11,6 +11,7 @@ import {
   useDeleteGsmMasterMutation,
   useGetGsmMasterByIdQuery,
   useGetGsmMasterQuery,
+  useSearchGsmMasterQuery,
   useLazyGetGsmMasterByIdQuery,
   useUpdateGsmMasterMutation,
 } from "../../../redux/services/GsmMasterService";
@@ -31,18 +32,42 @@ export default function Form({ onSuccess, defaultName = "" } = {}) {
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchGsmName, setSearchGsmName] = useState("");
+  const [debouncedGsmName, setDebouncedGsmName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const childRecord = useRef(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedGsmName(searchGsmName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchGsmName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedGsmName, statusFilter]);
 
   const params = {
     companyId: secureLocalStorage.getItem(
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
   };
+
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedGsmName ? { name: debouncedGsmName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetGsmMasterQuery({ params, searchParams: searchValue });
+  } = useSearchGsmMasterQuery(queryParams);
   const {
     data: singleData,
     isFetching: isSingleFetching,
@@ -246,21 +271,35 @@ export default function Form({ onSuccess, defaultName = "" } = {}) {
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Gsm",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchGsmName,
+      onFilterChange: setSearchGsmName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "text-center w-24 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-24",
     },
   ];
 
@@ -371,11 +410,15 @@ export default function Form({ onSuccess, defaultName = "" } = {}) {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable
           columns={columns}
-          data={allData?.data}
+          data={allData?.data || []}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 

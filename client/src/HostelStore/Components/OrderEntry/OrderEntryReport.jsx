@@ -18,7 +18,7 @@ import { UserPermissions } from "../../../Utils/UserPermissions";
 const OrderEntryReport = ({
   onClick,
   onView,
-  itemsPerPage = 10,
+  itemsPerPage = 15,
   onEdit,
   onDelete,
   rowActions = true,
@@ -30,11 +30,17 @@ const OrderEntryReport = ({
     sessionStorage.getItem("sessionId") + "currentBranchId",
   );
 
-  const [dataPerPage, setDataPerPage] = useState("10");
+  const [dataPerPage, setDataPerPage] = useState(String(itemsPerPage || 15));
   const [serachDocNo, setSerachDocNo] = useState("");
   const [searchDocDate, setSearchDocDate] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
   const [searchOrderType, setSearchOrderType] = useState("");
+  const [searchOrderGridType, setSearchOrderGridType] = useState("");
+
+  const [debouncedDocNo, setDebouncedDocNo] = useState("");
+  const [debouncedDocDate, setDebouncedDocDate] = useState("");
+  const [debouncedCustomer, setDebouncedCustomer] = useState("");
+  const [debouncedOrderType, setDebouncedOrderType] = useState("");
 
   const [totalCount, setTotalCount] = useState(0);
   const [currentPageNumber, setCurrentPageNumber] = useState(1);
@@ -47,16 +53,53 @@ const OrderEntryReport = ({
 
   const dispatch = useDispatch();
   const [addApprovalStatus] = useAddApprovalStausMutation();
-  const searchFields = {
-    serachDocNo,
-    searchDocDate,
-    searchCustomer,
-    searchOrderType,
-  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocNo(serachDocNo);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [serachDocNo]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocDate(searchDocDate);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchDocDate]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCustomer(searchCustomer);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCustomer]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedOrderType(searchOrderType);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchOrderType]);
 
   useEffect(() => {
     setCurrentPageNumber(1);
-  }, [serachDocNo, searchDocDate, searchCustomer, searchOrderType]);
+  }, [
+    debouncedDocNo,
+    debouncedDocDate,
+    debouncedCustomer,
+    debouncedOrderType,
+    searchOrderGridType,
+    dataPerPage,
+  ]);
+
+  const searchFields = {
+    serachDocNo: debouncedDocNo,
+    searchDocDate: debouncedDocDate,
+    searchCustomer: debouncedCustomer,
+    searchOrderType: debouncedOrderType,
+    searchOrderGridType,
+  };
 
   const companyId = secureLocalStorage.getItem(
     sessionStorage.getItem("sessionId") + "userCompanyId",
@@ -77,43 +120,46 @@ const OrderEntryReport = ({
   });
 
   useEffect(() => {
-    if (allData?.totalCount) {
-      setTotalCount(allData?.totalCount);
+    if (typeof allData?.totalCount === "number") {
+      setTotalCount(allData.totalCount);
     }
-  }, [allData, isLoading, isFetching]);
+  }, [allData]);
 
   const isLoadingIndicator = isLoading || isFetching;
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
-  const indexOfLastItem = currentPageNumber * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const totalPages = Math.ceil(totalCount / parseInt(dataPerPage)) || 1;
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPageNumber(newPage);
     }
   };
+
   const Pagination = () => {
     return (
-      <div className="h-10 w-full flex flex-col sm:flex-row justify-between items-center p-2 bg-white border-t border-gray-200 ">
-        <div className="text-sm text-gray-600 mb-2 sm:mb-0">
-          Showing {totalCount === 0 ? 0 : indexOfFirstItem + 1} to{" "}
-          {Math.min(indexOfLastItem, totalCount)} of {totalCount} entries
+      <div className="h-10 w-full flex flex-col sm:flex-row justify-between items-center p-2 bg-white border-t border-gray-200">
+        <div className="text-[11px] text-gray-600 mb-2 sm:mb-0">
+          Showing{" "}
+          {totalCount === 0
+            ? 0
+            : (currentPageNumber - 1) * parseInt(dataPerPage) + 1}{" "}
+          to {Math.min(currentPageNumber * parseInt(dataPerPage), totalCount)}{" "}
+          of {totalCount} entries
         </div>
         <div className="flex gap-1">
           <button
             onClick={() => handlePageChange(currentPageNumber - 1)}
             disabled={currentPageNumber === 1}
-            className={`px-3 py-1 rounded-md ${
+            className={`px-2 py-0.5 rounded text-[11px] ${
               currentPageNumber === 1
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-600 hover:bg-gray-100"
+                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
             }`}
           >
-            <FaChevronLeft className="inline" />
+            <FaChevronLeft className="inline w-2.5 h-2.5" />
           </button>
 
-          {Array?.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             let pageNum;
             if (totalPages <= 5) {
               pageNum = i + 1;
@@ -129,10 +175,10 @@ const OrderEntryReport = ({
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-1 rounded-md ${
+                className={`px-2 py-0.5 rounded text-[11px] ${
                   currentPageNumber === pageNum
                     ? "bg-indigo-800 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
                 }`}
               >
                 {pageNum}
@@ -141,16 +187,16 @@ const OrderEntryReport = ({
           })}
 
           {totalPages > 5 && currentPageNumber < totalPages - 2 && (
-            <span className="px-3 py-1">...</span>
+            <span className="px-2 py-0.5 text-[11px]">...</span>
           )}
 
           {totalPages > 5 && currentPageNumber < totalPages - 2 && (
             <button
               onClick={() => handlePageChange(totalPages)}
-              className={`px-3 py-1 rounded-md ${
+              className={`px-2 py-0.5 rounded text-[11px] ${
                 currentPageNumber === totalPages
                   ? "bg-indigo-800 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
               }`}
             >
               {totalPages}
@@ -160,13 +206,13 @@ const OrderEntryReport = ({
           <button
             onClick={() => handlePageChange(currentPageNumber + 1)}
             disabled={currentPageNumber === totalPages}
-            className={`px-3 py-1 rounded-md ${
+            className={`px-2 py-0.5 rounded text-[11px] ${
               currentPageNumber === totalPages
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-600 hover:bg-gray-100"
+                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
             }`}
           >
-            <FaChevronRight className="inline" />
+            <FaChevronRight className="inline w-2.5 h-2.5" />
           </button>
         </div>
       </div>
@@ -217,6 +263,8 @@ const OrderEntryReport = ({
       setActionLoading(false);
     }
   };
+
+  const totalColSpan = 6 + (canApprove ? 1 : 0) + (rowActions ? 1 : 0);
 
   return (
     <>
@@ -343,356 +391,313 @@ const OrderEntryReport = ({
           </div>
         </div>
       </Modal>
-      <div className="flex flex-col w-full h-[78Vh] overflow-auto">
-        <>
-          <div className="h-[100vh] rounded-lg bg-[#F1F1F0] shadow-sm">
-            <div className="h-[68vh]">
-              <table className="">
-                <thead className="bg-gray-200 text-gray-800 ">
-                  <tr className="">
-                    <th className=" px-1 py-1.5  font-medium text-[13px]  text-gray-900  text-center  w-12">
-                      <div className="">S No</div>
-                    </th>
-
-                    <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-32">
-                      <div>Order No</div>
-                    </th>
-                    <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-32">
-                      <div>Order Date</div>
-                    </th>
-                    <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-40">
-                      <div>Order Type</div>
-                    </th>
-
-                    <th className="w-80  px-3   font-medium text-[13px] text-gray-900  text-center ">
-                      <div>Customer</div>
-                    </th>
-                    {/* <th
-                                            className=" px-3 w-36  font-medium text-[13px]  text-gray-900  text-center "
-                                            rowSpan={2}
-                                        >
-                                            <div>Approval Status</div>
-                                        </th> */}
-                    {/* <th
-                                            className=" px-3 w-32  font-medium text-[13px]  text-gray-900  text-center "
-                                            rowSpan={2}
-                                        >
-                                            <div> Remarks</div>
-                                        </th> */}
-                    {canApprove && (
-                      <th
-                        className=" px-3 w-32  font-medium text-[13px]  text-gray-900  text-center "
-                        rowSpan={2}
-                      >
-                        <div>Approval Actions</div>
-                      </th>
-                    )}
-
-                    <th
-                      className="w-14   px-3  font-medium text-[13px]  text-gray-900  text-center "
-                      rowSpan={2}
-                    >
-                      <div>Actions</div>
-                    </th>
-                  </tr>
-                  <tr className="">
-                    <th className=" px-1  font-medium text-[13px] justify-end  text-gray-900  text-center  w-12">
-                      <div className="h-3"></div>
-                    </th>
-
-                    <th className=" px-1 font-medium text-[13px] border  text-gray-900  text-center w-32">
-                      <input
-                        type="text"
-                        className="text-black h-5   w-full  px-1 focus:outline-none border  border-gray-400 rounded-md"
-                        placeholder="Search"
-                        value={serachDocNo}
-                        onChange={(e) => {
-                          setSerachDocNo(e.target.value);
-                        }}
-                      />
-                    </th>
-                    <th className="  px-1 font-medium text-[13px]  text-gray-900  text-center w-32">
-                      <input
-                        type="text"
-                        className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
-                        placeholder="Search"
-                        value={searchDocDate}
-                        onChange={(e) => {
-                          setSearchDocDate(e.target.value);
-                        }}
-                      />
-                    </th>
-                    <th className="  px-1 font-medium text-[13px]  text-gray-900  text-center w-40">
-                      <input
-                        type="text"
-                        className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
-                        placeholder="Search"
-                        value={searchOrderType}
-                        onChange={(e) => {
-                          setSearchOrderType(e.target.value);
-                        }}
-                      />
-                    </th>
-                    <th className="w-80  px-1 font-medium text-[13px]  text-gray-900  text-center ">
-                      <input
-                        type="text"
-                        className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
-                        placeholder="Search"
-                        value={searchCustomer}
-                        onChange={(e) => {
-                          setSearchCustomer(e.target.value);
-                        }}
-                      />
-                    </th>
-                  </tr>
-                </thead>
-                {isLoadingIndicator ? (
-                  <tbody>
-                    <tr>
-                      <td>
-                        <Loader />
-                      </td>
-                    </tr>
-                  </tbody>
-                ) : (
-                  <tbody className="border-2">
-                    {(allData?.data ? allData?.data : []).map(
-                      (dataObj, index) => {
-                        const isDisabled =
-                          dataObj?.approvalStatus?.status === "PENDING" ||
-                          dataObj?.approvalStatus?.status === "NOTAPPROVED" ||
-                          dataObj?.approvalStatus?.status === "REJECTED";
-                        return (
-                          <tr
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                onClick(dataObj.id);
-                              }
-                            }}
-                            tabIndex={0}
-                            key={dataObj.id}
-                            className={`hover:bg-gray-50 transition-colors border-b   border-gray-200 text-[12px] ${
-                              index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                            }`}
-                            onClick={() => {
-                              onClick(dataObj.id);
-                            }}
-                          >
-                            <td className="text-center ">{index + 1}</td>
-
-                            <td className="py-1.5 text-center">
-                              {dataObj.docId}{" "}
-                            </td>
-
-                            <td className="py-1.5 text-left">
-                              {getDateFromDateTimeToDisplay(dataObj.docDate)}
-                            </td>
-                            <td className="py-1.5 text-left  ">
-                              {dataObj.orderType}{" "}
-                            </td>
-
-                            <td className="py-1.5 text-left">
-                              {" "}
-                              {dataObj?.customer?.name}
-                            </td>
-                            {/* <td className="py-1.5 text-left">
-                                                            <ApprovalBadge
-                                                                approvalStatus={dataObj?.approvalStatus}
-                                                            />
-                                                        </td> */}
-                            {/* <td className="px-2 py-1">
-                                                            <div className="flex items-center justify-center gap-1.5 text-orange-700">
-                                                                {dataObj?.approvalStatus?.remarks || "-"}
-                                                            </div>
-                                                        </td> */}
-                            {canApprove && (
-                              <td className="px-2 py-1">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  {/* ↩️ Send Back — show when PENDING or APPROVED */}
-                                  {["PENDING"].includes(
-                                    dataObj?.approvalStatus?.status,
-                                  ) && (
-                                    <Tooltip title="Send Back for Review" arrow>
-                                      <button
-                                        onClick={() =>
-                                          handleApprovalAction(
-                                            dataObj,
-                                            "REJECT",
-                                          )
-                                        }
-                                        // disabled={dataObj?.approvalStatus?.status === "PENDING"}
-                                        className="p-1.5 rounded-md bg-blue-200 text-blue-700 hover:bg-blue-300 transition"
-                                      >
-                                        <MdKeyboardDoubleArrowLeft size={16} />
-                                      </button>
-                                    </Tooltip>
-                                  )}
-
-                                  {/* ✅ Approve — show only when PENDING */}
-                                  {dataObj?.approvalStatus?.status ===
-                                    "PENDING" && (
-                                    <Tooltip title="Approve" arrow>
-                                      <button
-                                        onClick={() =>
-                                          handleApprovalAction(
-                                            dataObj,
-                                            "APPROVE",
-                                          )
-                                        }
-                                        className="p-1.5 rounded-md bg-green-200 text-green-700 hover:bg-green-300 transition"
-                                      >
-                                        <FiCheck size={16} />
-                                      </button>
-                                    </Tooltip>
-                                  )}
-
-                                  {dataObj?.approvalStatus?.status ===
-                                    "NOT_CONFIGURED" && (
-                                    <span className="text-[10px] text-gray-400 italic">
-                                      —
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                            )}
-                            {rowActions && (
-                              <td className="px-2 py-1">
-                                <div className="flex items-center justify-center">
-                                  {/* <div className="flex items-center gap-1.5 pr-2 border-r border-gray-300">
-                                                                        {onCreateJobCard && (
-                                                                            <Tooltip title="Create Job Card" arrow>
-                                                                                <button
-                                                                                    disabled={dataObj.childRecord > 0 || isDisabled}
-                                                                                    onClick={() => {
-                                                                                        dispatch(
-                                                                                            push({
-                                                                                                name: "JOB CARD", // ⬅️ must match your tabs key exactly
-                                                                                                params: {
-                                                                                                    customerId: dataObj.customerId,
-                                                                                                    orderEntryId: dataObj.id,
-                                                                                                    orderType: dataObj.orderType,
-                                                                                                    orderQty: dataObj.orderQty,
-                                                                                                    timestamp: Date.now(),
-                                                                                                },
-                                                                                            }),
-                                                                                        );
-                                                                                    }}
-                                                                                    className={`p-1.5 rounded-md transition bg-indigo-50 text-indigo-600 hover:bg-indigo-100 ${dataObj.childRecord > 0 || isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-                                                                                >
-                                                                                    <FileText size={16} />
-                                                                                </button>
-                                                                            </Tooltip>
-                                                                        )}
-
-                                                                    </div> */}
-                                  {/* VIEW / EDIT / DELETE */}
-                                  <div className="flex items-center gap-1 pl-2">
-                                    {onView && (
-                                      <Tooltip title="View" arrow>
-                                        <button
-                                          className="text-blue-600  flex items-center   px-1  bg-blue-50 rounded"
-                                          onClick={() =>
-                                            hasPermission(
-                                              () => onView(dataObj.id),
-                                              "read",
-                                            )
-                                          }
-                                        >
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                          >
-                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                            <path
-                                              fillRule="evenodd"
-                                              d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                              clipRule="evenodd"
-                                            />
-                                          </svg>
-                                        </button>
-                                      </Tooltip>
-                                    )}
-                                    {onEdit && (
-                                      <Tooltip title="Edit" arrow>
-                                        <button
-                                          className="text-green-600 gap-1 px-1   bg-green-50 rounded"
-                                          onClick={() =>
-                                            hasPermission(
-                                              () => onEdit(dataObj.id),
-                                              "edit",
-                                            )
-                                          }
-                                        >
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                          >
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                          </svg>
-                                        </button>
-                                      </Tooltip>
-                                    )}
-                                    {onDelete && (
-                                      <Tooltip
-                                        title={
-                                          dataObj.childRecord > 0
-                                            ? "Cannot Delete. Child Record Exists"
-                                            : "Delete"
-                                        }
-                                        arrow
-                                      >
-                                        <button
-                                          className={`flex items-center gap-1 px-1 rounded transition
-       ${
-         dataObj.childRecord > 0
-           ? "bg-red-50 text-red-500 opacity-40 cursor-not-allowed"
-           : "bg-red-50 text-red-800 hover:bg-red-100"
-       }`}
-                                          onClick={() =>
-                                            hasPermission(
-                                              () => onDelete(dataObj.id),
-                                              "delete",
-                                            )
-                                          }
-                                          disabled={dataObj.childRecord > 0}
-                                        >
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                          >
-                                            <path
-                                              fillRule="evenodd"
-                                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                              clipRule="evenodd"
-                                            />
-                                          </svg>
-                                          {/* <span className="text-xs">delete</span> */}
-                                        </button>
-                                      </Tooltip>
-                                    )}
-                                  </div>
-                                </div>
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      },
-                    )}
-                  </tbody>
+      <div className="flex flex-col w-full h-full overflow-hidden bg-[#F1F1F0] rounded-lg shadow-sm">
+        <div className="flex-1 overflow-auto">
+          <table className="border-collapse table-fixed text-left">
+            <thead className="bg-gray-200 text-gray-800 sticky top-0 z-10">
+              <tr className="border-b border-gray-300">
+                <th className="px-1 py-1.5 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                  <div>S No</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
+                  <div>Order No</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                  <div>Order Date</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <div>Order Type</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <div>Sales Type</div>
+                </th>
+                <th className="w-80 min-w-[320px] px-3 font-medium text-[13px] text-gray-900 text-left">
+                  <div>Customer</div>
+                </th>
+                {canApprove && (
+                  <th className="w-36 min-w-[140px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                    <div>Approval Actions</div>
+                  </th>
                 )}
-              </table>
-            </div>
-            <div className="h-[10vh]">
-              <Pagination />
-            </div>
-          </div>
-        </>
+                {rowActions && (
+                  <th className="w-24 min-w-[96px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                    <div>Actions</div>
+                  </th>
+                )}
+              </tr>
+              <tr className="border-b border-gray-200">
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                  <div className="h-3"></div>
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={serachDocNo}
+                    onChange={(e) => setSerachDocNo(e.target.value)}
+                  />
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchDocDate}
+                    onChange={(e) => setSearchDocDate(e.target.value)}
+                  />
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchOrderType}
+                    onChange={(e) => setSearchOrderType(e.target.value)}
+                  />
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <select
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md text-[11px] bg-white cursor-pointer"
+                    value={searchOrderGridType}
+                    onChange={(e) => setSearchOrderGridType(e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="FABRIC SALES">FABRIC SALES</option>
+                    <option value="YARN SALES">YARN SALES</option>
+                  </select>
+                </th>
+                <th className="w-80 min-w-[320px] px-1 font-medium text-[13px] text-gray-900 text-left">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchCustomer}
+                    onChange={(e) => setSearchCustomer(e.target.value)}
+                  />
+                </th>
+                {canApprove && <th className="w-36 min-w-[140px] px-3"></th>}
+                {rowActions && <th className="w-24 min-w-[96px] px-3"></th>}
+              </tr>
+            </thead>
+            <tbody className="border-2">
+              {isLoadingIndicator ? (
+                <tr>
+                  <td colSpan={totalColSpan} className="px-6 py-10 text-center">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : allData?.data?.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={totalColSpan}
+                    className="px-6 py-10 text-center text-gray-500 italic"
+                  >
+                    No records found
+                  </td>
+                </tr>
+              ) : (
+                allData?.data?.map((dataObj, index) => {
+                  return (
+                    <tr
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (onClick) onClick(dataObj.id);
+                          else if (onView) onView(dataObj.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      key={dataObj.id}
+                      className={`hover:bg-gray-50 transition-colors border-b border-gray-200 text-[12px] cursor-pointer ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                      }`}
+                      onClick={() => {
+                        if (onClick) onClick(dataObj.id);
+                        else if (onView) onView(dataObj.id);
+                      }}
+                    >
+                      <td className="w-14 min-w-[56px] text-center py-1.5">
+                        {(currentPageNumber - 1) * parseInt(dataPerPage) +
+                          index +
+                          1}
+                      </td>
+
+                      <td className="w-44 min-w-[176px] py-1.5 text-center">
+                        {dataObj.docId}
+                      </td>
+
+                      <td className="w-32 min-w-[128px] py-1.5 text-center">
+                        {getDateFromDateTimeToDisplay(dataObj.docDate)}
+                      </td>
+                      <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
+                        {dataObj.orderType}
+                      </td>
+                      <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
+                        {dataObj.orderGridType === "FABRIC SALES"
+                          ? "FABRIC SALES"
+                          : dataObj.orderGridType === "YARN SALES"
+                            ? "YARN SALES"
+                            : dataObj.orderGridType || "—"}
+                      </td>
+
+                      <td className="w-80 min-w-[320px] py-1.5 text-left px-3">
+                        {dataObj?.customer?.name}
+                      </td>
+
+                      {canApprove && (
+                        <td
+                          className="w-36 min-w-[140px] px-2 py-1 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* ↩️ Send Back — show when PENDING */}
+                            {["PENDING"].includes(
+                              dataObj?.approvalStatus?.status,
+                            ) && (
+                              <Tooltip title="Send Back for Review" arrow>
+                                <button
+                                  onClick={() =>
+                                    handleApprovalAction(dataObj, "REJECT")
+                                  }
+                                  className="p-1.5 rounded-md bg-blue-200 text-blue-700 hover:bg-blue-300 transition"
+                                >
+                                  <MdKeyboardDoubleArrowLeft size={16} />
+                                </button>
+                              </Tooltip>
+                            )}
+
+                            {/* ✅ Approve — show only when PENDING */}
+                            {dataObj?.approvalStatus?.status === "PENDING" && (
+                              <Tooltip title="Approve" arrow>
+                                <button
+                                  onClick={() =>
+                                    handleApprovalAction(dataObj, "APPROVE")
+                                  }
+                                  className="p-1.5 rounded-md bg-green-200 text-green-700 hover:bg-green-300 transition"
+                                >
+                                  <FiCheck size={16} />
+                                </button>
+                              </Tooltip>
+                            )}
+
+                            {dataObj?.approvalStatus?.status ===
+                              "NOT_CONFIGURED" && (
+                              <span className="text-[10px] text-gray-400 italic">
+                                —
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      )}
+
+                      {rowActions && (
+                        <td
+                          className="w-24 min-w-[96px] px-2 py-1 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center">
+                            <div className="flex items-center gap-1 pl-2">
+                              {onView && (
+                                <Tooltip title="View" arrow>
+                                  <button
+                                    className="text-blue-600 flex items-center px-1 bg-blue-50 rounded"
+                                    onClick={() =>
+                                      hasPermission(
+                                        () => onView(dataObj.id),
+                                        "read",
+                                      )
+                                    }
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              )}
+                              {onEdit && (
+                                <Tooltip title="Edit" arrow>
+                                  <button
+                                    className="text-green-600 gap-1 px-1 bg-green-50 rounded"
+                                    onClick={() =>
+                                      hasPermission(
+                                        () => onEdit(dataObj.id),
+                                        "edit",
+                                      )
+                                    }
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              )}
+                              {onDelete && (
+                                <Tooltip
+                                  title={
+                                    dataObj.childRecord > 0
+                                      ? "Cannot Delete. Child Record Exists"
+                                      : "Delete"
+                                  }
+                                  arrow
+                                >
+                                  <button
+                                    className={`flex items-center gap-1 px-1 rounded transition ${
+                                      dataObj.childRecord > 0
+                                        ? "bg-red-50 text-red-500 opacity-40 cursor-not-allowed"
+                                        : "bg-red-50 text-red-800 hover:bg-red-100"
+                                    }`}
+                                    onClick={() =>
+                                      hasPermission(
+                                        () => onDelete(dataObj.id),
+                                        "delete",
+                                      )
+                                    }
+                                    disabled={dataObj.childRecord > 0}
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex-none">
+          <Pagination />
+        </div>
       </div>
     </>
   );

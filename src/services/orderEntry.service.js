@@ -131,6 +131,8 @@ async function get(req) {
     serachDocNo,
     searchDocDate,
     searchOrderType,
+    searchOrderGridType,
+    orderGridType,
     finYearId,
     searchCustomer,
     isTakeOnlyFinshedJobCards,
@@ -150,6 +152,8 @@ async function get(req) {
   );
   let data;
   let totalCount;
+  const gridTypeFilter = searchOrderGridType || orderGridType;
+
   data = await prisma.orderEntry.findMany({
     where: {
       branchId: branchId ? parseInt(branchId) : undefined,
@@ -170,15 +174,30 @@ async function get(req) {
         : undefined,
       docId: Boolean(serachDocNo)
         ? {
-            contains: serachDocNo,
+            contains: serachDocNo.trim(),
+            mode: "insensitive",
           }
         : undefined,
       orderType: Boolean(searchOrderType)
-        ? { contains: searchOrderType }
+        ? {
+            contains: searchOrderType.trim(),
+            mode: "insensitive",
+          }
         : undefined,
-      customer: {
-        name: searchCustomer ? { contains: searchCustomer } : undefined,
-      },
+      orderGridType: Boolean(gridTypeFilter)
+        ? {
+            contains: gridTypeFilter.trim(),
+            mode: "insensitive",
+          }
+        : undefined,
+      customer: Boolean(searchCustomer)
+        ? {
+            name: {
+              contains: searchCustomer.trim(),
+              mode: "insensitive",
+            },
+          }
+        : undefined,
     },
     include: {
       customer: {
@@ -198,9 +217,18 @@ async function get(req) {
     },
   });
   if (searchDocDate) {
-    data = data?.filter((item) =>
-      String(getDateFromDateTime(item.createdAt)).includes(searchDocDate),
-    );
+    const trimmedDate = searchDocDate.trim().toLowerCase();
+    data = data?.filter((item) => {
+      const docDateStr = item.docDate
+        ? String(getDateFromDateTime(item.docDate)).toLowerCase()
+        : "";
+      const createdDateStr = item.createdAt
+        ? String(getDateFromDateTime(item.createdAt)).toLowerCase()
+        : "";
+      return (
+        docDateStr.includes(trimmedDate) || createdDateStr.includes(trimmedDate)
+      );
+    });
   }
   totalCount = data.length;
 
@@ -283,13 +311,6 @@ async function get(req) {
     };
   });
 
-  if (pagination) {
-    resolvedData = resolvedData.slice(
-      (pageNumber - 1) * parseInt(dataPerPage),
-      pageNumber * parseInt(dataPerPage),
-    );
-  }
-
   if (isTakeOnlyFinshedJobCards) {
     resolvedData = resolvedData.filter((order) => {
       if (!order.JobCard) return false;
@@ -301,6 +322,13 @@ async function get(req) {
         return lastProcess.status === "COMPLETED";
       });
     });
+    totalCount = resolvedData.length;
+  }
+
+  if (pagination === "true" || pagination === true) {
+    const page = parseInt(pageNumber, 10) || 1;
+    const perPage = parseInt(dataPerPage, 10) || 15;
+    resolvedData = resolvedData.slice((page - 1) * perPage, page * perPage);
   }
 
   return {
@@ -347,7 +375,20 @@ async function getOne(id) {
         },
       },
       orderYarnItems: true,
-      orderFabricItems: true,
+      orderFabricItems: {
+        include: {
+          fabricYarnDetails: {
+            include: {
+              yarnProcessDetails: {
+                include: {
+                  yarnProcessColors: true,
+                },
+              },
+            },
+          },
+          fabricProcess: true,
+        },
+      },
       // _count: {
       //   select: {
       //     JobCard: true,
@@ -356,7 +397,7 @@ async function getOne(id) {
     },
   });
 
-  if (!data) return NoRecordFound("Purchase Inward");
+  if (!data) return NoRecordFound("Order Entry");
   const { module, hasApproval } = await getModuleApprovalSetup(
     REFERENCE_PAGE,
     data.branchId,
@@ -417,6 +458,92 @@ async function getOne(id) {
     },
   };
 }
+
+const safeJsonParse = (val, fallback = []) => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const mapFabricYarnDetails = (rawYarns) => {
+  const yarns = safeJsonParse(rawYarns);
+  return yarns
+    .filter((yd) => yd && (yd.yarnId || yd.yarnId === 0))
+    .map((yd) => {
+      const processes = safeJsonParse(yd.yarnProcessDetails);
+      const safeYarnProcessDetails = processes
+        .filter((yp) => yp && (yp.processId || yp.processId === 0))
+        .map((yp) => {
+          const colors = safeJsonParse(yp.yarnProcessColors);
+          const safeYarnProcessColors = colors
+            .filter((yc) => yc && (yc.colorId || yc.colorId === 0))
+            .map((yc) => ({
+              rowId: yc.rowId ? String(yc.rowId) : null,
+              colorId: yc.colorId ? parseInt(yc.colorId) : null,
+              yarnProPercentage:
+                yc.yarnProPercentage != null && yc.yarnProPercentage !== ""
+                  ? parseFloat(yc.yarnProPercentage)
+                  : null,
+            }));
+
+          return {
+            rowId: yp.rowId ? String(yp.rowId) : null,
+            processId: yp.processId ? parseInt(yp.processId) : null,
+            colorId: yp.colorId ? parseInt(yp.colorId) : null,
+            lossPercentage:
+              yp.lossPercentage != null && yp.lossPercentage !== ""
+                ? parseFloat(yp.lossPercentage)
+                : null,
+            dyeing: yp.dyeing || "No",
+            yarnProcessColors:
+              safeYarnProcessColors.length > 0
+                ? {
+                    create: safeYarnProcessColors,
+                  }
+                : undefined,
+          };
+        });
+
+      return {
+        rowId: yd.rowId ? String(yd.rowId) : null,
+        yarnId: yd.yarnId ? parseInt(yd.yarnId) : null,
+        colorId: yd.colorId ? parseInt(yd.colorId) : null,
+        percentage:
+          yd.percentage != null && yd.percentage !== ""
+            ? parseFloat(yd.percentage)
+            : null,
+        yarnQty:
+          yd.yarnQty != null && yd.yarnQty !== ""
+            ? parseFloat(yd.yarnQty)
+            : null,
+        process: yd.process || "No",
+        yarnProcessDetails:
+          safeYarnProcessDetails.length > 0
+            ? {
+                create: safeYarnProcessDetails,
+              }
+            : undefined,
+      };
+    });
+};
+
+const mapFabricProcess = (rawProcesses) => {
+  const processes = safeJsonParse(rawProcesses);
+  return processes
+    .filter((fp) => fp && (fp.processId || fp.processId === 0))
+    .map((fp) => ({
+      rowId: fp.rowId ? String(fp.rowId) : null,
+      processId: fp.processId ? parseInt(fp.processId) : null,
+      description: fp.description || null,
+    }));
+};
 
 async function create(body) {
   const {
@@ -480,36 +607,68 @@ async function create(body) {
     typeof orderYarnItems === "string"
       ? JSON.parse(orderYarnItems)
       : orderYarnItems;
+
   const safeFabricItems =
     parsedFabricItems?.length > 0
-      ? parsedFabricItems.map((item) => ({
-          fabricId: item.fabricId ? parseInt(item.fabricId) : null,
-          hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-          colorId: item.colorId ? parseInt(item.colorId) : null,
-          designId: item.designId ? parseInt(item.designId) : null,
-          gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
-          loopLengthId: item.loopLengthId ? parseInt(item.loopLengthId) : null,
-          gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-          kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
-          fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
-          uomId: item.uomId ? parseInt(item.uomId) : null,
-          width: item.width || null,
-          numberOfRolls: item.numberOfRolls
-            ? parseFloat(item.numberOfRolls)
-            : null,
-          weightPerRoll: item.weightPerRoll
-            ? parseFloat(item.weightPerRoll)
-            : null,
-          totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
-          pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
-          totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
-          qty: parseFloat(item.qty || 0),
-          price: parseFloat(item.price || 0),
-          amount: item.amount ? parseFloat(item.amount) : null,
-          taxPercent: parseFloat(item.taxPercent || 0),
-          discountType: item.discountType,
-          discountValue: parseFloat(item.discountValue || 0),
-        }))
+      ? parsedFabricItems
+          .filter((item) => item?.fabricId)
+          .map((item) => {
+            const safeFabricYarnDetails = mapFabricYarnDetails(
+              item.fabricYarnDetails,
+            );
+            const safeFabricProcess = mapFabricProcess(item.fabricProcess);
+
+            return {
+              fabricId: item.fabricId ? parseInt(item.fabricId) : null,
+              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+              colorId: item.colorId ? parseInt(item.colorId) : null,
+              designId: item.designId ? parseInt(item.designId) : null,
+              gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+              loopLengthId: item.loopLengthId
+                ? parseInt(item.loopLengthId)
+                : null,
+              gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+              kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+              fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+              uomId: item.uomId ? parseInt(item.uomId) : null,
+              width: item.width || null,
+              numberOfRolls: item.numberOfRolls
+                ? parseFloat(item.numberOfRolls)
+                : null,
+              weightPerRoll: item.weightPerRoll
+                ? parseFloat(item.weightPerRoll)
+                : null,
+              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+              pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
+              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
+              qty: parseFloat(item.qty || 0),
+              wastePercentage:
+                item.wastePercentage != null && item.wastePercentage !== ""
+                  ? parseFloat(item.wastePercentage)
+                  : null,
+              requiredQty:
+                item.requiredQty != null && item.requiredQty !== ""
+                  ? parseFloat(item.requiredQty)
+                  : null,
+              price: parseFloat(item.price || 0),
+              amount: item.amount ? parseFloat(item.amount) : null,
+              taxPercent: parseFloat(item.taxPercent || 0),
+              discountType: item.discountType || null,
+              discountValue: parseFloat(item.discountValue || 0),
+              fabricYarnDetails:
+                safeFabricYarnDetails.length > 0
+                  ? {
+                      create: safeFabricYarnDetails,
+                    }
+                  : undefined,
+              fabricProcess:
+                safeFabricProcess.length > 0
+                  ? {
+                      create: safeFabricProcess,
+                    }
+                  : undefined,
+            };
+          })
       : [];
 
   const safeYarnItems =
@@ -557,7 +716,7 @@ async function create(body) {
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-        customerPoNo: customerPoNo || null,
+        customerPoNo: customerPoNo || "",
         termsAndCondition,
         termsId: termsId ? parseInt(termsId) : null,
         remarks,
@@ -669,11 +828,12 @@ async function update(id, body, files) {
     ?.filter((i) => i.id)
     .map((i) => parseInt(i.id));
 
-  const parsedFabricItems =
+  const validFabricItems = (
     typeof orderFabricItems === "string"
-      ? JSON.parse(orderFabricItems || "[]")
-      : orderFabricItems || [];
-  const incomingFabricItemIds = parsedFabricItems
+      ? safeJsonParse(orderFabricItems)
+      : orderFabricItems || []
+  ).filter((i) => i && i.fabricId);
+  const incomingFabricItemIds = validFabricItems
     ?.filter((i) => i.id)
     .map((i) => parseInt(i.id));
 
@@ -778,7 +938,7 @@ async function update(id, body, files) {
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         carriageCharge: carriageCharge ? parseFloat(carriageCharge) : null,
         carriageTax: carriageTax ? parseFloat(carriageTax) : null,
-        customerPoNo: customerPoNo || null,
+        customerPoNo: customerPoNo || "",
         termsAndCondition,
         termsId: termsId ? parseInt(termsId) : null,
         remarks,
@@ -788,11 +948,81 @@ async function update(id, body, files) {
           deleteMany: incomingFabricItemIds.length
             ? { id: { notIn: incomingFabricItemIds } }
             : {},
-          update: parsedFabricItems
+          update: validFabricItems
             .filter((item) => item.id)
-            .map((item) => ({
-              where: { id: parseInt(item.id) },
-              data: {
+            .map((item) => {
+              const safeFabricYarnDetails = mapFabricYarnDetails(
+                item.fabricYarnDetails,
+              );
+              const safeFabricProcess = mapFabricProcess(item.fabricProcess);
+
+              return {
+                where: { id: parseInt(item.id) },
+                data: {
+                  fabricId: item.fabricId ? parseInt(item.fabricId) : null,
+                  hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+                  colorId: item.colorId ? parseInt(item.colorId) : null,
+                  designId: item.designId ? parseInt(item.designId) : null,
+                  gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
+                  loopLengthId: item.loopLengthId
+                    ? parseInt(item.loopLengthId)
+                    : null,
+                  gsmId: item.gsmId ? parseInt(item.gsmId) : null,
+                  kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
+                  fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
+                  uomId: item.uomId ? parseInt(item.uomId) : null,
+                  width: item.width || null,
+                  numberOfRolls: item.numberOfRolls
+                    ? parseFloat(item.numberOfRolls)
+                    : null,
+                  weightPerRoll: item.weightPerRoll
+                    ? parseFloat(item.weightPerRoll)
+                    : null,
+                  totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
+                  pricePerKg: item.pricePerKg
+                    ? parseFloat(item.pricePerKg)
+                    : null,
+                  totalPrice: item.totalPrice
+                    ? parseFloat(item.totalPrice)
+                    : null,
+                  qty: parseFloat(item.qty || 0),
+                  wastePercentage:
+                    item.wastePercentage != null && item.wastePercentage !== ""
+                      ? parseFloat(item.wastePercentage)
+                      : null,
+                  requiredQty:
+                    item.requiredQty != null && item.requiredQty !== ""
+                      ? parseFloat(item.requiredQty)
+                      : null,
+                  price: parseFloat(item.price || 0),
+                  amount: item.amount ? parseFloat(item.amount) : null,
+                  taxPercent: parseFloat(item.taxPercent || 0),
+                  discountType: item.discountType || null,
+                  discountValue: parseFloat(item.discountValue || 0),
+                  fabricYarnDetails: {
+                    deleteMany: {},
+                    ...(safeFabricYarnDetails.length > 0 && {
+                      create: safeFabricYarnDetails,
+                    }),
+                  },
+                  fabricProcess: {
+                    deleteMany: {},
+                    ...(safeFabricProcess.length > 0 && {
+                      create: safeFabricProcess,
+                    }),
+                  },
+                },
+              };
+            }),
+          create: validFabricItems
+            .filter((item) => !item.id)
+            .map((item) => {
+              const safeFabricYarnDetails = mapFabricYarnDetails(
+                item.fabricYarnDetails,
+              );
+              const safeFabricProcess = mapFabricProcess(item.fabricProcess);
+
+              return {
                 fabricId: item.fabricId ? parseInt(item.fabricId) : null,
                 hsnId: item.hsnId ? parseInt(item.hsnId) : null,
                 colorId: item.colorId ? parseInt(item.colorId) : null,
@@ -820,45 +1050,33 @@ async function update(id, body, files) {
                   ? parseFloat(item.totalPrice)
                   : null,
                 qty: parseFloat(item.qty || 0),
+                wastePercentage:
+                  item.wastePercentage != null && item.wastePercentage !== ""
+                    ? parseFloat(item.wastePercentage)
+                    : null,
+                requiredQty:
+                  item.requiredQty != null && item.requiredQty !== ""
+                    ? parseFloat(item.requiredQty)
+                    : null,
                 price: parseFloat(item.price || 0),
                 amount: item.amount ? parseFloat(item.amount) : null,
                 taxPercent: parseFloat(item.taxPercent || 0),
                 discountType: item.discountType || null,
                 discountValue: parseFloat(item.discountValue || 0),
-              },
-            })),
-          create: parsedFabricItems
-            .filter((item) => !item.id)
-            .map((item) => ({
-              fabricId: item.fabricId ? parseInt(item.fabricId) : null,
-              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-              colorId: item.colorId ? parseInt(item.colorId) : null,
-              designId: item.designId ? parseInt(item.designId) : null,
-              gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
-              loopLengthId: item.loopLengthId
-                ? parseInt(item.loopLengthId)
-                : null,
-              gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-              kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
-              fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
-              uomId: item.uomId ? parseInt(item.uomId) : null,
-              width: item.width || null,
-              numberOfRolls: item.numberOfRolls
-                ? parseFloat(item.numberOfRolls)
-                : null,
-              weightPerRoll: item.weightPerRoll
-                ? parseFloat(item.weightPerRoll)
-                : null,
-              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
-              pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
-              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
-              qty: parseFloat(item.qty || 0),
-              price: parseFloat(item.price || 0),
-              amount: item.amount ? parseFloat(item.amount) : null,
-              taxPercent: parseFloat(item.taxPercent || 0),
-              discountType: item.discountType || null,
-              discountValue: parseFloat(item.discountValue || 0),
-            })),
+                fabricYarnDetails:
+                  safeFabricYarnDetails.length > 0
+                    ? {
+                        create: safeFabricYarnDetails,
+                      }
+                    : undefined,
+                fabricProcess:
+                  safeFabricProcess.length > 0
+                    ? {
+                        create: safeFabricProcess,
+                      }
+                    : undefined,
+              };
+            }),
         },
 
         orderYarnItems: {

@@ -365,9 +365,9 @@ const getColumns = (isExport) => [
   { label: "HSN", flex: 1.1, align: "center" },
   { label: "K Dia", flex: 1.0, align: "center" },
   { label: "F Dia", flex: 1.0, align: "center" },
-  { label: "Rolls", flex: 1.0, align: "center" },
-  { label: "Weight", flex: 1.2, align: "center" },
-  { label: "Rate per KG", flex: 1.4, align: "center" },
+  { label: "Uom", flex: 1.0, align: "center" },
+  { label: "Qty", flex: 1.2, align: "center" },
+  { label: "Price", flex: 1.4, align: "center" },
   { label: "Gross Amount", flex: 1.7, align: "center" },
 ];
 
@@ -1082,11 +1082,11 @@ const ProformaInvoiceFabricPrintFormat = ({
                             fontFamily: "Helvetica-Bold",
                             fontSize: 10.5,
                             color: "#000",
-                            textAlign: "right",
+                            textAlign: "left",
                             width: "100%",
                           }}
                         >
-                          {row?.numberOfRolls || ""}
+                          {findFromList(row?.uomId, uomList, "name")}
                         </Text>
                       </View>
 
@@ -1369,20 +1369,20 @@ const ProformaInvoiceFabricPrintFormat = ({
                             </Text>
                           </View>
                         ))}
-                      {!isExport && taxDetails?.roundOff !== 0 && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>Round Off</Text>
-                          <Text style={styles.summaryColon}>:</Text>
-                          <Text style={styles.summaryValue}>
-                            {taxDetails?.roundOff > 0 ? "+" : ""}
-                            {currencySymbol}{" "}
-                            {formatCurrencyAmount(
-                              Math.abs(taxDetails?.roundOff || 0),
-                              currencyCode || currencySymbol,
-                            )}
-                          </Text>
-                        </View>
-                      )}
+                      {!isExport &&
+                        parseFloat(taxDetails?.roundOff || 0) !== 0 && (
+                          <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Round Off</Text>
+                            <Text style={styles.summaryColon}>:</Text>
+                            <Text style={styles.summaryValue}>
+                              {currencySymbol}{" "}
+                              {formatCurrencyAmount(
+                                taxDetails?.roundOff || 0,
+                                currencyCode || currencySymbol,
+                              )}
+                            </Text>
+                          </View>
+                        )}
 
                       {!isExport && (
                         <View style={styles.summaryRow}>

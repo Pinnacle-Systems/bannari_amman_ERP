@@ -3,7 +3,7 @@ const TransactionGrid = ({
   className = "",
   containerClassName = "",
   tableClassName = "w-full border-collapse table-fixed",
-  headClassName = "bg-slate-50 text-slate-800 sticky top-0 z-10 border-b border-slate-200/80",
+  headClassName = "bg-slate-50 text-slate-800 sticky top-0 z-20 border-b border-slate-200/80",
   bodyClassName = "",
   footer,
   columns = [],
@@ -41,11 +41,19 @@ const TransactionGrid = ({
         <table className={tableClassName}>
           <thead className={headClassName}>
             <tr>
-              {columns.map((column) => (
-                <th key={column.key} className={column.className}>
-                  {column.label}
-                </th>
-              ))}
+              {columns.map((column) => {
+                const isSticky = column.className?.includes("sticky");
+                const hasTop = column.className?.includes("top-");
+                const thClassName =
+                  isSticky && !hasTop
+                    ? `${column.className} top-0`
+                    : column.className;
+                return (
+                  <th key={column.key} className={thClassName}>
+                    {column.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
@@ -69,7 +77,7 @@ const TransactionGrid = ({
           </tbody>
 
           {footer ? (
-            <tfoot className="sticky bottom-0 z-10 bg-slate-50 border-t border-slate-200/80">{footer}</tfoot>
+            <tfoot className="sticky bottom-0 z-20 bg-slate-50 border-t border-slate-200/80">{footer}</tfoot>
           ) : null}
         </table>
       </div>

@@ -11,6 +11,7 @@ import {
   useDeleteLoopLengthMasterMutation,
   useGetLoopLengthMasterByIdQuery,
   useGetLoopLengthMasterQuery,
+  useSearchLoopLengthMasterQuery,
   useUpdateLoopLengthMasterMutation,
 } from "../../../redux/services/LooplengthMasterService";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
@@ -28,6 +29,22 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchLoopName, setSearchLoopName] = useState("");
+  const [debouncedLoopName, setDebouncedLoopName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedLoopName(searchLoopName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchLoopName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedLoopName, statusFilter]);
+
   const childRecord = useRef(0);
 
   const params = {
@@ -35,11 +52,20 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
       sessionStorage.getItem("sessionId") + "userCompanyId",
     ),
   };
+
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedLoopName ? { name: debouncedLoopName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetLoopLengthMasterQuery({ params, searchParams: searchValue });
+  } = useSearchLoopLengthMasterQuery(queryParams);
   const {
     data: singleData,
     isFetching: isSingleFetching,
@@ -243,21 +269,34 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Loop Length Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchLoopName,
+      onFilterChange: setSearchLoopName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className:
+        "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -365,11 +404,15 @@ export default function LoopLengthMaster({ onSuccess, defaultName = "" } = {}) {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable
           columns={columns}
-          data={allData?.data}
+          data={allData?.data || []}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 

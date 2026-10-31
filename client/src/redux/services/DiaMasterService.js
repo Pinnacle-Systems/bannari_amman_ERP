@@ -33,6 +33,14 @@ const DiaMasterApi = createApi({
       },
       providesTags: ["DiaMaster"],
     }),
+    searchDiaMaster: builder.query({
+      query: (params) => ({
+        url: `${DIA_MASTER_API}/search`,
+        method: "GET",
+        params,
+      }),
+      providesTags: ["DiaMaster"],
+    }),
     getDiaMasterById: builder.query({
       query: (id) => {
         return {
@@ -76,6 +84,7 @@ const DiaMasterApi = createApi({
 
 export const {
   useGetDiaMasterQuery,
+  useSearchDiaMasterQuery,
   useGetDiaMasterByIdQuery,
   useLazyGetDiaMasterByIdQuery,
   useAddDiaMasterMutation,

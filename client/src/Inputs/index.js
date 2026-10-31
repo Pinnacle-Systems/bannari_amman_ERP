@@ -10,12 +10,14 @@ import { MultiSelect } from "react-multi-select-component";
 import Select, { components } from "react-select";
 import { findFromList } from "../Utils/helper";
 import {
+  FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
   FaEdit,
   FaInfoCircle,
   FaPlus,
   FaSearch,
+  FaTimes,
   FaTrash,
 } from "react-icons/fa";
 import secureLocalStorage from "react-secure-storage";
@@ -1633,7 +1635,7 @@ export const DropdownInputNew = forwardRef(
 export const ReusableTable = ({
   columns,
   data,
-  itemsPerPage = 10,
+  itemsPerPage = 15,
   onView,
   onEdit,
   onDelete,
@@ -1641,20 +1643,55 @@ export const ReusableTable = ({
   rowActions = true,
   width,
   childRecordLabel = "", // New prop with default value
+  page: controlledPage,
+  onPageChange,
+  totalItems,
+  serverPagination = false,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const isServerPagination = Boolean(
+    serverPagination || onPageChange || totalItems !== undefined
+  );
+  const [internalPage, setInternalPage] = useState(1);
+  const currentPage =
+    isServerPagination && controlledPage !== undefined
+      ? controlledPage
+      : internalPage;
+
+  const pageSize = itemsPerPage === 10 ? 15 : itemsPerPage;
+  const totalCount =
+    isServerPagination && totalItems !== undefined
+      ? totalItems
+      : data?.length || 0;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const [hoveredDeleteId, setHoveredDeleteId] = useState(null);
 
-  const totalPages = Math?.ceil(data?.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = data?.slice(indexOfFirstItem, indexOfLastItem);
+  const indexOfFirstItem = (currentPage - 1) * pageSize;
+  const indexOfLastItem = isServerPagination
+    ? Math.min(indexOfFirstItem + (data?.length || 0), totalCount)
+    : Math.min(currentPage * pageSize, totalCount);
+  const currentItems = isServerPagination
+    ? data || []
+    : data?.slice(indexOfFirstItem, indexOfFirstItem + pageSize);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      const targetPage = Math.max(1, totalPages);
+      if (onPageChange) {
+        onPageChange(targetPage);
+      } else {
+        setInternalPage(targetPage);
+      }
+    }
+  }, [totalPages, currentPage, onPageChange]);
 
   const { hasPermission } = UserPermissions();
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      if (onPageChange) {
+        onPageChange(newPage);
+      }
+      setInternalPage(newPage);
     }
   };
 
@@ -1662,8 +1699,8 @@ export const ReusableTable = ({
     return (
       <div className=" w-full flex flex-col sm:flex-row justify-between items-center p-2 bg-white border-t border-gray-200">
         <div className="text-sm text-gray-600 mb-2 sm:mb-0">
-          Showing {indexOfFirstItem + 1} to{" "}
-          {Math.min(indexOfLastItem, data?.length)} of {data?.length} entries
+          Showing {totalCount ? indexOfFirstItem + 1 : 0} to{" "}
+          {indexOfLastItem} of {totalCount} entries
         </div>
         <div className="flex gap-1">
           <button
@@ -1738,62 +1775,209 @@ export const ReusableTable = ({
     );
   };
 
-  return (
-    <>
-      <div className="bg-[#F1F1F0] shadow-sm h-[69vh]">
-        <div className="h-[100vh] rounded-lg bg-[#F1F1F0] shadow-sm">
-          <div className="h-[68vh]">
-            <table className="">
-              <thead className="bg-gray-200 text-gray-800">
-                <tr>
-                  {columns?.map((column, index) => (
-                    <th
-                      key={index}
-                      className={` font-medium text-gray-900 py-2 text-[12px] px-8 text-center uppercase  ${
-                        column.header !== "" ? "border-r border-white/50" : ""
-                      } `}
-                    >
-                      {column.header}
-                    </th>
-                  ))}
-                  {rowActions && (
-                    <th className="px-4 py-2 text-center text-[12px] font-medium justify-end">
-                      ACTIONS
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {currentItems?.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={columns?.length + (rowActions ? 1 : 0)}
-                      className="px-4 py-4 text-center text-gray-500"
-                    >
-                      {emptyStateMessage}
-                    </td>
-                  </tr>
-                ) : (
-                  currentItems?.map((item, index) => {
-                    const hasChildRecords = item?.childRecord > 0;
+  const actionColStyle = { width: "96px", minWidth: "96px" };
 
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`hover:bg-gray-50 transition-colors border-b   border-gray-200 text-[12px] ${
-                          index % 2 === 0 ? "bg-white" : "bg-gray-100"
-                        }`}
-                      >
-                        {columns?.map((column, colIndex) => (
-                          <td
-                            key={colIndex}
-                            className={` ${column.className ? column.className : ""} ${column.header !== "" ? "border-r border-white/50" : ""} h-7 px-1.5`}
+  const getColStyles = (column) => {
+    if (!column) return {};
+    const styles = {};
+    if (column.width) {
+      styles.width =
+        typeof column.width === "number" ? `${column.width}px` : column.width;
+      styles.minWidth = column.minWidth
+        ? typeof column.minWidth === "number"
+          ? `${column.minWidth}px`
+          : column.minWidth
+        : styles.width;
+    }
+    if (column.minWidth) {
+      styles.minWidth =
+        typeof column.minWidth === "number"
+          ? `${column.minWidth}px`
+          : column.minWidth;
+    }
+    if (column.className) {
+      const minWBracketMatch = column.className.match(/\bmin-w-\[([^\]]+)\]/);
+      if (minWBracketMatch) {
+        styles.minWidth = minWBracketMatch[1];
+      }
+      const wBracketMatch = column.className.match(/\bw-\[([^\]]+)\]/);
+      if (wBracketMatch) {
+        styles.width = wBracketMatch[1];
+        if (!styles.minWidth) styles.minWidth = wBracketMatch[1];
+      }
+      const wStdMatch = column.className.match(/\bw-(\d+)\b/);
+      if (wStdMatch) {
+        const val = `${parseInt(wStdMatch[1], 10) * 0.25}rem`;
+        if (!styles.width) styles.width = val;
+        if (!styles.minWidth) styles.minWidth = val;
+      }
+    }
+    return styles;
+  };
+
+  return (
+    <div className="flex flex-col justify-between h-[calc(100vh-125px)] min-h-[350px] bg-[#F1F1F0] overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto [scrollbar-color:#CBD5E1_#F1F5F9] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded">
+        <table className="" style={width ? { width } : undefined}>
+          <colgroup>
+            {columns?.map((column, index) => {
+              const colStyle = getColStyles(column);
+              return (
+                <col
+                  key={index}
+                  style={colStyle}
+                  className={column.className ? column.className : ""}
+                />
+              );
+            })}
+            {rowActions && (
+              <col style={actionColStyle} className="w-24 min-w-[96px]" />
+            )}
+          </colgroup>
+          <thead className="bg-gray-200 text-gray-800 sticky top-0 z-10 shadow-xs">
+            <tr>
+              {columns?.map((column, index) => {
+                const colStyle = getColStyles(column);
+                return (
+                  <th
+                    key={index}
+                    style={colStyle}
+                    className={`sticky top-0 bg-gray-200 z-10 font-medium text-gray-900 py-2 text-[12px] ${
+                      column.filterType || column.headerFilter ? "px-3" : "px-8"
+                    } ${
+                      column.className?.includes("text-left")
+                        ? "text-left"
+                        : column.className?.includes("text-right")
+                        ? "text-right"
+                        : "text-center"
+                    } uppercase ${
+                      column.header !== "" ? "border-r border-white/50" : ""
+                    } ${column.className ? column.className : ""}`}
+                  >
+                    {column.filterType ? (
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <span className="font-semibold text-gray-900 text-[12px] uppercase whitespace-nowrap">
+                          {column.header}
+                        </span>
+                        {column.filterType === "search" && (
+                          <div
+                            className="relative flex items-center"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {column.accessor(item, index)}
-                          </td>
-                        ))}
-                        {rowActions && (
-                          <td className=" w-[30px] border-gray-200 gap-1 px-2   h-8 justify-end">
+                            <FaSearch className="text-gray-400 absolute left-2 pointer-events-none text-[10px]" />
+                            <input
+                              type="text"
+                              value={column.filterValue || ""}
+                              onChange={(e) =>
+                                column.onFilterChange?.(e.target.value)
+                              }
+                              placeholder={column.filterPlaceholder || "Search..."}
+                              className={`${
+                                column.filterWidth
+                                  ? column.filterWidth
+                                  : "w-24 sm:w-28"
+                              } pl-5 pr-5 py-0.5 text-xs font-normal normal-case bg-white border border-gray-300 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 shadow-xs`}
+                            />
+                            {column.filterValue && (
+                              <button
+                                type="button"
+                                onClick={() => column.onFilterChange?.("")}
+                                className="absolute right-1 text-gray-400 hover:text-gray-600 p-0.5 leading-none"
+                                title="Clear"
+                              >
+                                <FaTimes className="text-[9px]" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {column.filterType === "select" && (
+                          <div
+                            className="relative flex items-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <select
+                              value={column.filterValue || "all"}
+                              onChange={(e) =>
+                                column.onFilterChange?.(e.target.value)
+                              }
+                              className="pl-2 pr-5 py-0.5 text-xs font-normal normal-case bg-white border border-gray-300 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer appearance-none shadow-xs"
+                            >
+                              {column.filterOptions?.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-1.5 flex items-center text-gray-400">
+                              <FaChevronDown className="text-[9px]" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : column.headerFilter ? (
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <span className="font-semibold text-gray-900 text-[12px] uppercase whitespace-nowrap">
+                          {column.header}
+                        </span>
+                        {column.headerFilter}
+                      </div>
+                    ) : (
+                      column.header
+                    )}
+                  </th>
+                );
+              })}
+              {rowActions && (
+                <th
+                  style={actionColStyle}
+                  className="sticky top-0 bg-gray-200 z-10 px-2 py-2 text-center text-[12px] font-medium justify-end w-24 min-w-[96px]"
+                >
+                  ACTIONS
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems?.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns?.length + (rowActions ? 1 : 0)}
+                  className="px-4 py-8 text-center text-gray-500"
+                >
+                  {emptyStateMessage}
+                </td>
+              </tr>
+            ) : (
+              currentItems?.map((item, index) => {
+                const hasChildRecords = item?.childRecord > 0;
+
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-gray-50 transition-colors border-b   border-gray-200 text-[12px] ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                    }`}
+                  >
+                    {columns?.map((column, colIndex) => {
+                      const colStyle = getColStyles(column);
+                      return (
+                        <td
+                          key={colIndex}
+                          style={colStyle}
+                          className={` ${column.className ? column.className : ""} ${column.header !== "" ? "border-r border-white/50" : ""} h-7 px-1.5`}
+                        >
+                          {column.accessor(
+                            item,
+                            (currentPage - 1) * pageSize + index,
+                          )}
+                        </td>
+                      );
+                    })}
+                    {rowActions && (
+                      <td
+                        style={actionColStyle}
+                        className="w-24 min-w-[96px] border-gray-200 gap-1 px-2 h-8 justify-end"
+                      >
                             <div className="flex">
                               {onView && (
                                 <button
@@ -1918,14 +2102,12 @@ export const ReusableTable = ({
                   })
                 )}
               </tbody>
-            </table>
-          </div>
-        </div>
+        </table>
       </div>
-      <div className="h-[10vh]">
+      <div className="flex-shrink-0">
         <Pagination />
       </div>
-    </>
+    </div>
   );
 };
 

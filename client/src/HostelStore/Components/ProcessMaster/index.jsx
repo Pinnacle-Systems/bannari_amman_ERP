@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import secureLocalStorage from "react-secure-storage";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { Check, Power } from "lucide-react";
-import { ReusableTable, TextInputNew, ToggleButton } from "../../../Inputs";
+import {
+  ReusableTable,
+  TextInputNew,
+  ToggleButton,
+  DropdownInput,
+} from "../../../Inputs";
 import Modal from "../../../UiComponents/Modal";
-import { statusDropdown } from "../../../Utils/DropdownData";
+import { statusDropdown, processData } from "../../../Utils/DropdownData";
 import { useFormKeyboardNavigation } from "../../../CustomHooks/useFormKeyboardNavigation";
 import {
   useAddProcessMasterMutation,
   useDeleteProcessMasterMutation,
   useGetProcessMasterByIdQuery,
   useGetProcessMasterQuery,
+  useSearchProcessMasterQuery,
   useLazyGetProcessMasterByIdQuery,
   useUpdateProcessMasterMutation,
 } from "../../../redux/services/ProcessMasterService";
@@ -32,22 +37,53 @@ export default function Form({
   const [readOnly, setReadOnly] = useState(false);
   const [id, setId] = useState("");
   const [name, setName] = useState("");
+  const [process, setProcess] = useState("");
   const [active, setActive] = useState(true);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
-  const [searchValue, setSearchValue] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchProcess, setSearchProcess] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [debouncedName, setDebouncedName] = useState("");
+  const [debouncedProcess, setDebouncedProcess] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedName(searchName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchName]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedProcess(searchProcess);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchProcess]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedName, debouncedProcess, statusFilter]);
+
   const childRecord = useRef(0);
 
   const { branchId, companyId } = getCommonParams();
-  const params = {
+  const queryParams = {
     branchId,
     companyId,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedName ? { name: debouncedName } : {}),
+    ...(debouncedProcess ? { process: debouncedProcess } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
   };
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetProcessMasterQuery({ params, searchParams: searchValue });
+  } = useSearchProcessMasterQuery(queryParams);
 
   const {
     data: singleData,
@@ -71,6 +107,7 @@ export default function Form({
   const syncFormWithDb = useCallback(
     (data) => {
       setName(data?.name ? data.name : "");
+      setProcess(data?.process ? data.process : "");
       setActive(id ? (data?.active ? data.active : false) : true);
       setIsOutsideJob(data?.isOutsideJob ? data?.isOutsideJob : false);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
@@ -87,6 +124,7 @@ export default function Form({
   const data = {
     id,
     name,
+    process,
     active,
     companyId,
     branchId,
@@ -212,7 +250,6 @@ export default function Form({
   const onNew = () => {
     setId("");
     setForm(true);
-    setSearchValue("");
     syncFormWithDb(undefined);
     setReadOnly(false);
   };
@@ -232,21 +269,42 @@ export default function Form({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Process Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-80",
+      className: "font-medium text-gray-900 text-left uppercase w-80 min-w-[320px]",
+      filterType: "search",
+      filterValue: searchName,
+      onFilterChange: setSearchName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
+    },
+
+    {
+      header: "Process",
+      accessor: (item) => item?.process,
+      className: "font-medium text-gray-900 text-left uppercase w-52 min-w-[208px]",
+      filterType: "search",
+      filterValue: searchProcess,
+      onFilterChange: setSearchProcess,
+      filterPlaceholder: "Search...",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -288,17 +346,29 @@ export default function Form({
                     ref={countryNameRef}
                   />
                 </div>
-                <div className="flex gap-x-10 items-center mt-5">
-                  <ToggleButton
-                    name=""
-                    options={statusDropdown}
-                    value={active}
-                    setActive={setActive}
-                    // required={true}
-                    readOnly={readOnly}
-                    ref={toggleButtonRef}
-                    onKeyDown={handlers.handleToggleKeyDown}
-                  />
+                <div className="flex gap-x-6">
+                  <div className="my-2 w-[45%]">
+                    <DropdownInput
+                      name="Process"
+                      value={process}
+                      setValue={setProcess}
+                      options={processData}
+                      readOnly={readOnly}
+                      disabled={childRecord.current > 0}
+                    />
+                  </div>
+                  <div className="flex gap-x-10 items-center">
+                    <ToggleButton
+                      name="Status"
+                      options={statusDropdown}
+                      value={active}
+                      setActive={setActive}
+                      // required={true}
+                      readOnly={readOnly}
+                      ref={toggleButtonRef}
+                      onKeyDown={handlers.handleToggleKeyDown}
+                    />
+                  </div>
                 </div>
               </fieldset>
             </div>
@@ -433,7 +503,11 @@ export default function Form({
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 
@@ -442,7 +516,7 @@ export default function Form({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[600px] h-[350px]"}
+            widthClass={"w-[600px] h-[400px]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);
@@ -468,7 +542,6 @@ export default function Form({
                         type="button"
                         onClick={() => {
                           setForm(false);
-                          setSearchValue("");
                           setId(false);
                         }}
                         className="px-3 py-1 text-red-600 hover:bg-red-600 hover:text-white border border-red-600 text-xs rounded"

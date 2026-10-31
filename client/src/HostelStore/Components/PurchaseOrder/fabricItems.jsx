@@ -75,6 +75,8 @@ const FabricItems = ({
     price: "",
     amount: "",
     taxPercent: "",
+    discountValue: "",
+    discountType: "",
     discountvalue: "",
     discounttype: "",
     quoteVersion: "",
@@ -503,8 +505,8 @@ const FabricItems = ({
       </Modal>
 
       <div
-        ref={gridWrapperRef}
         className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
+        tabIndex={-1}
         onScroll={(e) => {
           if (
             document.activeElement &&
@@ -530,14 +532,14 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="min-w-[2300px] w-full border-collapse table-fixed"
+          tableClassName="w-[2276px] min-w-[2276px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-slate-50 z-[30]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-0 bg-slate-50 z-[32]",
             },
             {
               key: "desc",
@@ -547,65 +549,75 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[321px] min-w-[321px] max-w-[321px] px-2 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-slate-50 z-[25]",
+                "w-[320px] min-w-[320px] max-w-[320px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky left-[40px] bg-slate-50 z-[31]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-[113px] min-w-[113px] max-w-[113px] px-1 py-2 text-center font-medium text-[11px] border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[359px] bg-slate-50 z-[20]",
+                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[360px] bg-slate-50 z-[30]",
             },
 
             {
               key: "color",
               label: "Color",
-              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "design",
               label: "Design",
-              className: "w-60 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-60 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gauge",
               label: "Gauge",
-              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "loop",
               label: "Loop Length",
-              className: "w-40 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gsm",
               label: "GSM",
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "kDia",
               label: "K-Dia",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "fDia",
               label: "F-Dia",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "uom",
               label: "UOM",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
 
             {
               key: "width",
               label: "Width",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "weight",
               label: "Weight",
-              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "qty",
@@ -614,7 +626,8 @@ const FabricItems = ({
                   Qty<span className="text-red-500">*</span>
                 </>
               ),
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "price",
@@ -624,46 +637,53 @@ const FabricItems = ({
                   <span className="text-red-500">*</span>
                 </>
               ),
-              className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "gross",
               label: "Gross",
-              className: "w-32 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "tax",
               label: "Tax",
-              className: "w-12 px-1 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
 
             {
               key: "actions",
               label: "Actions",
-              className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
+              className:
+                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
           ]}
           rows={visibleRows}
           footer={
             <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
+              <td className="w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-[22] bg-slate-50 border-r border-b border-gray-300" />
+              <td className="w-[320px] min-w-[320px] max-w-[320px] sticky left-[40px] z-[21] bg-slate-50 border-r border-b border-gray-300" />
+              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[360px] z-[20] bg-slate-50 border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
               <td
-                className="text-right px-2 border border-gray-300 bg-slate-50"
-                colSpan={13}
+                className="text-right px-2 border-r border-b border-gray-300 bg-slate-50"
+                colSpan={10}
               >
                 Total
               </td>
-              <td className="text-right px-1 border border-gray-300">
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {visibleRows
                   ?.reduce((sum, i) => sum + (parseFloat(i.row?.qty) || 0), 0)
                   .toFixed(3)}
               </td>
-              <td className="text-right px-1 border border-gray-300">
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {visibleRows
                   ?.reduce((sum, i) => sum + (parseFloat(i.row?.price) || 0), 0)
                   .toFixed(2)}
               </td>
-              <td className="text-right px-1 border border-gray-300 text-black">
+              <td className="w-32 text-right px-1 border-r border-b border-gray-300 text-black">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
                   visibleRows?.reduce(
@@ -674,7 +694,10 @@ const FabricItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
+              <td
+                className="border-r border-b border-gray-300 bg-slate-50"
+                colSpan={2}
+              />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
@@ -688,7 +711,7 @@ const FabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-0 bg-white group-hover:bg-gray-50 z-[10]"
+                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border-r border-b border-gray-300 sticky left-0 bg-white group-hover:bg-gray-50 z-[12]"
                 >
                   {index + 1}
                 </td>
@@ -696,7 +719,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="w-[321px] min-w-[321px] max-w-[321px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] sticky left-[39px] bg-white group-hover:bg-gray-50 z-[5]"
+                  className="w-[320px] min-w-[320px] max-w-[320px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -718,7 +741,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-[113px] min-w-[113px] max-w-[113px] grid-editable-cell border border-gray-300 shadow-[inset_-1px_0_0_#d1d5db] text-[11px] px-2 sticky left-[359px] bg-white group-hover:bg-gray-50 z-[2]"
+                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px] px-2 sticky left-[360px] bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
@@ -736,7 +759,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -756,7 +779,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-60 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.designId}
@@ -776,7 +799,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem?.gaugeId}
@@ -796,7 +819,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="w-40 grid-editable-cell border-r border-b border-gray-300 text-[11px] px-2"
                 >
                   <FxSelectWithAdd
                     value={rowItem.loopLengthId}
@@ -818,7 +841,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={3}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-28 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.gsmId}
@@ -841,7 +864,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.kDiaId}
@@ -864,7 +887,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fDiaId}
@@ -887,7 +910,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.uomId}
@@ -909,7 +932,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={4}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-24 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="text"
@@ -926,7 +949,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={5}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
                 >
                   <button
                     disabled={!rowItem.fabricId}
@@ -943,7 +966,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="number"
@@ -962,7 +985,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={7}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <div className="relative w-full">
                     <input
@@ -1030,7 +1053,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2"
+                  className="w-32 text-[11px] text-right px-1 border-r border-b border-gray-300 bg-gray-50 bg-transparent gap-x-2"
                 >
                   <span className="pr-1">
                     {isCurrencySymbol && rowItem.fabricId
@@ -1048,7 +1071,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
+                  className="w-12 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
                 >
                   <button
                     disabled={!rowItem.fabricId || isCustomerExport}
@@ -1071,7 +1094,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-12 border border-gray-300 align-top pt-1 bg-inherit"
+                  className="w-16 border-r border-b border-gray-300 align-top pt-1 bg-inherit"
                 >
                   {!readOnly && !isOrderFabricLocked && (
                     <div className="flex items-center justify-center">

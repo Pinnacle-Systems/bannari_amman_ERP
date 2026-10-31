@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import secureLocalStorage from "react-secure-storage";
 import {
   useGetEmployeeQuery,
+  useSearchEmployeeQuery,
   useGetEmployeeByIdQuery,
   useAddEmployeeMutation,
   useUpdateEmployeeMutation,
@@ -94,10 +95,50 @@ export default function Form() {
   const [rejoinReason, setRejoinReason] = useState("");
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchEmployeeName, setSearchEmployeeName] = useState("");
+  const [debouncedEmployeeName, setDebouncedEmployeeName] = useState("");
+  const [searchEmployeeId, setSearchEmployeeId] = useState("");
+  const [debouncedEmployeeId, setDebouncedEmployeeId] = useState("");
+  const [searchEmployeeCategory, setSearchEmployeeCategory] = useState("");
+  const [debouncedEmployeeCategory, setDebouncedEmployeeCategory] = useState("");
+  const [genderFilter, setGenderFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [image, setImage] = useState(null);
 
   const childRecord = useRef(0);
   const [view, setView] = useState("table");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedEmployeeName(searchEmployeeName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchEmployeeName]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedEmployeeId(searchEmployeeId);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchEmployeeId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedEmployeeCategory(searchEmployeeCategory);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchEmployeeCategory]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    debouncedEmployeeName,
+    debouncedEmployeeId,
+    debouncedEmployeeCategory,
+    genderFilter,
+    statusFilter,
+  ]);
 
   const { branchId, userId, companyId, finYearId } = getCommonParams();
 
@@ -107,6 +148,17 @@ export default function Form() {
     ),
   };
 
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedEmployeeName ? { name: debouncedEmployeeName } : {}),
+    ...(debouncedEmployeeId ? { employeeId: debouncedEmployeeId } : {}),
+    ...(debouncedEmployeeCategory ? { employeeCategory: debouncedEmployeeCategory } : {}),
+    ...(genderFilter !== "all" ? { gender: genderFilter } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const { data: cityList } = useGetCityQuery({ params });
 
   const { data: employeeCategoryList } = useGetEmployeeCategoryQuery({
@@ -114,10 +166,7 @@ export default function Form() {
   });
 
   const { data: departmentList } = useGetDepartmentQuery({ params });
-  const { data: allData } = useGetEmployeeQuery({
-    params,
-    searchParams: searchValue,
-  });
+  const { data: allData } = useSearchEmployeeQuery(queryParams);
 
   const {
     data: singleData,
@@ -503,39 +552,74 @@ export default function Form() {
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Employee Id",
       accessor: (item) => item?.regNo,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-40",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-52 min-w-[200px]",
+      filterType: "search",
+      filterValue: searchEmployeeId,
+      onFilterChange: setSearchEmployeeId,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-28",
     },
 
     {
       header: "Employee Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-72 min-w-[280px]",
+      filterType: "search",
+      filterValue: searchEmployeeName,
+      onFilterChange: setSearchEmployeeName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-36",
     },
     {
       header: "Employee Category",
       accessor: (item) => item?.EmployeeCategory?.name,
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-48",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-60 min-w-[220px]",
+      filterType: "search",
+      filterValue: searchEmployeeCategory,
+      onFilterChange: setSearchEmployeeCategory,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-28",
     },
     {
       header: "Gender",
       accessor: (item) => item?.gender,
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-24",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-36 min-w-[140px]",
+      filterType: "select",
+      filterValue: genderFilter,
+      onFilterChange: setGenderFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Male", value: "MALE" },
+        { label: "Female", value: "FEMALE" },
+        { label: "Other", value: "OTHER" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-20",
     },
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "text-center w-24 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-24",
     },
   ];
 
@@ -638,11 +722,15 @@ export default function Form() {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <ReusableTable
                 columns={columns}
-                data={allData?.data}
+                data={allData?.data || []}
                 onView={handleView}
                 onEdit={handleEdit}
                 onDelete={deleteData}
-                itemsPerPage={10}
+                itemsPerPage={15}
+                page={currentPage}
+                onPageChange={setCurrentPage}
+                totalItems={allData?.totalCount}
+                serverPagination={true}
               />
             </div>
           ) : (

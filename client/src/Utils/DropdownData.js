@@ -238,11 +238,19 @@ export const measurementType = [
 ];
 
 export const gridTypes = [
-  { show: "FABRIC", value: "FABRIC" },
-  { show: "YARN", value: "YARN" },
+  { show: "FABRIC SALES", value: "FABRIC SALES" },
+  { show: "YARN SALES", value: "YARN SALES" },
 ];
 export const gridTypesPo = [
   { show: "FABRIC", value: "FABRIC" },
   { show: "YARN", value: "YARN" },
   { show: "GENERAL", value: "GENERAL" },
+];
+
+export const processData = [
+  { show: "GY-GF", value: "GY_GF" },
+  { show: "GY-DY", value: "GY_DY" },
+  { show: "GF-DF", value: "GF_DF" },
+  { show: "DY-DF", value: "DY_DF" },
+  { show: "DF-DF", value: "DF_DF" },
 ];

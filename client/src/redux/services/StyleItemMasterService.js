@@ -74,11 +74,23 @@ const StyleItemMasterApi = createApi({
             }),
             invalidatesTags: ["StyleItemMaster"],
         }),
+        searchStyleItemMaster: builder.query({
+            query: (params) => ({
+                url: `${STYLE_ITEM_API}/search`,
+                method: "GET",
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                },
+                params,
+            }),
+            providesTags: ["StyleItemMaster"],
+        }),
     }),
 });
 
 export const {
     useGetStyleItemMasterQuery,
+    useSearchStyleItemMasterQuery,
     useGetStyleItemMasterByIdQuery,
     useLazyGetStyleItemMasterByIdQuery,
     useAddStyleItemMasterMutation,

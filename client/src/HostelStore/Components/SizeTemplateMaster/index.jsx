@@ -45,6 +45,8 @@ export default function Form({
   const [active, setActive] = useState(true);
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchTemplateName, setSearchTemplateName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const childRecord = useRef(0);
   const [errors, setErrors] = useState({});
   const [dispatchInvalidate] = useInvalidateTags();
@@ -68,11 +70,24 @@ export default function Form({
     isLoading,
     isFetching,
   } = useGetSizeTemplateQuery({
-    params: {
-      ...params,
-      active: true,
-    },
+    params,
   });
+
+  const filteredData = React.useMemo(() => {
+    if (!allData?.data) return [];
+    return allData.data.filter((item) => {
+      const matchesName = searchTemplateName
+        ? item?.name?.toLowerCase().includes(searchTemplateName.toLowerCase())
+        : true;
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "active"
+            ? Boolean(item?.active)
+            : !item?.active;
+      return matchesName && matchesStatus;
+    });
+  }, [allData?.data, searchTemplateName, statusFilter]);
 
   const {
     data: singleData,
@@ -353,19 +368,34 @@ export default function Form({
   const columns = [
     {
       header: "S.No",
-      accessor: (item, index) => parseInt(index) + parseInt(1),
-      className: "font-medium text-center text-gray-900 w-[10px] py-1",
+      accessor: (item, index) => index + 1,
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
     {
       header: "Size Template Name",
       accessor: (item) => item.name,
-      className: "font-medium text-gray-900  w-[200px]  py-1  px-2",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchTemplateName,
+      onFilterChange: setSearchTemplateName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      className: "font-medium text-gray-900 text-center w-[10px] py-1",
-      search: "",
+      className: "text-center w-24 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-24",
     },
   ];
 
@@ -536,11 +566,11 @@ export default function Form({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3">
         <ReusableTable
           columns={columns}
-          data={allData?.data || []}
+          data={filteredData}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          itemsPerPage={10}
+          itemsPerPage={15}
         />
       </div>
 

@@ -4,6 +4,7 @@ import {
   get,
   getOne,
   getSearch,
+  search,
   create,
   update,
   remove,
@@ -12,6 +13,8 @@ import {
 router.post("/", create);
 
 router.get("/", get);
+
+router.get("/search", search);
 
 router.get("/:id", getOne);
 

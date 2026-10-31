@@ -5,6 +5,7 @@ import {
   useDeleteStyleItemMasterMutation,
   useGetStyleItemMasterByIdQuery,
   useGetStyleItemMasterQuery,
+  useSearchStyleItemMasterQuery,
   useLazyGetStyleItemMasterByIdQuery,
   useUpdateStyleItemMasterMutation,
 } from "../../../redux/services/StyleItemMasterService";
@@ -58,6 +59,22 @@ export default function Form({ onSuccess, defaultName = "" }) {
   const [uomId, setUomId] = useState("");
   const [gsmId, setGsmId] = useState("");
 
+  const [searchItemName, setSearchItemName] = useState("");
+  const [debouncedItemName, setDebouncedItemName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedItemName(searchItemName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchItemName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedItemName, statusFilter]);
+
   const [dispatchInvalidate] = useInvalidateTags();
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
 
@@ -77,11 +94,19 @@ export default function Form({ onSuccess, defaultName = "" }) {
   });
   console.log(itemSubGroupList, "itemSubGroupList");
 
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedItemName ? { name: debouncedItemName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetStyleItemMasterQuery({ params, searchParams: searchValue });
+  } = useSearchStyleItemMasterQuery(queryParams);
 
   const {
     data: singleData,
@@ -311,20 +336,32 @@ export default function Form({ onSuccess, defaultName = "" }) {
     {
       header: "S.No",
       accessor: (item, index) => parseInt(index) + parseInt(1),
-      className: "font-medium text-gray-900 text-center w-[10px] py-1",
-      search: "",
+      className: "font-medium text-gray-900 text-center w-12 min-w-[48px] py-1",
     },
     {
       header: "Item Name",
       accessor: (item) => item.name,
-      className: "font-medium text-gray-900  w-[400px]  py-1  px-2",
-      search: "Item Name",
+      className:
+        "font-medium text-gray-900 w-96 min-w-[380px] py-1 px-2 uppercase",
+      filterType: "search",
+      filterValue: searchItemName,
+      onFilterChange: setSearchItemName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      className: "font-medium text-gray-900 text-center w-[10px] py-1",
-      search: "",
+      className:
+        "font-medium text-gray-900 text-center w-40 min-w-[160px] py-1 uppercase",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -402,7 +439,7 @@ export default function Form({ onSuccess, defaultName = "" }) {
                             clear={true}
                             required={true}
                           /> */}
-                  <DropdownWithModal
+                  {/* <DropdownWithModal
                     name="Item Sub Group"
                     options={dropDownListObject(
                       id
@@ -429,7 +466,7 @@ export default function Form({ onSuccess, defaultName = "" }) {
                     addNewLabel="+ Add New Item Sub Group"
                     childComponent={ItemSubGroupMaster}
                     addNewModalWidth="w-[40%] h-[45%]"
-                  />
+                  /> */}
                 </div>
                 <DropdownWithModal
                   name="Item Group"
@@ -619,7 +656,11 @@ export default function Form({ onSuccess, defaultName = "" }) {
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
       {form && (

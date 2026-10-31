@@ -33,6 +33,14 @@ const partyMasterApi = createApi({
       },
       providesTags: ["Party"],
     }),
+    searchParty: builder.query({
+      query: (params) => ({
+        url: `${PARTY_API}/search`,
+        method: "GET",
+        params,
+      }),
+      providesTags: ["Party"],
+    }),
     getPartyNew: builder.query({
       query: ({ params, searchParams }) => {
         if (searchParams) {
@@ -98,6 +106,7 @@ const partyMasterApi = createApi({
 
 export const {
   useGetPartyQuery,
+  useSearchPartyQuery,
   useGetPartyNewQuery,
   useLazyGetPartyByIdQuery,
   useGetPartyByIdQuery,

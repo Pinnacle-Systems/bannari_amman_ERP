@@ -4,12 +4,14 @@ import {
   get,
   getOne,
   getSearch,
+  search,
   create,
   update,
   remove,
 } from "../controllers/yarnBlendMaster.controller.js";
 
 router.get("/", get);
+router.get("/search", search);
 router.get("/:id", getOne);
 router.get("/search/:searchKey", getSearch);
 router.post("/", create);

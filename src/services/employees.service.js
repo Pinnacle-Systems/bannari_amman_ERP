@@ -484,4 +484,115 @@ async function remove(id) {
   return { statusCode: 0, data };
 }
 
-export { get, getPaginated, getOne, getSearch, create, update, remove };
+async function search(req) {
+  const {
+    name,
+    active,
+    branchId,
+    companyId,
+    employeeCategory,
+    employeeCategoryId,
+    employeeId,
+    regNo,
+    gender,
+    page,
+    pageNumber,
+    limit,
+    pageSize,
+    dataPerPage,
+  } = req.query;
+
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const searchId = (regNo || employeeId || "").trim();
+
+  const where = {
+    ...(branchId ? { branchId: parseInt(branchId) } : {}),
+    ...(companyId ? { Branch: { companyId: parseInt(companyId) } } : {}),
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+    ...(name && name.trim() !== ""
+      ? { name: { contains: name.trim(), mode: "insensitive" } }
+      : {}),
+    ...(searchId
+      ? {
+          OR: [
+            { regNo: { contains: searchId, mode: "insensitive" } },
+            { employeeId: { contains: searchId, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+    ...(employeeCategoryId && employeeCategoryId !== "all"
+      ? { employeeCategoryId: parseInt(employeeCategoryId) }
+      : employeeCategory && employeeCategory.trim() !== "" && employeeCategory !== "all"
+        ? !isNaN(employeeCategory)
+          ? { employeeCategoryId: parseInt(employeeCategory) }
+          : { EmployeeCategory: { name: { contains: employeeCategory.trim(), mode: "insensitive" } } }
+        : {}),
+    ...(gender && gender !== "all" && gender.trim() !== ""
+      ? { gender: { equals: gender.trim(), mode: "insensitive" } }
+      : {}),
+  };
+
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await xprisma.employee.count({ where });
+
+  const data = await xprisma.employee.findMany({
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
+    include: {
+      department: {
+        select: {
+          name: true,
+        },
+      },
+      EmployeeCategory: true,
+      _count: {
+        select: {
+          User: true,
+        },
+      },
+    },
+    orderBy: { id: "asc" },
+  });
+
+  return {
+    statusCode: 0,
+    data: data.map((item) =>
+      exclude({ ...item, childRecord: item?._count?.User }, ["image"]),
+    ),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
+  };
+}
+
+export { get, getPaginated, getOne, getSearch, search, create, update, remove };

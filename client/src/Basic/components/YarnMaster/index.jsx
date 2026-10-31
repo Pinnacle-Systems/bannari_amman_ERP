@@ -16,6 +16,7 @@ import {
   useDeleteYarnMasterMutation,
   useGetYarnMasterByIdQuery,
   useGetYarnMasterQuery,
+  useSearchYarnMasterQuery,
   useUpdateYarnMasterMutation,
 } from "../../../redux/services/YarnMasterService";
 import { useGetCountsMasterQuery } from "../../../redux/services/CountsMaster.service";
@@ -83,6 +84,22 @@ export default function YarnMaster({
   }, [defaultName, id]);
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchYarnName, setSearchYarnName] = useState("");
+  const [debouncedYarnName, setDebouncedYarnName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedYarnName(searchYarnName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchYarnName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedYarnName, statusFilter]);
+
   const lastSyncedIds = useRef({ countsId: null, contentId: null });
 
   const params = {
@@ -110,11 +127,19 @@ export default function YarnMaster({
     }
   }, [hsnId, hsnList]);
 
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    ...(debouncedYarnName ? { name: debouncedYarnName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetYarnMasterQuery({ params, searchParams: searchValue });
+  } = useSearchYarnMasterQuery(queryParams);
   const {
     data: singleData,
     isFetching: isSingleFetching,
@@ -525,21 +550,34 @@ export default function YarnMaster({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
 
     {
       header: "Yarn Name",
       accessor: (item) => item?.name,
-      //   cellClass: () => "font-medium  text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-72",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchYarnName,
+      onFilterChange: setSearchYarnName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
 
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className:
+        "font-medium text-gray-900 text-center uppercase w-40 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
     },
   ];
 
@@ -569,7 +607,9 @@ export default function YarnMaster({
             <div className="space-y-4 ">
               <fieldset className=" rounded mt-2">
                 <div className="flex gap-x-4 my-2">
-                  <div className="w-[25%]">
+                  {/* Counts Name */}
+
+                  {/* <div className="w-[25%]">
                     <DropdownWithModal
                       name="Counts Name"
                       options={dropDownListObject(
@@ -590,8 +630,11 @@ export default function YarnMaster({
                       addNewModalWidth="w-[40%] h-[45%]"
                       ref={countryNameRef}
                     />
-                  </div>
-                  <div className="w-[40%]">
+                  </div> */}
+
+                  {/* Content Name */}
+
+                  {/* <div className="w-[40%]">
                     <DropdownWithModal
                       name="Content Name"
                       options={dropDownListObject(
@@ -611,8 +654,9 @@ export default function YarnMaster({
                       childComponent={ContentMaster}
                       addNewModalWidth="w-[40%] h-[45%]"
                     />
-                  </div>
-                  <div className="w-[50%]">
+                  </div> */}
+
+                  <div className="w-[80%]">
                     <TextInputNew
                       name="Yarn Name"
                       type="text"
@@ -639,7 +683,7 @@ export default function YarnMaster({
                   </div> */}
                 </div>
                 <div className="flex gap-x-8">
-                  <div className="w-[17%] mb-3">
+                  <div className="w-[27%] mb-3">
                     <DropdownWithModal
                       name="Hsn"
                       options={dropDownListObject(
@@ -660,7 +704,7 @@ export default function YarnMaster({
                       required={true}
                     />
                   </div>
-                  <div className="w-[10%]">
+                  <div className="w-[15%]">
                     <TextInputNew
                       name="Tax percentage %"
                       type="text"
@@ -980,11 +1024,15 @@ export default function YarnMaster({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 ">
         <ReusableTable
           columns={columns}
-          data={allData?.data}
+          data={allData?.data || []}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
+          page={currentPage}
+          onPageChange={setCurrentPage}
+          totalItems={allData?.totalCount}
+          serverPagination={true}
         />
       </div>
 
@@ -993,7 +1041,7 @@ export default function YarnMaster({
           <Modal
             isOpen={form}
             form={form}
-            widthClass={"w-[65vw] h-[60vh]"}
+            widthClass={"w-[49vw] h-[60vh]"}
             onClose={() => {
               setForm(false);
               syncFormWithDb(undefined);

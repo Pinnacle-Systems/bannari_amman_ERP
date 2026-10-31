@@ -659,9 +659,9 @@ model Uom {
   active                 Boolean                  @default(true)
   Company                Company?                 @relation(fields: [companyId], references: [id])
   companyId              Int?
+  isFabricUom            Boolean?                 @default(false)
   Product                Product[]
   ProductUomPriceDetails ProductUomPriceDetails[]
-
   PoReturnItems          PoReturnItems[]
   SalesBillItems         SalesBillItems[]
   SalesReturnItems       SalesReturnItems[]
@@ -1137,6 +1137,9 @@ model Color {
   orderFabricItems       OrderFabricItems[]
   poFabricItems          PoFabricItems[]
   poYarnItems            PoYarnItems[]
+  fabricYarnDetails      FabricYarnDetails[]
+  yarnProcessColors      YarnProcessColors[]
+  yarnProcessDetails     YarnProcessDetails[]
 }
 
 model DeliveryInvoice {
@@ -2136,41 +2139,94 @@ model OrderYarnItems {
 }
 
 model OrderFabricItems {
-  id            Int           @id @default(autoincrement())
-  OrderEntry    OrderEntry    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId       Int
-  fabricId      Int?
-  fabric        FabricMaster? @relation(fields: [fabricId], references: [id])
-  hsnId         Int?
-  hsn           Hsn?          @relation(fields: [hsnId], references: [id])
-  colorId       Int?
-  color         Color?        @relation(fields: [colorId], references: [id])
-  designId      Int?
-  design        DesignMaster? @relation(fields: [designId], references: [id])
-  gaugeId       Int?
-  gauge         Gauge?        @relation(fields: [gaugeId], references: [id])
-  loopLengthId  Int?
-  loopLength    LoopLength?   @relation(fields: [loopLengthId], references: [id])
-  gsmId         Int?
-  gsm           Gsm?          @relation(fields: [gsmId], references: [id])
-  kDiaId        Int?
-  kDia          DiaMaster?    @relation("kDia", fields: [kDiaId], references: [id])
-  fDiaId        Int?
-  fDia          DiaMaster?    @relation("fDia", fields: [fDiaId], references: [id])
-  uomId         Int?
-  uom           Uom?          @relation(fields: [uomId], references: [id])
-  width         String?
-  numberOfRolls Float?
-  weightPerRoll Float?
-  totalKgs      Float?
-  pricePerKg    Float?
-  totalPrice    Float?
-  qty           Float?
-  price         Float?
-  amount        Float?
-  taxPercent    Float?
-  discountType  String?
-  discountValue Float?
+  id                Int                 @id @default(autoincrement())
+  OrderEntry        OrderEntry          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           Int
+  fabricId          Int?
+  fabric            FabricMaster?       @relation(fields: [fabricId], references: [id])
+  hsnId             Int?
+  hsn               Hsn?                @relation(fields: [hsnId], references: [id])
+  colorId           Int?
+  color             Color?              @relation(fields: [colorId], references: [id])
+  designId          Int?
+  design            DesignMaster?       @relation(fields: [designId], references: [id])
+  gaugeId           Int?
+  gauge             Gauge?              @relation(fields: [gaugeId], references: [id])
+  loopLengthId      Int?
+  loopLength        LoopLength?         @relation(fields: [loopLengthId], references: [id])
+  gsmId             Int?
+  gsm               Gsm?                @relation(fields: [gsmId], references: [id])
+  kDiaId            Int?
+  kDia              DiaMaster?          @relation("kDia", fields: [kDiaId], references: [id])
+  fDiaId            Int?
+  fDia              DiaMaster?          @relation("fDia", fields: [fDiaId], references: [id])
+  uomId             Int?
+  uom               Uom?                @relation(fields: [uomId], references: [id])
+  width             String?
+  numberOfRolls     Float?
+  weightPerRoll     Float?
+  totalKgs          Float?
+  pricePerKg        Float?
+  totalPrice        Float?
+  qty               Float?
+  wastePercentage   Float?
+  requiredQty       Float?
+  price             Float?
+  amount            Float?
+  taxPercent        Float?
+  discountType      String?
+  discountValue     Float?
+  fabricYarnDetails FabricYarnDetails[]
+  fabricProcess     FabricProcess[]
+}
+
+model FabricYarnDetails {
+  id                 Int                  @id @default(autoincrement())
+  orderFabricItemsId Int
+  OrderFabricItems   OrderFabricItems     @relation(fields: [orderFabricItemsId], references: [id], onDelete: Cascade)
+  rowId              String?
+  yarnId             Int?
+  yarn               YarnMaster?          @relation(fields: [yarnId], references: [id])
+  colorId            Int?
+  color              Color?               @relation(fields: [colorId], references: [id])
+  percentage         Float?
+  yarnQty            Float?
+  process            String?
+  yarnProcessDetails YarnProcessDetails[]
+}
+
+model YarnProcessDetails {
+  id                  Int                 @id @default(autoincrement())
+  FabricYarnDetailsId Int
+  FabricYarnDetails   FabricYarnDetails   @relation(fields: [FabricYarnDetailsId], references: [id], onDelete: Cascade)
+  rowId               String?
+  processId           Int?
+  process             Process?            @relation(fields: [processId], references: [id])
+  lossPercentage      Float?
+  dyeing              String?
+  colorId             Int?
+  color               Color?              @relation(fields: [colorId], references: [id])
+  yarnProcessColors   YarnProcessColors[]
+}
+
+model YarnProcessColors {
+  id                   Int                @id @default(autoincrement())
+  yarnProcessDetailsId Int
+  YarnProcessDetails   YarnProcessDetails @relation(fields: [yarnProcessDetailsId], references: [id], onDelete: Cascade)
+  rowId                String?
+  colorId              Int?
+  color                Color?             @relation(fields: [colorId], references: [id])
+  yarnProPercentage    Float?
+}
+
+model FabricProcess {
+  id                 Int              @id @default(autoincrement())
+  orderFabricItemsId Int
+  OrderFabricItems   OrderFabricItems @relation(fields: [orderFabricItemsId], references: [id], onDelete: Cascade)
+  rowId              String?
+  processId          Int?
+  process            Process?         @relation(fields: [processId], references: [id])
+  description        String?
 }
 
 model OrderItems {
@@ -2976,22 +3032,23 @@ model YarnBlendMaster {
 }
 
 model YarnMaster {
-  id               Int                @id @default(autoincrement())
-  name             String             @unique
-  aliasName        String?
-  active           Boolean            @default(true)
-  Company          Company            @relation(fields: [companyId], references: [id])
-  companyId        Int
-  countsId         Int?
-  CountsMaster     CountsMaster?      @relation(fields: [countsId], references: [id])
-  contentId        Int?
-  ContentMaster    ContentMaster?     @relation(fields: [contentId], references: [id])
-  hsnId            Int
-  Hsn              Hsn                @relation(fields: [hsnId], references: [id])
-  YarnMasterDetail YarnMasterDetail[]
-  yarnItems        YarnItems[]
-  orderYarnItems   OrderYarnItems[]
-  poYarnItems      PoYarnItems[]
+  id                Int                 @id @default(autoincrement())
+  name              String              @unique
+  aliasName         String?
+  active            Boolean             @default(true)
+  Company           Company             @relation(fields: [companyId], references: [id])
+  companyId         Int
+  countsId          Int?
+  CountsMaster      CountsMaster?       @relation(fields: [countsId], references: [id])
+  contentId         Int?
+  ContentMaster     ContentMaster?      @relation(fields: [contentId], references: [id])
+  hsnId             Int
+  Hsn               Hsn                 @relation(fields: [hsnId], references: [id])
+  YarnMasterDetail  YarnMasterDetail[]
+  yarnItems         YarnItems[]
+  orderYarnItems    OrderYarnItems[]
+  poYarnItems       PoYarnItems[]
+  fabricYarnDetails FabricYarnDetails[]
 }
 
 model YarnMasterDetail {
@@ -3149,14 +3206,17 @@ model YarnItems {
 }
 
 model Process {
-  id               Int                @id @default(autoincrement())
-  name             String?
-  active           Boolean?           @default(true)
-  Company          Company?           @relation(fields: [companyId], references: [id])
-  companyId        Int?
-  Branch           Branch?            @relation(fields: [branchId], references: [id])
-  branchId         Int?
-  processGroupList ProcessGroupList[]
+  id                 Int                  @id @default(autoincrement())
+  name               String?
+  active             Boolean?             @default(true)
+  Company            Company?             @relation(fields: [companyId], references: [id])
+  companyId          Int?
+  Branch             Branch?              @relation(fields: [branchId], references: [id])
+  branchId           Int?
+  process            String?
+  processGroupList   ProcessGroupList[]
+  yarnProcessDetails YarnProcessDetails[]
+  fabricProcess      FabricProcess[]
 }
 
 model ProcessGroup {
@@ -3167,6 +3227,7 @@ model ProcessGroup {
   Branch           Branch?            @relation(fields: [branchId], references: [id])
   branchId         Int?
   active           Boolean?           @default(true)
+  isYarnProcess    Boolean?           @default(false)
   processGroupList ProcessGroupList[]
 }
 

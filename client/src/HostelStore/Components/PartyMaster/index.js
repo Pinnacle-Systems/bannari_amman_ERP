@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import secureLocalStorage from "react-secure-storage";
 import {
   useGetPartyQuery,
+  useSearchPartyQuery,
   useGetPartyByIdQuery,
   useAddPartyMutation,
   useUpdatePartyMutation,
@@ -148,11 +149,38 @@ export default function Form({
   } = useGetCityQuery({ params });
   const { data: branchTypeData } = useGetbranchTypeQuery({});
 
+  const [searchPartyName, setSearchPartyName] = useState("");
+  const [debouncedPartyName, setDebouncedPartyName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPartyName(searchPartyName);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchPartyName]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedPartyName, statusFilter, view]);
+
+  const queryParams = {
+    ...params,
+    page: currentPage,
+    limit: 15,
+    view: view !== "all" ? view : undefined,
+    ...(debouncedPartyName ? { name: debouncedPartyName } : {}),
+    ...(statusFilter !== "all" ? { active: statusFilter === "active" } : {}),
+  };
+
+  const { data: partyList } = useGetPartyQuery({ params });
+
   const {
     data: allData,
     isLoading,
     isFetching,
-  } = useGetPartyQuery({ params, searchParams: searchValue });
+  } = useSearchPartyQuery(queryParams);
 
   const {
     data: singleData,
@@ -568,14 +596,14 @@ export default function Form({
     let foundItem;
 
     if (isBranch) {
-      foundItem = allData?.data
+      foundItem = partyList?.data
         ?.filter((i) => i.id != id)
         ?.some(
           (item) =>
             item.branchTypeId == branchTypeId && item.parentId == parentId,
         );
     } else {
-      foundItem = allData?.data
+      foundItem = partyList?.data
         ?.filter((i) => i.id != id)
         ?.some((item) => item.name == name && item.gstNo == gstNo);
     }
@@ -754,13 +782,19 @@ export default function Form({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12  text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
     {
       header: "Name",
       accessor: (item) => item?.name,
       //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-left uppercase w-96",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      filterType: "search",
+      filterValue: searchPartyName,
+      onFilterChange: setSearchPartyName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
     {
       header: "Branch Type",
@@ -797,7 +831,17 @@ export default function Form({
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
       //   cellClass: () => "font-medium text-gray-900",
-      className: "font-medium text-gray-900 text-center uppercase w-16",
+      className: "text-center w-24 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-24",
     },
   ];
 
@@ -989,10 +1033,10 @@ export default function Form({
                         name="Customer/supplier"
                         options={dropDownListObject(
                           id
-                            ? allData?.data?.filter(
+                            ? partyList?.data?.filter(
                                 (i) => i.id != id && !i.parentId && i.gstNo,
                               )
-                            : allData?.data?.filter(
+                            : partyList?.data?.filter(
                                 (item) =>
                                   item.active &&
                                   item.id != id &&
@@ -1005,7 +1049,7 @@ export default function Form({
                         value={parentId}
                         setValue={(value) => {
                           setParentId(value);
-                          setName(findFromList(value, allData?.data, "name"));
+                          setName(findFromList(value, partyList?.data, "name"));
                         }}
                         // setValue={setParentId}
                         readOnly={readOnly}
@@ -2486,11 +2530,15 @@ export default function Form({
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-3 w-">
           <ReusableTable
             columns={columns}
-            data={filterParty || []}
+            data={allData?.data || []}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={deleteData}
-            itemsPerPage={10}
+            itemsPerPage={15}
+            page={currentPage}
+            onPageChange={setCurrentPage}
+            totalItems={allData?.totalCount}
+            serverPagination={true}
           />
         </div>
 

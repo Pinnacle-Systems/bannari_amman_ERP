@@ -105,8 +105,9 @@ async function get(req) {
       ?.filter((i) => i.isCustomer)
       .map((i) => ({
         ...i,
-        name: `${i.name}${i?.BranchType?.name ? ` / ${i.BranchType.name}` : ""
-          }${i?.City?.name ? ` / ${i.City.name}` : ""}`,
+        name: `${i.name}${
+          i?.BranchType?.name ? ` / ${i.BranchType.name}` : ""
+        }${i?.City?.name ? ` / ${i.City.name}` : ""}`,
       }));
   }
   return {
@@ -279,7 +280,6 @@ async function getOne(id) {
     (sum, val) => sum + (val?.amount ?? 0),
     0,
   );
-  console.log(totalOpeningBalance, "openingBalancessssdddd");
 
   const totalPurchaseNetBillValue = data.PurchaseBillSupplier.reduce(
     (acc, bill) => acc + (bill.ourPrice || 0),
@@ -467,14 +467,14 @@ async function create(body) {
       attachments:
         JSON.parse(attachments)?.length > 0
           ? {
-            createMany: {
-              data: JSON.parse(attachments).map((sub) => ({
-                date: sub?.date ? new Date(sub?.date) : undefined,
-                filePath: sub?.filePath ? sub?.filePath : undefined,
-                name: sub?.name ? sub?.name : undefined,
-              })),
-            },
-          }
+              createMany: {
+                data: JSON.parse(attachments).map((sub) => ({
+                  date: sub?.date ? new Date(sub?.date) : undefined,
+                  filePath: sub?.filePath ? sub?.filePath : undefined,
+                  name: sub?.name ? sub?.name : undefined,
+                })),
+              },
+            }
           : undefined,
     },
   });
@@ -644,4 +644,142 @@ async function remove(id) {
   return { statusCode: 0, data };
 }
 
-export { get, getOne, getSearch, create, update, remove };
+async function search(req) {
+  const {
+    name,
+    active,
+    isCustomer,
+    isSupplier,
+    view,
+    page,
+    pageNumber,
+    limit,
+    pageSize,
+    dataPerPage,
+    companyId,
+  } = req.query;
+
+  let customerFilter = undefined;
+  if (view === "Customer" || isCustomer === true || isCustomer === "true") {
+    customerFilter = true;
+  }
+  let supplierFilter = undefined;
+  if (view === "Supplier" || isSupplier === true || isSupplier === "true") {
+    supplierFilter = true;
+  }
+
+  let activeFilter = undefined;
+  if (
+    active !== undefined &&
+    active !== "" &&
+    active !== "all" &&
+    active !== "ALL"
+  ) {
+    if (
+      active === true ||
+      active === "true" ||
+      active === "active" ||
+      active === "ACTIVE"
+    ) {
+      activeFilter = true;
+    } else if (
+      active === false ||
+      active === "false" ||
+      active === "inactive" ||
+      active === "INACTIVE"
+    ) {
+      activeFilter = false;
+    }
+  }
+
+  const where = {
+    companyId: companyId ? parseInt(companyId) : undefined,
+    ...(customerFilter !== undefined ? { isCustomer: true } : {}),
+    ...(supplierFilter !== undefined ? { isSupplier: true } : {}),
+    ...(activeFilter !== undefined ? { active: activeFilter } : {}),
+    ...(name && name.trim() !== ""
+      ? { name: { contains: name.trim(), mode: "insensitive" } }
+      : {}),
+  };
+
+  const hasPagination = Boolean(
+    page || pageNumber || limit || pageSize || dataPerPage,
+  );
+  const pageVal = parseInt(page || pageNumber) || 1;
+  const limitVal = parseInt(limit || pageSize || dataPerPage) || 15;
+  const skip = (pageVal - 1) * limitVal;
+
+  const totalCount = await prisma.party.count({ where });
+
+  const data = await prisma.party.findMany({
+    where,
+    ...(hasPagination ? { skip, take: limitVal } : {}),
+    include: {
+      PurchaseBillSupplier: {
+        select: {
+          netBillValue: true,
+          supplierId: true,
+        },
+      },
+      SalesBillSupplier: {
+        select: {
+          netBillValue: true,
+          supplierId: true,
+          isOn: true,
+        },
+      },
+      Payment: {
+        select: {
+          paidAmount: true,
+          partyId: true,
+          paymentType: true,
+          discount: true,
+        },
+      },
+      ledgers: true,
+      PartyBranch: {
+        select: {
+          id: true,
+          partyId: true,
+          name: true,
+          City: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      City: {
+        select: {
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          PoSupplier: true,
+          purchaseInwards: true,
+          proformaInvoices: true,
+        },
+      },
+      BranchType: true,
+    },
+    orderBy: { id: "asc" },
+  });
+
+  return {
+    statusCode: 0,
+    data: data.map((party) => ({
+      ...party,
+      childRecord:
+        party?._count.PoSupplier +
+        party?._count.purchaseInwards +
+        party?._count.proformaInvoices,
+    })),
+    totalCount,
+    totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,
+    currentPage: pageVal,
+    limit: limitVal,
+  };
+}
+
+export { get, getOne, getSearch, search, create, update, remove };
