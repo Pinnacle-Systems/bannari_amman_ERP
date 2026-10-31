@@ -15,6 +15,7 @@ import {
   focusNextGridField,
 } from "../../../Basic/components/Reuseable/gridNavigation";
 import { VIEW } from "../../../icons";
+import { Plus } from "lucide-react";
 import { findFromList } from "../../../Utils/helper";
 import {
   createPurchaseOrderRow,
@@ -99,6 +100,11 @@ const PO_GRID_COLUMNS = [
     key: "tax",
     label: "Tax",
     className: "w-16 px-1 py-2 text-center font-medium text-[11px]",
+  },
+  {
+    key: "actions",
+    label: "Actions",
+    className: "w-16 px-2 py-2 text-center font-medium text-[11px]",
   },
 ];
 
@@ -363,6 +369,7 @@ const PoItems = ({
           .toFixed(2)}
       </td>
       <td className="border border-gray-300"></td>
+      <td className="border border-gray-300"></td>
     </tr>
   );
 
@@ -597,7 +604,7 @@ const PoItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="min-w-[1380px] w-full border-collapse table-fixed"
+          tableClassName="min-w-[1450px] w-full border-collapse table-fixed"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={PO_GRID_COLUMNS}
           rows={visibleRows}
@@ -957,6 +964,23 @@ const PoItems = ({
                   >
                     {VIEW}
                   </button>
+                </td>
+                <td
+                  data-grid-row={index}
+                  className="w-16 border border-gray-300 align-top pt-1 bg-inherit"
+                >
+                  {!readOnly && (
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={addRow}
+                        className="flex items-center justify-center p-0.5 bg-blue-50 hover:bg-blue-100 rounded"
+                        title="Add row"
+                        tabIndex={-1}
+                      >
+                        <Plus size={13} className="text-blue-700" />
+                      </button>
+                    </div>
+                  )}
                 </td>
               </>
             );
