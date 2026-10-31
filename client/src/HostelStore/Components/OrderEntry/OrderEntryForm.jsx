@@ -1688,9 +1688,7 @@ const OrderEntryForm = ({
               value={deliveryDate}
               setValue={setDeliveryDate}
               required={true}
-              readOnly={
-                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
-              }
+              readOnly={childRecord.current > 0 || readOnly}
               min={docDate}
               type={"date"}
               className={compactFieldClass}
