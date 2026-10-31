@@ -33,6 +33,14 @@ const HsnMasterApi = createApi({
       },
       providesTags: ["HsnMaster"],
     }),
+    searchHsnMaster: builder.query({
+      query: (params) => ({
+        url: `${HSN_API}/search`,
+        method: "GET",
+        params,
+      }),
+      providesTags: ["HsnMaster"],
+    }),
     getHsnMasterById: builder.query({
       query: (id) => {
         return {
@@ -79,6 +87,7 @@ const HsnMasterApi = createApi({
 
 export const {
   useGetHsnMasterQuery,
+  useSearchHsnMasterQuery,
   useGetHsnMasterByIdQuery,
   useLazyGetHsnMasterByIdQuery,
   useAddHsnMasterMutation,

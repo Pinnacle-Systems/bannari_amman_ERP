@@ -33,6 +33,14 @@ const employeeMasterApi = createApi({
       },
       providesTags: ["Employee"],
     }),
+    searchEmployee: builder.query({
+      query: (params) => ({
+        url: `${EMPLOYEE_API}/search`,
+        method: "GET",
+        params,
+      }),
+      providesTags: ["Employee"],
+    }),
     getEmployeeById: builder.query({
       query: (id) => {
         return {
@@ -75,6 +83,7 @@ const employeeMasterApi = createApi({
 
 export const {
   useGetEmployeeQuery,
+  useSearchEmployeeQuery,
   useGetEmployeeByIdQuery,
   useAddEmployeeMutation,
   useUpdateEmployeeMutation,

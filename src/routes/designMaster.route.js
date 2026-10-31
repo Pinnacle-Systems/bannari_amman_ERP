@@ -2,6 +2,7 @@ import { Router } from "express";
 const router = Router();
 import {
   get,
+  search,
   getOne,
   getSearch,
   create,
@@ -10,6 +11,7 @@ import {
 } from "../controllers/designMaster.controller.js";
 
 router.get("/", get);
+router.get("/search", search);
 router.get("/:id", getOne);
 router.get("/search/:searchKey", getSearch);
 router.post("/", create);

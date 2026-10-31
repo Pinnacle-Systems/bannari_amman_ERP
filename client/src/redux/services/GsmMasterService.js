@@ -33,6 +33,14 @@ const GsmMasterApi = createApi({
             },
             providesTags: ["GsmMaster"],
         }),
+        searchGsmMaster: builder.query({
+            query: (params) => ({
+                url: `${GSM_API}/search`,
+                method: "GET",
+                params,
+            }),
+            providesTags: ["GsmMaster"],
+        }),
         getGsmMasterById: builder.query({
             query: (id) => {
                 return {
@@ -79,6 +87,7 @@ const GsmMasterApi = createApi({
 
 export const {
     useGetGsmMasterQuery,
+    useSearchGsmMasterQuery,
     useGetGsmMasterByIdQuery,
     useLazyGetGsmMasterByIdQuery,
     useAddGsmMasterMutation,

@@ -1,6 +1,6 @@
 import { Prisma } from '../lib/prisma.js'
 
-import { get as _get, getOne as _getOne, getSearch as _getSearch, create as _create, update as _update, remove as _remove } from '../services/hsn.service.js';
+import { get as _get, getOne as _getOne, getSearch as _getSearch, search as _search, create as _create, update as _update, remove as _remove } from '../services/hsn.service.js';
 
 async function get(req, res, next) {
     try {
@@ -8,6 +8,15 @@ async function get(req, res, next) {
         console.log(res.statusCode);
     } catch (err) {
         console.error(`Error `, err.message);
+    }
+}
+
+async function search(req, res, next) {
+    try {
+        res.json(await _search(req));
+    } catch (err) {
+        console.error(`Error `, err.message);
+        res.status(500).json({ statusCode: 1, message: err.message });
     }
 }
 
@@ -86,6 +95,7 @@ async function remove(req, res, next) {
 
 export {
     get,
+    search,
     getOne,
     getSearch,
     create,

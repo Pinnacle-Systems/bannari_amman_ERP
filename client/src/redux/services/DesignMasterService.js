@@ -33,6 +33,14 @@ const DesignMasterApi = createApi({
       },
       providesTags: ["DesignMaster"],
     }),
+    searchDesignMaster: builder.query({
+      query: (params) => ({
+        url: `${DESIGN_MASTER_API}/search`,
+        method: "GET",
+        params,
+      }),
+      providesTags: ["DesignMaster"],
+    }),
     getDesignMasterById: builder.query({
       query: (id) => {
         return {
@@ -76,6 +84,7 @@ const DesignMasterApi = createApi({
 
 export const {
   useGetDesignMasterQuery,
+  useSearchDesignMasterQuery,
   useGetDesignMasterByIdQuery,
   useLazyGetDesignMasterByIdQuery,
   useAddDesignMasterMutation,

@@ -34,6 +34,8 @@ export default function Form({
   const [active, setActive] = useState(true);
   const [description, setDescription] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [searchTermsName, setSearchTermsName] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const childRecord = useRef(0);
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
   const [showHint, setShowHint] = useState(false);
@@ -50,7 +52,23 @@ export default function Form({
     isFetching,
   } = useGetTermsandCondtionsQuery({ params, searchParams: searchValue });
 
-  const rows = allData?.data ?? [];
+  const filteredData = React.useMemo(() => {
+    if (!allData?.data) return [];
+    return allData.data.filter((item) => {
+      const matchesName = searchTermsName
+        ? item?.name?.toLowerCase().includes(searchTermsName.toLowerCase())
+        : true;
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "active"
+            ? Boolean(item?.active)
+            : !item?.active;
+      return matchesName && matchesStatus;
+    });
+  }, [allData?.data, searchTermsName, statusFilter]);
+
+  const rows = filteredData;
 
   const {
     data: singleData,
@@ -261,22 +279,38 @@ export default function Form({
     {
       header: "S.No",
       accessor: (item, index) => index + 1,
-      className: "font-medium text-gray-900 w-12 text-center",
+      className: "font-medium text-gray-900 w-12 min-w-[48px] text-center",
     },
     {
       header: "Name",
       accessor: (item) => item?.name,
-      className: "font-medium text-gray-900 text-left uppercase w-48",
+      className:
+        "font-medium text-gray-900 text-left uppercase w-64 min-w-[240px]",
+      filterType: "search",
+      filterValue: searchTermsName,
+      onFilterChange: setSearchTermsName,
+      filterPlaceholder: "Search...",
+      filterWidth: "w-44",
     },
     {
       header: "Terms & Conditions",
       accessor: (item) => item?.description,
-      className: "font-medium text-gray-900 text-left w-[400px]",
+      className: "font-medium text-gray-900 text-left w-[400px] min-w-[260px]",
     },
     {
       header: "Status",
       accessor: (item) => (item.active ? ACTIVE : INACTIVE),
-      className: "font-medium text-gray-900 text-center w-16",
+      className: "text-center w-24 min-w-[160px]",
+      filterType: "select",
+      filterValue: statusFilter,
+      onFilterChange: setStatusFilter,
+      filterOptions: [
+        { label: "All", value: "all" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      filterPlaceholder: "All",
+      filterWidth: "w-24",
     },
   ];
 
@@ -525,7 +559,7 @@ export default function Form({
           onView={handleView}
           onEdit={handleEdit}
           onDelete={deleteData}
-          itemsPerPage={10}
+          itemsPerPage={15}
         />
       </div>
 
