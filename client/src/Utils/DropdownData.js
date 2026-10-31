@@ -238,8 +238,8 @@ export const measurementType = [
 ];
 
 export const gridTypes = [
-  { show: "FABRIC SALES", value: "FABRIC" },
-  { show: "YARN SALES", value: "YARN" },
+  { show: "FABRIC SALES", value: "FABRIC SALES" },
+  { show: "YARN SALES", value: "YARN SALES" },
 ];
 export const gridTypesPo = [
   { show: "FABRIC", value: "FABRIC" },

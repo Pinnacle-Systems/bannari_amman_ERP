@@ -229,7 +229,7 @@ const OrderEntryForm = ({
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
-  const [orderGridType, setOrderGridType] = useState("FABRIC");
+  const [orderGridType, setOrderGridType] = useState("FABRIC SALES");
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
   const qrRef = useRef(null);
@@ -426,7 +426,7 @@ const OrderEntryForm = ({
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
       setCustomerPoNo(data?.customerPoNo || "");
-      setOrderGridType(data?.orderGridType || "FABRIC");
+      setOrderGridType(data?.orderGridType || "FABRIC SALES");
     },
     [id],
   );
@@ -572,7 +572,7 @@ const OrderEntryForm = ({
     const errors = [];
     const seen = new Set();
     items.forEach((item, index) => {
-      if (orderGridType === "FABRIC") {
+      if (orderGridType === "FABRIC SALES") {
         if (!item.fabricId) {
           errors.push(`Row ${index + 1}: Fabric is required`);
         }
@@ -647,7 +647,7 @@ const OrderEntryForm = ({
 
   const validateData = (data) => {
     const items =
-      data.orderGridType === "FABRIC"
+      data.orderGridType === "FABRIC SALES"
         ? data?.orderFabricItems || []
         : data?.orderYarnItems || [];
     const checks = [
@@ -656,14 +656,14 @@ const OrderEntryForm = ({
       {
         condition:
           data.orderType === "AGAINSTPI" &&
-          data.orderGridType === "FABRIC" &&
+          data.orderGridType === "FABRIC SALES" &&
           !data.proFormaFabricId,
         title: "Fabric PI No is required!",
       },
       {
         condition:
           data.orderType === "AGAINSTPI" &&
-          data.orderGridType === "YARN" &&
+          data.orderGridType === "YARN SALES" &&
           !data.proFormaYarnId,
         title: "Yarn PI No is required!",
       },
@@ -836,7 +836,7 @@ const OrderEntryForm = ({
   }, [supplierData]);
 
   const enrichedData = useMemo(() => {
-    const isFabric = orderGridType === "FABRIC";
+    const isFabric = orderGridType === "FABRIC SALES";
     const filteredItems = (
       isFabric
         ? (orderFabricItems || []).filter((i) => i.fabricId)
@@ -1033,7 +1033,7 @@ const OrderEntryForm = ({
 
             {/* PI Selection when AGAINSTPI */}
             <div className={narrowFieldWrap}>
-              {orderGridType === "FABRIC" ? (
+              {orderGridType === "FABRIC SALES" ? (
                 id ? (
                   <TextInput
                     name="Fabric PI No"
@@ -1988,7 +1988,7 @@ const OrderEntryForm = ({
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
           poItems={
-            orderGridType === "FABRIC" ? orderFabricItems : orderYarnItems
+            orderGridType === "FABRIC SALES" ? orderFabricItems : orderYarnItems
           }
           totals={enrichedData}
           readOnly={readOnly || isDisabled || childRecord.current > 0}
@@ -2400,7 +2400,7 @@ const OrderEntryForm = ({
               payTermList={payTermList}
               bankList={bankList}
               carriageFinalAmt={carriageFinalAmt}
-              uomList={uomList}
+              uomList={filteredUomList}
               sizeList={sizeList}
               hsnList={hsnList}
               colorList={colorList}
@@ -2431,7 +2431,7 @@ const OrderEntryForm = ({
         detailsContent={headerContent}
         detailsTitle="Transaction Details"
         gridItems={
-          orderGridType === "FABRIC" ? (
+          orderGridType === "FABRIC SALES" ? (
             <FabricItems
               orderFabricItems={orderFabricItems}
               setFabricItems={setFabricItems}

@@ -17,7 +17,7 @@ const ProformaInvoiceFabricReport = ({
   onView,
   onEdit,
   onDelete,
-  itemsPerPage = 10,
+  itemsPerPage = 15,
 }) => {
   const branchId = secureLocalStorage.getItem(
     sessionStorage.getItem("sessionId") + "currentBranchId",
@@ -35,26 +35,58 @@ const ProformaInvoiceFabricReport = ({
   const [updateProformaInvoice] = useUpdateProformaInvoiceMutation();
   const [approvingId, setApprovingId] = useState(null);
 
-  const [dataPerPage, setDataPerPage] = useState("10");
+  const [dataPerPage, setDataPerPage] = useState(String(itemsPerPage || 15));
   const [serachDocNo, setSerachDocNo] = useState("");
+  const [debouncedDocNo, setDebouncedDocNo] = useState("");
   const [searchDocDate, setSearchDocDate] = useState("");
+  const [debouncedDocDate, setDebouncedDocDate] = useState("");
   const [searchCustomer, setSearchCustomer] = useState("");
+  const [debouncedCustomer, setDebouncedCustomer] = useState("");
   const [searchOrderNo, setSearchOrderNo] = useState("");
+  const [debouncedOrderNo, setDebouncedOrderNo] = useState("");
 
   const [totalCount, setTotalCount] = useState(0);
   const [currentPageNumber, setCurrentPageNumber] = useState(1);
   const { hasPermission } = UserPermissions();
 
-  const searchFields = {
-    serachDocNo,
-    searchDocDate,
-    searchCustomer,
-    searchOrderNo,
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocNo(serachDocNo);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [serachDocNo]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocDate(searchDocDate);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchDocDate]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCustomer(searchCustomer);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCustomer]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedOrderNo(searchOrderNo);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchOrderNo]);
 
   useEffect(() => {
     setCurrentPageNumber(1);
-  }, [serachDocNo, searchDocDate, searchCustomer, searchOrderNo]);
+  }, [debouncedDocNo, debouncedDocDate, debouncedCustomer, debouncedOrderNo, dataPerPage]);
+
+  const searchFields = {
+    serachDocNo: debouncedDocNo,
+    searchDocDate: debouncedDocDate,
+    searchCustomer: debouncedCustomer,
+    searchOrderNo: debouncedOrderNo,
+  };
 
   const {
     data: allData,
@@ -71,14 +103,14 @@ const ProformaInvoiceFabricReport = ({
   });
 
   useEffect(() => {
-    if (allData?.totalCount) {
-      setTotalCount(allData?.totalCount);
+    if (typeof allData?.totalCount === "number") {
+      setTotalCount(allData.totalCount);
     }
-  }, [allData, isLoading, isFetching]);
+  }, [allData]);
 
   const isLoadingIndicator = isLoading || isFetching;
 
-  const totalPages = Math.ceil(totalCount / parseInt(dataPerPage));
+  const totalPages = Math.ceil(totalCount / parseInt(dataPerPage)) || 1;
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -90,7 +122,7 @@ const ProformaInvoiceFabricReport = ({
     return (
       <div className="h-10 w-full flex flex-col sm:flex-row justify-between items-center p-2 bg-white border-t border-gray-200">
         <div className="text-[11px] text-gray-600 mb-2 sm:mb-0">
-          Showing {(currentPageNumber - 1) * parseInt(dataPerPage) + 1} to{" "}
+          Showing {totalCount === 0 ? 0 : (currentPageNumber - 1) * parseInt(dataPerPage) + 1} to{" "}
           {Math.min(currentPageNumber * parseInt(dataPerPage), totalCount)} of{" "}
           {totalCount} entries
         </div>
@@ -151,103 +183,88 @@ const ProformaInvoiceFabricReport = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-[78Vh] overflow-auto">
-      <div className="h-[100vh] rounded-lg bg-[#F1F1F0] shadow-sm">
-        <div className="h-[68vh]">
-          <table className="">
-            <thead className="bg-gray-200 text-gray-800 ">
-              <tr className="">
-                <th className=" px-1 py-1.5  font-medium text-[13px]  text-gray-900  text-center  w-12">
-                  <div className="">S No</div>
+    <div className="flex flex-col w-full h-full overflow-hidden bg-[#F1F1F0] rounded-lg shadow-sm">
+      <div className="flex-1 overflow-auto">
+        <table className="border-collapse table-fixed text-left">
+          <thead className="bg-gray-200 text-gray-800 sticky top-0 z-10">
+            <tr className="border-b border-gray-300">
+              <th className="px-1 py-1.5 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                <div>S No</div>
+              </th>
+              <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-48 min-w-[190px]">
+                <div>Proforma No</div>
+              </th>
+              <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                <div>Date</div>
+              </th>
+              <th className="w-80 min-w-[320px] px-3 font-medium text-[13px] text-gray-900 text-left">
+                <div>Customer</div>
+              </th>
+              {showApprovalColumn && (
+                <th className="w-44 min-w-[176px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                  <div>Approval Action</div>
                 </th>
-                <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-32">
-                  <div>Proforma No</div>
-                </th>
-                {/* <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-32">
-                                    <div>Order No</div>
-                                </th> */}
-                <th className=" px-3  font-medium text-[13px]  text-gray-900  text-center w-32">
-                  <div>Date</div>
-                </th>
-                <th className="w-80  px-3   font-medium text-[13px] text-gray-900  text-center ">
-                  <div>Customer</div>
-                </th>
-                {/* <th className=" px-3 w-36  font-medium text-[13px]  text-gray-900  text-center ">
-                                    <div>Amount</div>
-                                </th> */}
-                {showApprovalColumn && (
-                  <th className="w-44 px-3 font-medium text-[13px] text-gray-900 text-center">
-                    <div>Approval Action</div>
-                  </th>
-                )}
-                <th className="w-14   px-3  font-medium text-[13px]  text-gray-900  text-center ">
-                  <div>Actions</div>
-                </th>
+              )}
+              <th className="w-24 min-w-[96px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                <div>Actions</div>
+              </th>
+            </tr>
+            <tr className="border-b border-gray-200">
+              <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                <div className="h-3"></div>
+              </th>
+              <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-48 min-w-[190px]">
+                <input
+                  type="text"
+                  className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                  placeholder="Search"
+                  value={serachDocNo}
+                  onChange={(e) => setSerachDocNo(e.target.value)}
+                />
+              </th>
+              <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                <input
+                  type="text"
+                  className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                  placeholder="Search"
+                  value={searchDocDate}
+                  onChange={(e) => setSearchDocDate(e.target.value)}
+                />
+              </th>
+              <th className="w-80 min-w-[320px] px-1 font-medium text-[13px] text-gray-900 text-left">
+                <input
+                  type="text"
+                  className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                  placeholder="Search"
+                  value={searchCustomer}
+                  onChange={(e) => setSearchCustomer(e.target.value)}
+                />
+              </th>
+              {showApprovalColumn && (
+                <th className="w-44 min-w-[176px] px-3"></th>
+              )}
+              <th className="w-24 min-w-[96px] px-3"></th>
+            </tr>
+          </thead>
+          <tbody className="border-2">
+            {isLoadingIndicator ? (
+              <tr>
+                <td
+                  colSpan={showApprovalColumn ? 6 : 5}
+                  className="px-6 py-10 text-center"
+                >
+                  <Loader />
+                </td>
               </tr>
-              <tr className="">
-                <th className=" px-1  font-medium text-[13px] justify-end  text-gray-900  text-center  w-12">
-                  <div className="h-3"></div>
-                </th>
-                <th className=" px-1 font-medium text-[13px] border  text-gray-900  text-center w-32">
-                  <input
-                    type="text"
-                    className="text-black h-5   w-full  px-1 focus:outline-none border  border-gray-400 rounded-md"
-                    placeholder="Search"
-                    value={serachDocNo}
-                    onChange={(e) => setSerachDocNo(e.target.value)}
-                  />
-                </th>
-                {/* <th className=" px-1 font-medium text-[13px] border  text-gray-900  text-center w-32">
-                                    <input
-                                        type="text"
-                                        className="text-black h-5   w-full  px-1 focus:outline-none border  border-gray-400 rounded-md"
-                                        placeholder="Search"
-                                        value={searchOrderNo}
-                                        onChange={(e) => setSearchOrderNo(e.target.value)}
-                                    />
-                                </th> */}
-                <th className=" px-1 font-medium text-[13px] border  text-gray-900  text-center w-32">
-                  <input
-                    type="text"
-                    className="text-black h-5   w-full  px-1 focus:outline-none border  border-gray-400 rounded-md"
-                    placeholder="Search"
-                    value={searchDocDate}
-                    onChange={(e) => setSearchDocDate(e.target.value)}
-                  />
-                </th>
-                <th className="w-80  px-1 font-medium text-[13px]  text-gray-900  text-center ">
-                  <input
-                    type="text"
-                    className="text-black h-5   w-full   px-1 focus:outline-none border  border-gray-400 rounded-md"
-                    placeholder="Search"
-                    value={searchCustomer}
-                    onChange={(e) => setSearchCustomer(e.target.value)}
-                  />
-                </th>
-                <th className=" px-3 w-36  font-medium text-[13px]  text-gray-900  text-center "></th>
-                {showApprovalColumn && <th className="w-44 px-3"></th>}
-                {/* <th className="w-14   px-3  font-medium text-[13px]  text-gray-900  text-center "></th> */}
+            ) : allData?.data?.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={showApprovalColumn ? 6 : 5}
+                  className="px-6 py-10 text-center text-gray-500 italic"
+                >
+                  No records found
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white">
-              {isLoadingIndicator ? (
-                <tr>
-                  <td
-                    colSpan={showApprovalColumn ? 9 : 7}
-                    className="px-6 py-10 text-center"
-                  >
-                    <Loader />
-                  </td>
-                </tr>
-              ) : allData?.data?.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={showApprovalColumn ? 8 : 7}
-                    className="px-6 py-10 text-center text-gray-500 italic"
-                  >
-                    No records found
-                  </td>
-                </tr>
               ) : (
                 allData?.data?.map((item, index) => {
                   const totalAmount =
@@ -261,15 +278,17 @@ const ProformaInvoiceFabricReport = ({
                       }`}
                       onClick={() => onView(item.id)}
                     >
-                      <td className="text-center ">{index + 1}</td>
-                      <td className="py-1.5 text-center ">{item.docId}</td>
+                      <td className="w-14 min-w-[56px] text-center py-1.5">
+                        {(currentPageNumber - 1) * parseInt(dataPerPage) + index + 1}
+                      </td>
+                      <td className="w-48 min-w-[190px] py-1.5 text-center">{item.docId}</td>
                       {/* <td className="py-1.5 text-center">
                                                 {item.OrderEntry?.docId || "—"}
                                             </td> */}
-                      <td className="py-1.5 text-center">
+                      <td className="w-32 min-w-[128px] py-1.5 text-center">
                         {getDateFromDateTimeToDisplay(item.docDate)}
                       </td>
-                      <td className="py-1.5 text-left">
+                      <td className="w-80 min-w-[320px] py-1.5 text-left px-3">
                         {item.customer?.name}
                       </td>
                       {/* <td className="py-1.5 text-right px-3 ">
@@ -277,7 +296,7 @@ const ProformaInvoiceFabricReport = ({
                                             </td> */}
                       {showApprovalColumn && (
                         <td
-                          className="px-3 py-1 text-center"
+                          className="w-44 min-w-[176px] px-3 py-1 text-center"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {(() => {
@@ -383,7 +402,7 @@ const ProformaInvoiceFabricReport = ({
                           })()}
                         </td>
                       )}
-                      <td className="px-2 py-1">
+                      <td className="w-24 min-w-[96px] px-2 py-1 text-center">
                         <div
                           className="flex items-center justify-center gap-1"
                           onClick={(e) => e.stopPropagation()}
@@ -470,11 +489,10 @@ const ProformaInvoiceFabricReport = ({
             </tbody>
           </table>
         </div>
-        <div className="h-[10vh]">
+        <div className="flex-none">
           <Pagination />
         </div>
       </div>
-    </div>
   );
 };
 

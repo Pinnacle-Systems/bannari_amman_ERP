@@ -131,6 +131,8 @@ async function get(req) {
     serachDocNo,
     searchDocDate,
     searchOrderType,
+    searchOrderGridType,
+    orderGridType,
     finYearId,
     searchCustomer,
     isTakeOnlyFinshedJobCards,
@@ -150,6 +152,8 @@ async function get(req) {
   );
   let data;
   let totalCount;
+  const gridTypeFilter = searchOrderGridType || orderGridType;
+
   data = await prisma.orderEntry.findMany({
     where: {
       branchId: branchId ? parseInt(branchId) : undefined,
@@ -170,15 +174,30 @@ async function get(req) {
         : undefined,
       docId: Boolean(serachDocNo)
         ? {
-            contains: serachDocNo,
+            contains: serachDocNo.trim(),
+            mode: "insensitive",
           }
         : undefined,
       orderType: Boolean(searchOrderType)
-        ? { contains: searchOrderType }
+        ? {
+            contains: searchOrderType.trim(),
+            mode: "insensitive",
+          }
         : undefined,
-      customer: {
-        name: searchCustomer ? { contains: searchCustomer } : undefined,
-      },
+      orderGridType: Boolean(gridTypeFilter)
+        ? {
+            contains: gridTypeFilter.trim(),
+            mode: "insensitive",
+          }
+        : undefined,
+      customer: Boolean(searchCustomer)
+        ? {
+            name: {
+              contains: searchCustomer.trim(),
+              mode: "insensitive",
+            },
+          }
+        : undefined,
     },
     include: {
       customer: {
@@ -198,9 +217,18 @@ async function get(req) {
     },
   });
   if (searchDocDate) {
-    data = data?.filter((item) =>
-      String(getDateFromDateTime(item.createdAt)).includes(searchDocDate),
-    );
+    const trimmedDate = searchDocDate.trim().toLowerCase();
+    data = data?.filter((item) => {
+      const docDateStr = item.docDate
+        ? String(getDateFromDateTime(item.docDate)).toLowerCase()
+        : "";
+      const createdDateStr = item.createdAt
+        ? String(getDateFromDateTime(item.createdAt)).toLowerCase()
+        : "";
+      return (
+        docDateStr.includes(trimmedDate) || createdDateStr.includes(trimmedDate)
+      );
+    });
   }
   totalCount = data.length;
 
@@ -283,13 +311,6 @@ async function get(req) {
     };
   });
 
-  if (pagination) {
-    resolvedData = resolvedData.slice(
-      (pageNumber - 1) * parseInt(dataPerPage),
-      pageNumber * parseInt(dataPerPage),
-    );
-  }
-
   if (isTakeOnlyFinshedJobCards) {
     resolvedData = resolvedData.filter((order) => {
       if (!order.JobCard) return false;
@@ -301,6 +322,13 @@ async function get(req) {
         return lastProcess.status === "COMPLETED";
       });
     });
+    totalCount = resolvedData.length;
+  }
+
+  if (pagination === "true" || pagination === true) {
+    const page = parseInt(pageNumber, 10) || 1;
+    const perPage = parseInt(dataPerPage, 10) || 15;
+    resolvedData = resolvedData.slice((page - 1) * perPage, page * perPage);
   }
 
   return {
@@ -369,7 +397,7 @@ async function getOne(id) {
     },
   });
 
-  if (!data) return NoRecordFound("Purchase Inward");
+  if (!data) return NoRecordFound("Order Entry");
   const { module, hasApproval } = await getModuleApprovalSetup(
     REFERENCE_PAGE,
     data.branchId,
