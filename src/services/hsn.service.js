@@ -107,7 +107,7 @@ async function getSearch(req) {
   const { companyId, active } = req.query;
   const data = await prisma.hsn.findMany({
     where: {
-      companyId: companyId ? parseInt(companyId) : undefined,
+      // companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
       OR: [
         {
@@ -207,7 +207,7 @@ async function search(req) {
   }
 
   const where = {
-    ...(companyId ? { companyId: parseInt(companyId) } : {}),
+    // ...(companyId ? { companyId: parseInt(companyId) } : {}),
     ...(activeFilter !== undefined ? { active: activeFilter } : {}),
     ...(name && name.trim() !== ""
       ? { name: { contains: name.trim(), mode: "insensitive" } }

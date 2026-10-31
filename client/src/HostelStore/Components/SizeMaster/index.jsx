@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import secureLocalStorage from "react-secure-storage";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
@@ -51,7 +51,7 @@ export default function Form({ onSuccess, defaultName = "" }) {
     isFetching,
   } = useGetSizeMasterQuery({ params, searchParams: searchValue });
 
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     if (!allData?.data) return [];
     return allData.data.filter((item) => {
       const matchesName = searchSizeName
