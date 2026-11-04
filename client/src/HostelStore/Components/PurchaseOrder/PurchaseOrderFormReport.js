@@ -93,10 +93,6 @@ const PurchaseOrderFormReport = ({
   const currentPageId =
     (pageData?.data || []).find((i) => i.name === activeTab.name)?.id || "";
 
-  useEffect(() => {
-    console.log(currentPageId, "currentPageId");
-  }, [currentPageId]);
-
   const {
     data: allData,
     isFetching,

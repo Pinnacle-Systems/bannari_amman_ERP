@@ -14,6 +14,7 @@ import { UomMaster, ColorMaster } from "../index.js";
 import { YarnMaster } from "../../../Basic/components/index.js";
 import { TransactionGrid } from "../../../Basic/components/Reuseable/index.js";
 import { Plus } from "lucide-react";
+import YarnOrderProcess from "./yarnOrderProcess.jsx";
 
 const YarnItems = ({
   orderYarnItems,
@@ -31,6 +32,7 @@ const YarnItems = ({
   hsnList,
   colorList,
   yarnList,
+  processList,
 }) => {
   const styleItemRefs = useRef({});
   const { companyId } = getCommonParams();
@@ -38,12 +40,14 @@ const YarnItems = ({
   const EMPTY_ROW = {
     yarnId: "",
     hsnId: "",
-
     colorId: "",
     uomId: "",
     noOfbags: "",
     weightPerBag: "",
     qty: "",
+    wastePercentage: "",
+    requiredQty: "",
+    process: "No",
     price: "",
     amount: "",
     taxPercent: "",
@@ -51,10 +55,13 @@ const YarnItems = ({
     discountType: "",
     discountvalue: "",
     discounttype: "",
+    yarnOrderProcess: [],
   };
 
   const [contextMenu, setContextMenu] = useState(null);
   const [currentSelectedIndex, setCurrentSelectedIndex] = useState(null);
+  const [currentProcessSelectedIndex, setCurrentProcessSelectedIndex] =
+    useState(null);
 
   const [focusedField, setFocusedField] = useState(null);
   const gridWrapperRef = useRef(null);
@@ -115,6 +122,21 @@ const YarnItems = ({
       const qty = parseFloat(newItems[index].qty) || 0;
       const price = parseFloat(newItems[index].price) || 0;
       newItems[index].amount = (qty * price).toFixed(2);
+    }
+    if (
+      field === "noOfbags" ||
+      field === "weightPerBag" ||
+      field === "qty" ||
+      field === "wastePercentage"
+    ) {
+      const q = parseFloat(newItems[index].qty) || 0;
+      const waste = parseFloat(newItems[index].wastePercentage) || 0;
+      if (q > 0) {
+        const required = q + (q * waste) / 100;
+        newItems[index].requiredQty = required.toFixed(3);
+      } else {
+        newItems[index].requiredQty = "";
+      }
     }
     setYarnItems(newItems);
   };
@@ -201,6 +223,25 @@ const YarnItems = ({
         />
       </Modal>
 
+      <Modal
+        isOpen={Number.isInteger(currentProcessSelectedIndex)}
+        onClose={() => {
+          setCurrentProcessSelectedIndex(null);
+        }}
+        widthClass="!p-0 !rounded-xl overflow-hidden shadow-2xl w-[820px] h-[480px] max-w-[94vw] max-h-[90vh]"
+      >
+        <YarnOrderProcess
+          currentIndex={currentProcessSelectedIndex}
+          orderYarnItems={orderYarnItems}
+          setYarnItems={setYarnItems}
+          yarnList={yarnList}
+          colorList={colorList}
+          processList={processList}
+          readOnly={readOnly}
+          onClose={() => setCurrentProcessSelectedIndex(null)}
+        />
+      </Modal>
+
       <div
         ref={gridWrapperRef}
         className="w-full h-full min-h-0 min-w-0 flex flex-col overflow-hidden"
@@ -229,7 +270,7 @@ const YarnItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="min-w-[1450px] w-full border-collapse table-fixed"
+          tableClassName="min-w-[1700px] w-full border-collapse table-fixed"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           columns={[
             {
@@ -276,10 +317,25 @@ const YarnItems = ({
               key: "qty",
               label: (
                 <>
-                  Total Weight<span className="text-red-500">*</span>
+                  Total Weight/ Order Qty<span className="text-red-500">*</span>
                 </>
               ),
+              className: "w-36 px-1 py-2 text-center font-medium text-[11px]",
+            },
+            {
+              key: "wastePercentage",
+              label: "Loss %",
+              className: "w-20 px-1 py-2 text-center font-medium text-[11px]",
+            },
+            {
+              key: "requiredQty",
+              label: "Required Qty",
               className: "w-28 px-1 py-2 text-center font-medium text-[11px]",
+            },
+            {
+              key: "process",
+              label: "Process",
+              className: "w-24 px-1 py-2 text-center font-medium text-[11px]",
             },
             {
               key: "price",
@@ -326,6 +382,16 @@ const YarnItems = ({
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
+              <td className="border border-gray-300 bg-slate-50" />
+              <td className="text-right px-1 border border-gray-300">
+                {orderYarnItems
+                  ?.reduce(
+                    (sum, i) => sum + (parseFloat(i.requiredQty) || 0),
+                    0,
+                  )
+                  .toFixed(3)}
+              </td>
+              <td className="border border-gray-300 bg-slate-50" />
               <td className="text-right px-1 border border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderYarnItems
@@ -447,7 +513,7 @@ const YarnItems = ({
                 </td> */}
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] px-2"
+                  className="grid-editable-cell border border-gray-300 text-[11px] "
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -556,6 +622,112 @@ const YarnItems = ({
                     readOnly={true}
                     disabled={true}
                   />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-20 grid-editable-cell text-[11px] border border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.wastePercentage ?? ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "wastePercentage",
+                      )
+                    }
+                    onBlur={() => {
+                      const val = rowItem.wastePercentage;
+                      if (val !== "" && val !== undefined && val !== null) {
+                        const num = parseFloat(val);
+                        handleInputChange(
+                          !isNaN(num) ? num.toFixed(2) : "",
+                          originalIndex,
+                          "wastePercentage",
+                        );
+                      }
+                    }}
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-28 grid-editable-cell text-[11px] border border-gray-300 text-right"
+                >
+                  <input
+                    type="number"
+                    step="any"
+                    className="text-right px-3 w-full table-data-input bg-transparent"
+                    value={rowItem.requiredQty ?? ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        e.target.value,
+                        originalIndex,
+                        "requiredQty",
+                      )
+                    }
+                    onBlur={() => {
+                      const val = rowItem.requiredQty;
+                      if (val !== "" && val !== undefined && val !== null) {
+                        const num = parseFloat(val);
+                        handleInputChange(
+                          !isNaN(num) ? num.toFixed(3) : "",
+                          originalIndex,
+                          "requiredQty",
+                        );
+                      }
+                    }}
+                    readOnly={true}
+                  />
+                </td>
+                <td
+                  data-grid-row={index}
+                  data-grid-editable="true"
+                  className="w-24 grid-editable-cell border border-gray-300 text-left text-[11px]"
+                >
+                  <div className="flex items-center gap-1 w-full px-1 text-left">
+                    <div className="flex-1 min-w-0 text-left">
+                      <FxSelect
+                        value={rowItem.process || "No"}
+                        onChange={(val) => {
+                          handleInputChange(val, originalIndex, "process");
+                          if (val === "Yes") {
+                            setCurrentProcessSelectedIndex(originalIndex);
+                          }
+                        }}
+                        options={[
+                          { label: "No", value: "No" },
+                          { label: "Yes", value: "Yes" },
+                        ]}
+                        readOnly={readOnly}
+                        placeholder="No"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={
+                        !rowItem.yarnId || (rowItem.process || "No") !== "Yes"
+                      }
+                      className="text-indigo-600 p-0.5 hover:text-indigo-800 disabled:text-gray-300 disabled:opacity-40"
+                      onClick={() => {
+                        if (rowItem.process === "Yes") {
+                          setCurrentProcessSelectedIndex(originalIndex);
+                        }
+                      }}
+                      title={
+                        rowItem.process === "Yes"
+                          ? "Yarn Order Process"
+                          : "Set Process to Yes to open"
+                      }
+                    >
+                      {VIEW}
+                    </button>
+                  </div>
                 </td>
                 <td
                   data-grid-row={index}

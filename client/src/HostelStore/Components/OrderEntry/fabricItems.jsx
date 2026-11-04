@@ -82,6 +82,7 @@ const FabricItems = ({
     qty: "",
     wastePercentage: "",
     requiredQty: "",
+    process: "No",
     price: "",
     amount: "",
     taxPercent: "",
@@ -651,7 +652,7 @@ const FabricItems = ({
               key: "process",
               label: "Process",
               className:
-                "w-16 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-20 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
             },
             {
               key: "price",
@@ -716,7 +717,7 @@ const FabricItems = ({
                   .toFixed(3)}
               </td>
               <td className="w-14 border-r border-b border-gray-300 bg-slate-50" />
-              <td className="w-16 border-r border-b border-gray-300 bg-slate-50" />
+              <td className="w-28 border-r border-b border-gray-300 bg-slate-50" />
               <td className="w-28 text-right px-1 border-r border-b border-gray-300">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderFabricItems
@@ -1049,7 +1050,7 @@ const FabricItems = ({
                         );
                       }
                     }}
-                    readOnly={newFieldsReadOnly}
+                    readOnly={true}
                   />
                 </td>
                 <td
@@ -1075,19 +1076,46 @@ const FabricItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-editable="true"
-                  className="w-16 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
+                  className="w-20 grid-editable-cell border-r border-b border-gray-300 text-left text-[11px]"
                 >
-                  <button
-                    type="button"
-                    disabled={!rowItem.fabricId}
-                    className="text-indigo-600 w-full flex items-center justify-center hover:text-indigo-800 disabled:text-gray-300 table-data-input"
-                    onClick={() => {
-                      setCurrentFabricProcessSelectedIndex(originalIndex);
-                    }}
-                    title="Fabric Process Details"
-                  >
-                    {VIEW}
-                  </button>
+                  <div className="flex items-center gap-1 w-full px-1 text-left">
+                    <div className="flex-1 min-w-0 text-left">
+                      <FxSelect
+                        value={rowItem.process || "No"}
+                        onChange={(val) => {
+                          handleInputChange(val, originalIndex, "process");
+                          if (val === "Yes") {
+                            setCurrentFabricProcessSelectedIndex(originalIndex);
+                          }
+                        }}
+                        options={[
+                          { label: "No", value: "No" },
+                          { label: "Yes", value: "Yes" },
+                        ]}
+                        readOnly={newFieldsReadOnly}
+                        placeholder="No"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={
+                        !rowItem.fabricId || (rowItem.process || "No") !== "Yes"
+                      }
+                      className="text-indigo-600 p-0.5 hover:text-indigo-800 disabled:text-gray-300 disabled:opacity-40"
+                      onClick={() => {
+                        if (rowItem.process === "Yes") {
+                          setCurrentFabricProcessSelectedIndex(originalIndex);
+                        }
+                      }}
+                      title={
+                        rowItem.process === "Yes"
+                          ? "Fabric Process Details"
+                          : "Set Process to Yes to open"
+                      }
+                    >
+                      {VIEW}
+                    </button>
+                  </div>
                 </td>
                 <td
                   data-grid-row={index}

@@ -1140,6 +1140,7 @@ model Color {
   fabricYarnDetails      FabricYarnDetails[]
   yarnProcessColors      YarnProcessColors[]
   yarnProcessDetails     YarnProcessDetails[]
+  yarnOrderProcesses     YarnOrderProcess[]
 }
 
 model DeliveryInvoice {
@@ -2113,29 +2114,44 @@ model OrderEntry {
 }
 
 model OrderYarnItems {
-  id            Int            @id @default(autoincrement())
-  OrderEntry    OrderEntry     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId       Int
-  yarnId        Int?
-  yarn          YarnMaster?    @relation(fields: [yarnId], references: [id])
-  hsnId         Int?
-  hsn           Hsn?           @relation(fields: [hsnId], references: [id])
-  contentId     Int?
-  content       ContentMaster? @relation(fields: [contentId], references: [id])
-  countsId      Int?
-  counts        CountsMaster?  @relation(fields: [countsId], references: [id])
-  colorId       Int?
-  color         Color?         @relation(fields: [colorId], references: [id])
-  uomId         Int?
-  uom           Uom?           @relation(fields: [uomId], references: [id])
-  noOfbags      Int?
-  weightPerBag  Float?
-  qty           Float?
-  price         Float?
-  amount        Float?
-  taxPercent    Float?
-  discountType  String?
-  discountValue Float?
+  id               Int                @id @default(autoincrement())
+  OrderEntry       OrderEntry         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId          Int
+  yarnId           Int?
+  yarn             YarnMaster?        @relation(fields: [yarnId], references: [id])
+  hsnId            Int?
+  hsn              Hsn?               @relation(fields: [hsnId], references: [id])
+  contentId        Int?
+  content          ContentMaster?     @relation(fields: [contentId], references: [id])
+  countsId         Int?
+  counts           CountsMaster?      @relation(fields: [countsId], references: [id])
+  colorId          Int?
+  color            Color?             @relation(fields: [colorId], references: [id])
+  uomId            Int?
+  uom              Uom?               @relation(fields: [uomId], references: [id])
+  noOfbags         Int?
+  weightPerBag     Float?
+  qty              Float?
+  wastePercentage  Float?
+  requiredQty      Float?
+  process          String?
+  price            Float?
+  amount           Float?
+  taxPercent       Float?
+  discountType     String?
+  discountValue    Float?
+  yarnOrderProcess YarnOrderProcess[]
+}
+
+model YarnOrderProcess {
+  id               Int            @id @default(autoincrement())
+  OrderYarnItems   OrderYarnItems @relation(fields: [orderYarnItemsId], references: [id], onDelete: Cascade)
+  orderYarnItemsId Int
+  rowId            String?
+  processId        Int?
+  process          Process?       @relation(fields: [processId], references: [id])
+  colorId          Int?
+  color            Color?         @relation(fields: [colorId], references: [id])
 }
 
 model OrderFabricItems {
@@ -2171,6 +2187,7 @@ model OrderFabricItems {
   qty               Float?
   wastePercentage   Float?
   requiredQty       Float?
+  process           String?
   price             Float?
   amount            Float?
   taxPercent        Float?
@@ -3217,6 +3234,7 @@ model Process {
   processGroupList   ProcessGroupList[]
   yarnProcessDetails YarnProcessDetails[]
   fabricProcess      FabricProcess[]
+  yarnOrderProcesses YarnOrderProcess[]
 }
 
 model ProcessGroup {
