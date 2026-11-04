@@ -1,6 +1,14 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const countryChildRecordSelect = {
+  state: true,
+};
+
+const getCountryChildRecordCount = (counts) => {
+  return counts?.state ?? 0;
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.country.findMany({
@@ -10,9 +18,7 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          state: true,
-        },
+        select: countryChildRecordSelect,
       },
     },
   });
@@ -20,22 +26,30 @@ async function get(req) {
     statusCode: 0,
     data: data.map((country) => ({
       ...country,
-      childRecord: country?._count.state,
+      childRecord: getCountryChildRecordCount(country?._count),
     })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.state.count({
-    where: { countryId: parseInt(id) },
-  });
   const data = await prisma.country.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: countryChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("Country");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getCountryChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

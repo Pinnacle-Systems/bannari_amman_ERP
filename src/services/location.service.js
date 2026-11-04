@@ -2,6 +2,23 @@ import { prisma } from "../lib/prisma.js";
 
 import { NoRecordFound } from "../configs/Responses.js";
 
+const locationChildRecordSelect = {
+  purchaseInwards: true,
+  stocks: true,
+  purchaseInwardReturns: true,
+  purchaseCancels: true,
+};
+
+const getLocationChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.purchaseInwards || 0) +
+    (counts.stocks || 0) +
+    (counts.purchaseInwardReturns || 0) +
+    (counts.purchaseCancels || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.location.findMany({
@@ -11,10 +28,7 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          purchaseInwards: true,
-          purchaseCancels: true,
-        },
+        select: locationChildRecordSelect,
       },
       Location: {
         select: {
@@ -25,28 +39,32 @@ async function get(req) {
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.purchaseInwards + item._count.purchaseCancels,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getLocationChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.purchaseInward.count({
-    where: {
-      locationId: parseInt(id),
-    },
-  });
   const data = await prisma.location.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: locationChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("location");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getLocationChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

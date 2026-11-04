@@ -1561,7 +1561,7 @@ const PurchaseOrderForm = ({
 
   const deliveryDetailsFields = (
     <>
-      <div className="col-span-1">
+      <div className="col-span-1 min-w-0">
         <DropdownInput
           name="Delivery Type"
           options={deliveryTypes}
@@ -1572,48 +1572,39 @@ const PurchaseOrderForm = ({
           className={`${compactFieldClass} ${fieldWidthShort}`}
         />
       </div>
-      <div className="col-span-2">
-        {deliveryType == "ToSelf" ? (
-          <DropdownInput
-            name="Delivery To"
-            options={
-              deliveryType === "ToSelf"
-                ? dropDownListObject(
-                    branchList ? branchList.data : [],
-                    "branchName",
-                    "id",
-                  )
-                : dropDownListObject(allSuppliers, "name", "id")
-            }
-            value={deliveryToId}
-            setValue={setDeliveryToId}
-            required={true}
-            readOnly={isCoreLocked}
-            className={compactFieldClass}
-          />
-        ) : (
-          <DropdownWithModal
-            name="Delivery To"
-            options={dropDownListObject(
-              id
-                ? supplierList?.data
-                : supplierList?.data?.filter((item) => item?.active),
-              "name",
-              "id",
-            )}
-            value={deliveryToId}
-            setValue={setDeliveryToId}
-            required={true}
-            readOnly={isCoreLocked}
-            className={compactModalFieldClass}
-            dropdownMinWidth={partyDropdownMinWidth}
-            addNewLabel="+ Add New Customer"
-            childComponent={PartyMaster}
-            addNewModalWidth="w-[90%] h-[95%]"
-          />
-        )}
+      <div className="col-span-2 min-w-0">
+        <DropdownWithModal
+          name="Delivery To"
+          options={
+            deliveryType === "ToSelf"
+              ? dropDownListObject(
+                  branchList ? branchList.data : [],
+                  "branchName",
+                  "id",
+                )
+              : dropDownListObject(
+                  id
+                    ? supplierList?.data
+                    : supplierList?.data?.filter((item) => item?.active),
+                  "name",
+                  "id",
+                )
+          }
+          value={deliveryToId}
+          setValue={setDeliveryToId}
+          required={true}
+          readOnly={isCoreLocked}
+          className={compactModalFieldClass}
+          dropdownMinWidth={partyDropdownMinWidth}
+          searchable={true}
+          addNewLabel={
+            deliveryType === "ToSelf" ? undefined : "+ Add New Customer"
+          }
+          childComponent={deliveryType === "ToSelf" ? null : PartyMaster}
+          addNewModalWidth="w-[90%] h-[95%]"
+        />
       </div>
-      <div className="col-span-1">
+      <div className="col-span-1 min-w-0">
         <DateInputNew
           name="Delivery Date"
           value={dueDate}
@@ -1853,45 +1844,36 @@ const PurchaseOrderForm = ({
         />
       </div>
       <div className="min-w-0">
-        {deliveryType == "ToSelf" ? (
-          <DropdownInput
-            name="Delivery To"
-            options={
-              deliveryType === "ToSelf"
-                ? dropDownListObject(
-                    branchList ? branchList.data : [],
-                    "branchName",
-                    "id",
-                  )
-                : dropDownListObject(allSuppliers, "name", "id")
-            }
-            value={deliveryToId}
-            setValue={setDeliveryToId}
-            required={true}
-            readOnly={readOnly}
-            className={compactFieldClass}
-          />
-        ) : (
-          <DropdownWithModal
-            name="Delivery To"
-            options={dropDownListObject(
-              id
-                ? supplierList?.data
-                : supplierList?.data?.filter((item) => item?.active),
-              "name",
-              "id",
-            )}
-            value={deliveryToId}
-            setValue={setDeliveryToId}
-            required={true}
-            readOnly={readOnly}
-            className={compactModalFieldClass}
-            dropdownMinWidth={partyDropdownMinWidth}
-            addNewLabel="+ Add New Customer"
-            childComponent={PartyMaster}
-            addNewModalWidth="w-[90%] h-[95%]"
-          />
-        )}
+        <DropdownWithModal
+          name="Delivery To"
+          options={
+            deliveryType === "ToSelf"
+              ? dropDownListObject(
+                  branchList ? branchList.data : [],
+                  "branchName",
+                  "id",
+                )
+              : dropDownListObject(
+                  id
+                    ? supplierList?.data
+                    : supplierList?.data?.filter((item) => item?.active),
+                  "name",
+                  "id",
+                )
+          }
+          value={deliveryToId}
+          setValue={setDeliveryToId}
+          required={true}
+          readOnly={readOnly}
+          className={compactModalFieldClass}
+          dropdownMinWidth={partyDropdownMinWidth}
+          searchable={true}
+          addNewLabel={
+            deliveryType === "ToSelf" ? undefined : "+ Add New Customer"
+          }
+          childComponent={deliveryType === "ToSelf" ? null : PartyMaster}
+          addNewModalWidth="w-[90%] h-[95%]"
+        />
       </div>
       <div className={narrowFieldWrap}>
         <DateInputNew

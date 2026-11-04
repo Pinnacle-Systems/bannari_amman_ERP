@@ -12,6 +12,8 @@ async function get(req) {
       _count: {
         select: {
           fabricItems: true,
+          orderFabricItems: true,
+          poFabricItems: true,
         },
       },
     },
@@ -21,7 +23,10 @@ async function get(req) {
     statusCode: 0,
     data: data.map((fabricMaster) => ({
       ...fabricMaster,
-      childRecord: fabricMaster?._count.fabricItems,
+      childRecord:
+        fabricMaster?._count.fabricItems +
+        fabricMaster?._count.orderFabricItems +
+        fabricMaster?._count.poFabricItems,
     })),
   };
 }
@@ -32,13 +37,31 @@ async function getOne(id) {
       fabricId: parseInt(id),
     },
   });
+  const orderFabricItems = await prisma.orderFabricItems.count({
+    where: {
+      fabricId: parseInt(id),
+    },
+  });
+  const poFabricItems = await prisma.poFabricItems.count({
+    where: {
+      fabricId: parseInt(id),
+    },
+  });
   const data = await prisma.fabricMaster.findUnique({
     where: {
       id: parseInt(id),
     },
   });
   if (!data) return NoRecordFound("Fabric Master");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      ...{
+        childRecord: childRecord + orderFabricItems + poFabricItems,
+      },
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -185,4 +208,3 @@ async function search(req) {
 }
 
 export { get, getOne, getSearch, search, create, update, remove };
-

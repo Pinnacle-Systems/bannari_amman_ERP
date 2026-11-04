@@ -1,6 +1,49 @@
 import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
+const cityChildRecordSelect = {
+  doctorLocalCity: true,
+  doctorPermCity: true,
+  Party: true,
+  PartyBranch: true,
+  bank: true,
+  proformaInvoiceDelivery: true,
+  proformaInvoiceLoading: true,
+  orderEntryDelivery: true,
+  orderEntryLoading: true,
+  SalesOrderDelivery: true,
+  SalesOrderLoading: true,
+  SalesDeliveryDelivery: true,
+  SalesDeliveryLoading: true,
+  SalesBillEntryLoading: true,
+  SalesBillEntryDelivery: true,
+  ProformaInvoiceYarnDelivery: true,
+  ProformaInvoiceYarnLoading: true,
+};
+
+const getCityChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.doctorLocalCity || 0) +
+    (counts.doctorPermCity || 0) +
+    (counts.Party || 0) +
+    (counts.PartyBranch || 0) +
+    (counts.bank || 0) +
+    (counts.proformaInvoiceDelivery || 0) +
+    (counts.proformaInvoiceLoading || 0) +
+    (counts.orderEntryDelivery || 0) +
+    (counts.orderEntryLoading || 0) +
+    (counts.SalesOrderDelivery || 0) +
+    (counts.SalesOrderLoading || 0) +
+    (counts.SalesDeliveryDelivery || 0) +
+    (counts.SalesDeliveryLoading || 0) +
+    (counts.SalesBillEntryLoading || 0) +
+    (counts.SalesBillEntryDelivery || 0) +
+    (counts.ProformaInvoiceYarnDelivery || 0) +
+    (counts.ProformaInvoiceYarnLoading || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   let data;
@@ -13,24 +56,6 @@ async function get(req) {
       },
       active: active ? Boolean(active) : undefined,
     },
-    // select: {
-    //     name: true,
-    //     code: true,
-    //     active: true
-    //     , id: true,
-    //     stateId: true,
-    //     state: {
-    //         select: {
-    //             name: true,
-
-    //             country: {
-    //                 select: {
-    //                     name: true
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
     include: {
       state: {
         select: {
@@ -43,40 +68,28 @@ async function get(req) {
         },
       },
       _count: {
-        select: {
-          Party: true,
-          proformaInvoiceDelivery: true,
-          proformaInvoiceLoading: true,
-        },
+        select: cityChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: (data = data.map((order) => ({
+    data: data.map((order) => ({
       ...order,
-      childRecord:
-        order?._count.Party +
-        order?._count.proformaInvoiceDelivery +
-        order?._count.proformaInvoiceLoading,
-    }))),
+      childRecord: getCityChildRecordCount(order?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecordParty = await prisma.party.count({
-    where: { cityId: parseInt(id) },
-  });
-  const childRecordPiDelivery = await prisma.proformaInvoice.count({
-    where: { deliveryId: parseInt(id) },
-  });
-  const childRecordPiLoading = await prisma.proformaInvoice.count({
-    where: { loadingId: parseInt(id) },
-  });
-
   const data = await prisma.city.findUnique({
     where: {
       id: parseInt(id),
+    },
+    include: {
+      _count: {
+        select: cityChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("City");
@@ -84,10 +97,7 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      ...{
-        childRecord:
-          childRecordParty + childRecordPiDelivery + childRecordPiLoading,
-      },
+      childRecord: getCityChildRecordCount(data?._count),
     },
   };
 }

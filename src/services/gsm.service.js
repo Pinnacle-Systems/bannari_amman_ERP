@@ -2,6 +2,49 @@ import { NoRecordFound } from "../configs/Responses.js";
 
 import { prisma } from "../lib/prisma.js";
 
+const gsmChildRecordSelect = {
+  styleItems: true,
+  poItems: true,
+  inwardItems: true,
+  purchaseReturnItems: true,
+  purchaseCancelItems: true,
+  purchaseBillEntryItems: true,
+  stocks: true,
+  orderItems: true,
+  proformaInvoiceItems: true,
+  SalesOrderItems: true,
+  PackingItems: true,
+  SalesDeliveryItems: true,
+  SalesReturnItems: true,
+  SalesBillEntryItems: true,
+  fabricItems: true,
+  orderFabricItems: true,
+  poFabricItems: true,
+};
+
+const getGsmChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.styleItems || 0) +
+    (counts.poItems || 0) +
+    (counts.inwardItems || 0) +
+    (counts.purchaseReturnItems || 0) +
+    (counts.purchaseCancelItems || 0) +
+    (counts.purchaseBillEntryItems || 0) +
+    (counts.stocks || 0) +
+    (counts.orderItems || 0) +
+    (counts.proformaInvoiceItems || 0) +
+    (counts.SalesOrderItems || 0) +
+    (counts.PackingItems || 0) +
+    (counts.SalesDeliveryItems || 0) +
+    (counts.SalesReturnItems || 0) +
+    (counts.SalesBillEntryItems || 0) +
+    (counts.fabricItems || 0) +
+    (counts.orderFabricItems || 0) +
+    (counts.poFabricItems || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.gsm.findMany({
@@ -11,37 +54,38 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          styleItems: true,
-          poItems: true,
-          inwardItems: true,
-        },
+        select: gsmChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord:
-          item._count.styleItems +
-          item._count.poItems +
-          item._count.inwardItems,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getGsmChildRecordCount(item?._count),
+    })),
   };
 }
 
 async function getOne(id) {
-  const childRecord = 0;
   const data = await prisma.gsm.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: gsmChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("gsm");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getGsmChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {
@@ -162,11 +206,7 @@ async function search(req) {
     ...(hasPagination ? { skip, take: limitVal } : {}),
     include: {
       _count: {
-        select: {
-          styleItems: true,
-          poItems: true,
-          inwardItems: true,
-        },
+        select: gsmChildRecordSelect,
       },
     },
     orderBy: { id: "asc" },
@@ -176,10 +216,7 @@ async function search(req) {
     statusCode: 0,
     data: data.map((item) => ({
       ...item,
-      childRecord:
-        item._count.styleItems +
-        item._count.poItems +
-        item._count.inwardItems,
+      childRecord: getGsmChildRecordCount(item?._count),
     })),
     totalCount,
     totalPages: hasPagination ? Math.ceil(totalCount / limitVal) : 1,

@@ -374,7 +374,11 @@ async function getOne(id) {
           docId: true,
         },
       },
-      orderYarnItems: true,
+      orderYarnItems: {
+        include: {
+          yarnOrderProcess: true,
+        },
+      },
       orderFabricItems: {
         include: {
           fabricYarnDetails: {
@@ -545,6 +549,17 @@ const mapFabricProcess = (rawProcesses) => {
     }));
 };
 
+const mapYarnOrderProcess = (rawProcesses) => {
+  const processes = safeJsonParse(rawProcesses);
+  return processes
+    .filter((yp) => yp && (yp.processId || yp.processId === 0))
+    .map((yp) => ({
+      rowId: yp.rowId ? String(yp.rowId) : null,
+      processId: yp.processId ? parseInt(yp.processId) : null,
+      colorId: yp.colorId ? parseInt(yp.colorId) : null,
+    }));
+};
+
 async function create(body) {
   const {
     userId,
@@ -650,6 +665,7 @@ async function create(body) {
                 item.requiredQty != null && item.requiredQty !== ""
                   ? parseFloat(item.requiredQty)
                   : null,
+              process: item.process || "No",
               price: parseFloat(item.price || 0),
               amount: item.amount ? parseFloat(item.amount) : null,
               taxPercent: parseFloat(item.taxPercent || 0),
@@ -673,22 +689,40 @@ async function create(body) {
 
   const safeYarnItems =
     parsedyarnItems?.length > 0
-      ? parsedyarnItems.map((item) => ({
-          yarnId: item.yarnId ? parseInt(item.yarnId) : null,
-          hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-          colorId: item.colorId ? parseInt(item.colorId) : null,
+      ? parsedyarnItems.map((item) => {
+          const safeYarnProcess = mapYarnOrderProcess(item.yarnOrderProcess);
+          return {
+            yarnId: item.yarnId ? parseInt(item.yarnId) : null,
+            hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+            colorId: item.colorId ? parseInt(item.colorId) : null,
 
-          uomId: item.uomId ? parseInt(item.uomId) : null,
-          noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
+            uomId: item.uomId ? parseInt(item.uomId) : null,
+            noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
 
-          weightPerBag: parseFloat(item.weightPerBag || 0),
-          qty: parseFloat(item.qty || 0),
-          price: parseFloat(item.price || 0),
-          amount: item.amount ? parseFloat(item.amount) : null,
-          taxPercent: parseFloat(item.taxPercent || 0),
-          discountType: item.discountType,
-          discountValue: parseFloat(item.discountValue || 0),
-        }))
+            weightPerBag: parseFloat(item.weightPerBag || 0),
+            qty: parseFloat(item.qty || 0),
+            wastePercentage:
+              item.wastePercentage != null && item.wastePercentage !== ""
+                ? parseFloat(item.wastePercentage)
+                : null,
+            requiredQty:
+              item.requiredQty != null && item.requiredQty !== ""
+                ? parseFloat(item.requiredQty)
+                : null,
+            process: item.process || "No",
+            price: parseFloat(item.price || 0),
+            amount: item.amount ? parseFloat(item.amount) : null,
+            taxPercent: parseFloat(item.taxPercent || 0),
+            discountType: item.discountType,
+            discountValue: parseFloat(item.discountValue || 0),
+            yarnOrderProcess:
+              safeYarnProcess.length > 0
+                ? {
+                    create: safeYarnProcess,
+                  }
+                : undefined,
+          };
+        })
       : [];
 
   await prisma.$transaction(async (tx) => {
@@ -857,7 +891,11 @@ async function update(id, body, files) {
     include: {
       attachments: { select: { id: true, filePath: true } },
       orderFabricItems: true,
-      orderYarnItems: true,
+      orderYarnItems: {
+        include: {
+          yarnOrderProcess: true,
+        },
+      },
     },
   });
   if (!dataFound) return NoRecordFound("Order Entry");
@@ -994,6 +1032,7 @@ async function update(id, body, files) {
                     item.requiredQty != null && item.requiredQty !== ""
                       ? parseFloat(item.requiredQty)
                       : null,
+                  process: item.process || "No",
                   price: parseFloat(item.price || 0),
                   amount: item.amount ? parseFloat(item.amount) : null,
                   taxPercent: parseFloat(item.taxPercent || 0),
@@ -1058,6 +1097,7 @@ async function update(id, body, files) {
                   item.requiredQty != null && item.requiredQty !== ""
                     ? parseFloat(item.requiredQty)
                     : null,
+                process: item.process || "No",
                 price: parseFloat(item.price || 0),
                 amount: item.amount ? parseFloat(item.amount) : null,
                 taxPercent: parseFloat(item.taxPercent || 0),
@@ -1085,9 +1125,50 @@ async function update(id, body, files) {
             : {},
           update: parsedYarnItems
             .filter((item) => item.id)
-            .map((item) => ({
-              where: { id: parseInt(item.id) },
-              data: {
+            .map((item) => {
+              const safeYarnProcess = mapYarnOrderProcess(
+                item.yarnOrderProcess,
+              );
+              return {
+                where: { id: parseInt(item.id) },
+                data: {
+                  yarnId: item.yarnId ? parseInt(item.yarnId) : null,
+                  hsnId: item.hsnId ? parseInt(item.hsnId) : null,
+                  colorId: item.colorId ? parseInt(item.colorId) : null,
+                  uomId: item.uomId ? parseInt(item.uomId) : null,
+                  noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
+                  weightPerBag: parseFloat(item.weightPerBag || 0),
+                  qty: parseFloat(item.qty || 0),
+                  wastePercentage:
+                    item.wastePercentage != null && item.wastePercentage !== ""
+                      ? parseFloat(item.wastePercentage)
+                      : null,
+                  requiredQty:
+                    item.requiredQty != null && item.requiredQty !== ""
+                      ? parseFloat(item.requiredQty)
+                      : null,
+                  process: item.process || "No",
+                  price: parseFloat(item.price || 0),
+                  amount: item.amount ? parseFloat(item.amount) : null,
+                  taxPercent: parseFloat(item.taxPercent || 0),
+                  discountType: item.discountType || null,
+                  discountValue: parseFloat(item.discountValue || 0),
+                  yarnOrderProcess: {
+                    deleteMany: {},
+                    ...(safeYarnProcess.length > 0 && {
+                      create: safeYarnProcess,
+                    }),
+                  },
+                },
+              };
+            }),
+          create: parsedYarnItems
+            .filter((item) => !item.id)
+            .map((item) => {
+              const safeYarnProcess = mapYarnOrderProcess(
+                item.yarnOrderProcess,
+              );
+              return {
                 yarnId: item.yarnId ? parseInt(item.yarnId) : null,
                 hsnId: item.hsnId ? parseInt(item.hsnId) : null,
                 colorId: item.colorId ? parseInt(item.colorId) : null,
@@ -1095,29 +1176,28 @@ async function update(id, body, files) {
                 noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
                 weightPerBag: parseFloat(item.weightPerBag || 0),
                 qty: parseFloat(item.qty || 0),
+                wastePercentage:
+                  item.wastePercentage != null && item.wastePercentage !== ""
+                    ? parseFloat(item.wastePercentage)
+                    : null,
+                requiredQty:
+                  item.requiredQty != null && item.requiredQty !== ""
+                    ? parseFloat(item.requiredQty)
+                    : null,
+                process: item.process || "No",
                 price: parseFloat(item.price || 0),
                 amount: item.amount ? parseFloat(item.amount) : null,
                 taxPercent: parseFloat(item.taxPercent || 0),
                 discountType: item.discountType || null,
                 discountValue: parseFloat(item.discountValue || 0),
-              },
-            })),
-          create: parsedYarnItems
-            .filter((item) => !item.id)
-            .map((item) => ({
-              yarnId: item.yarnId ? parseInt(item.yarnId) : null,
-              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-              colorId: item.colorId ? parseInt(item.colorId) : null,
-              uomId: item.uomId ? parseInt(item.uomId) : null,
-              noOfbags: item.noOfbags ? parseInt(item.noOfbags) : null,
-              weightPerBag: parseFloat(item.weightPerBag || 0),
-              qty: parseFloat(item.qty || 0),
-              price: parseFloat(item.price || 0),
-              amount: item.amount ? parseFloat(item.amount) : null,
-              taxPercent: parseFloat(item.taxPercent || 0),
-              discountType: item.discountType || null,
-              discountValue: parseFloat(item.discountValue || 0),
-            })),
+                yarnOrderProcess:
+                  safeYarnProcess.length > 0
+                    ? {
+                        create: safeYarnProcess,
+                      }
+                    : undefined,
+              };
+            }),
         },
 
         attachments: {

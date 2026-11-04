@@ -12,6 +12,9 @@ async function get(req) {
       _count: {
         select: {
           yarnItems: true,
+          orderYarnItems: true,
+          poYarnItems: true,
+          fabricYarnDetails: true,
         },
       },
       CountsMaster: true,
@@ -31,10 +34,11 @@ async function get(req) {
     statusCode: 0,
     data: data.map((yarnMaster) => ({
       ...yarnMaster,
-      childRecord: yarnMaster?._count.yarnItems,
-      // yarnMaster?._count.InwardItems +
-      //     yarnMaster?._count.Stock +
-      //     yarnMaster?._count.poItems,
+      childRecord:
+        yarnMaster?._count.yarnItems +
+        yarnMaster?._count.orderYarnItems +
+        yarnMaster?._count.poYarnItems +
+        yarnMaster?._count.fabricYarnDetails,
     })),
   };
 }
@@ -48,6 +52,9 @@ async function getOne(id) {
       _count: {
         select: {
           yarnItems: true,
+          orderYarnItems: true,
+          poYarnItems: true,
+          fabricYarnDetails: true,
         },
       },
       CountsMaster: true,
@@ -65,8 +72,11 @@ async function getOne(id) {
     statusCode: 0,
     data: {
       ...data,
-      childRecord: data?._count.yarnItems,
-      //     data?._count.InwardItems + data?._count.Stock + data?._count.poItems,
+      childRecord:
+        data?._count.yarnItems +
+        data?._count.orderYarnItems +
+        data?._count.poYarnItems +
+        data?._count.fabricYarnDetails,
     },
   };
 }
@@ -318,4 +328,3 @@ async function search(req) {
 }
 
 export { get, getOne, getSearch, search, create, update, remove };
-

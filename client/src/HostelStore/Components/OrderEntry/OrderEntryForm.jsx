@@ -117,6 +117,7 @@ const EMPTY_FABRIC_ROW = {
   qty: "",
   wastePercentage: "",
   requiredQty: "",
+  process: "No",
   price: "",
   amount: "",
   taxPercent: "",
@@ -134,11 +135,15 @@ const EMPTY_YARN_ROW = {
   noOfbags: "",
   weightPerBag: "",
   qty: "",
+  wastePercentage: "",
+  requiredQty: "",
+  process: "No",
   price: "",
   amount: "",
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
+  yarnOrderProcess: [],
 };
 
 const padFabricItems = (itemsArray = [], minLength = 10) => {
@@ -398,6 +403,7 @@ const OrderEntryForm = ({
         fabricProcess: Array.isArray(item?.fabricProcess)
           ? item.fabricProcess
           : [],
+        process: item?.process || "No",
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -406,6 +412,18 @@ const OrderEntryForm = ({
 
       const mappedYarnItems = data?.orderYarnItems?.map((item) => ({
         ...item,
+        wastePercentage:
+          item?.wastePercentage != null
+            ? Number(item?.wastePercentage)?.toFixed(2)
+            : "",
+        requiredQty:
+          item?.requiredQty != null
+            ? Number(item?.requiredQty)?.toFixed(3)
+            : "",
+        process: item?.process || "No",
+        yarnOrderProcess: Array.isArray(item?.yarnOrderProcess)
+          ? item.yarnOrderProcess
+          : [],
         weightPerBag: item?.weightPerBag?.toFixed(3),
         qty: item?.qty?.toFixed(3),
         price: item?.price?.toFixed(2),
@@ -485,7 +503,14 @@ const OrderEntryForm = ({
           })),
         fabricProcess: (item.fabricProcess || []).filter((fp) => fp.processId),
       })),
-    orderYarnItems: orderYarnItems?.filter((i) => i.yarnId),
+    orderYarnItems: orderYarnItems
+      ?.filter((i) => i.yarnId)
+      ?.map((item) => ({
+        ...item,
+        yarnOrderProcess: (item.yarnOrderProcess || []).filter(
+          (yp) => yp.processId,
+        ),
+      })),
     termsAndCondition,
     termsId,
     remarks,
@@ -2531,6 +2556,7 @@ const OrderEntryForm = ({
               hsnList={hsnList}
               colorList={colorList}
               yarnList={yarnList}
+              processList={processList}
               id={id}
               termsRef={termsRef}
               childRecord={childRecord}

@@ -20,6 +20,14 @@ const xprisma = prisma.$extends({
   },
 });
 
+const employeeChildRecordSelect = {
+  User: true,
+};
+
+const getEmployeeChildRecordCount = (counts) => {
+  return counts?.User ?? 0;
+};
+
 async function getPaginated(req) {
   const { pageNumber, dataPerPage, branchId, active, searchKey } = req.query;
   const totalCount = await xprisma.employee.count({
@@ -85,11 +93,22 @@ async function getPaginated(req) {
     },
     include: {
       EmployeeCategory: true,
+      _count: {
+        select: employeeChildRecordSelect,
+      },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((d) => exclude({ ...d }, ["image"])),
+    data: data.map((d) =>
+      exclude(
+        {
+          ...d,
+          childRecord: getEmployeeChildRecordCount(d?._count),
+        },
+        ["image"]
+      )
+    ),
     totalCount,
   };
 }
@@ -112,26 +131,25 @@ async function get(req) {
       },
       EmployeeCategory: true,
       _count: {
-        select: {
-          User: true,
-        },
+        select: employeeChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
     data: data.map((item) =>
-      exclude({ ...item, childRecord: item?._count?.User }, ["image"]),
+      exclude(
+        {
+          ...item,
+          childRecord: getEmployeeChildRecordCount(item?._count),
+        },
+        ["image"]
+      ),
     ),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.user.count({
-    where: { employeeId: parseInt(id) },
-  });
-
-  console.log(childRecord, "childRecord");
   const data = await xprisma.employee.findUnique({
     where: {
       id: parseInt(id),
@@ -153,10 +171,22 @@ async function getOne(id) {
         },
       },
       EmployeeCategory: true,
+      _count: {
+        select: employeeChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("Employee");
-  return { statusCode: 0, data: exclude({ ...data, childRecord }, ["image"]) };
+  return {
+    statusCode: 0,
+    data: exclude(
+      {
+        ...data,
+        childRecord: getEmployeeChildRecordCount(data?._count),
+      },
+      ["image"]
+    ),
+  };
 }
 
 async function getSearch(req) {

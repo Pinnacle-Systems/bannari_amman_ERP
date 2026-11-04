@@ -14,6 +14,12 @@ async function get(req) {
         select: {
           pos: true,
           proformaInvoices: true,
+          salesDeliveries: true,
+          orderEntries: true,
+          SalesOrder: true,
+          SalesReturn: true,
+          SalesBillEntry: true,
+          proformaInvoiceYarns: true,
         },
       },
     },
@@ -23,25 +29,59 @@ async function get(req) {
     data: data.map((item) => {
       return {
         ...item,
-        childRecord: item._count.pos + item._count.proformaInvoices,
+        childRecord:
+          item._count.pos +
+          item._count.proformaInvoices +
+          item._count.salesDeliveries +
+          item._count.orderEntries +
+          item._count.SalesOrder +
+          item._count.SalesReturn +
+          item._count.SalesBillEntry +
+          item._count.proformaInvoiceYarns,
       };
     }),
   };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.po.count({
-    where: { payTermId: parseInt(id) },
-  });
   const data = await prisma.payTerm.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: {
+          pos: true,
+          proformaInvoices: true,
+          salesDeliveries: true,
+          orderEntries: true,
+          SalesOrder: true,
+          SalesReturn: true,
+          SalesBillEntry: true,
+          proformaInvoiceYarns: true,
+        },
+      },
+    },
   });
   if (!data) return NoRecordFound("payTerm");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      ...{
+        childRecord:
+          data?._count.pos +
+          data?._count.proformaInvoices +
+          data?._count.salesDeliveries +
+          data?._count.orderEntries +
+          data?._count.SalesOrder +
+          data?._count.SalesReturn +
+          data?._count.SalesBillEntry +
+          data?._count.proformaInvoiceYarns,
+      },
+    },
+  };
 }
-
 async function getSearch(req) {
   const { searchKey } = req.params;
   const { companyId, active } = req.query;

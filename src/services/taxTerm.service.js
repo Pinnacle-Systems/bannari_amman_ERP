@@ -2,6 +2,15 @@ import { prisma } from "../lib/prisma.js";
 
 import { NoRecordFound } from "../configs/Responses.js";
 
+const taxTermChildRecordSelect = {
+  TaxTemplateDetails: true,
+};
+
+const getTaxTermChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return counts.TaxTemplateDetails || 0;
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.taxTerm.findMany({
@@ -11,20 +20,16 @@ async function get(req) {
     },
     include: {
       _count: {
-        select: {
-          TaxTemplateDetails: true,
-        },
+        select: taxTermChildRecordSelect,
       },
     },
   });
   return {
     statusCode: 0,
-    data: data.map((item) => {
-      return {
-        ...item,
-        childRecord: item._count.TaxTemplateDetails,
-      };
-    }),
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getTaxTermChildRecordCount(item?._count),
+    })),
   };
 }
 
@@ -33,14 +38,20 @@ async function getOne(id) {
     where: {
       id: parseInt(id),
     },
-  });
-  const childRecord = await prisma.taxTemplateDetails.count({
-    where: {
-      taxTermId: data.id,
+    include: {
+      _count: {
+        select: taxTermChildRecordSelect,
+      },
     },
   });
   if (!data) return NoRecordFound("taxTerm");
-  return { statusCode: 0, data: { ...data, ...{ childRecord } } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getTaxTermChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

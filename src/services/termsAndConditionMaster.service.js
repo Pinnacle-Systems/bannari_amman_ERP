@@ -3,6 +3,33 @@ import { prisma } from "../lib/prisma.js";
 import { NoRecordFound } from "../configs/Responses.js";
 
 
+const termsAndConditionsChildRecordSelect = {
+  pos: true,
+  purchaseInwardReturns: true,
+  purchaseCancels: true,
+  orderEntries: true,
+  proformaInvoices: true,
+  salesDeliveries: true,
+  SalesOrder: true,
+  SalesReturn: true,
+  proformaInvoiceYarns: true,
+};
+
+const getTermsAndConditionsChildRecordCount = (counts) => {
+  if (!counts) return 0;
+  return (
+    (counts.pos || 0) +
+    (counts.purchaseInwardReturns || 0) +
+    (counts.purchaseCancels || 0) +
+    (counts.orderEntries || 0) +
+    (counts.proformaInvoices || 0) +
+    (counts.salesDeliveries || 0) +
+    (counts.SalesOrder || 0) +
+    (counts.SalesReturn || 0) +
+    (counts.proformaInvoiceYarns || 0)
+  );
+};
+
 async function get(req) {
   const { companyId, active } = req.query;
   const data = await prisma.termsAndConditions.findMany({
@@ -10,37 +37,40 @@ async function get(req) {
       companyId: companyId ? parseInt(companyId) : undefined,
       active: active ? Boolean(active) : undefined,
     },
-    include:{
-      _count:{
-        select:{
-          pos:true
-        }
-      }
-    }
+    include: {
+      _count: {
+        select: termsAndConditionsChildRecordSelect,
+      },
+    },
   });
-  return { statusCode: 0, data : 
-    data.map((item) => {
-      return {
-        ...item,
-        childRecord : item._count.pos
-      }
-    })
-   };
+  return {
+    statusCode: 0,
+    data: data.map((item) => ({
+      ...item,
+      childRecord: getTermsAndConditionsChildRecordCount(item?._count),
+    })),
+  };
 }
 
 async function getOne(id) {
-  const childRecord = await prisma.po.count({
-    where: {
-      termsId: parseInt(id),
-    },
-  });
   const data = await prisma.termsAndConditions.findUnique({
     where: {
       id: parseInt(id),
     },
+    include: {
+      _count: {
+        select: termsAndConditionsChildRecordSelect,
+      },
+    },
   });
   if (!data) return NoRecordFound("termsAndConditions");
-  return { statusCode: 0, data: { ...data, ...{ childRecord : childRecord} } };
+  return {
+    statusCode: 0,
+    data: {
+      ...data,
+      childRecord: getTermsAndConditionsChildRecordCount(data?._count),
+    },
+  };
 }
 
 async function getSearch(req) {

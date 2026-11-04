@@ -636,7 +636,7 @@ const ProformaInvoiceFabricForm = ({
     setCustomerDetails({ name: "", contactPerson: "", phone: "" });
     setSelectedQuoteVersion("Latest");
     setAvailableVersions([]);
-    setDiscountType("Percentage");
+    setDiscountType("");
     setDiscountValue(0);
     setLoadingId("");
     setDeliveryId("");

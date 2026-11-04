@@ -3690,24 +3690,33 @@ export const customStyles = {
     height: "18px",
     fontSize: "11px",
     cursor: "pointer",
+    textAlign: "left",
   }),
 
   placeholder: (base) => ({
     ...base,
     color: "#9ca3af", // Tailwind gray-400
     fontSize: "11px",
+    textAlign: "left",
   }),
 
   singleValue: (base) => ({
     ...base,
     fontSize: "11px",
     color: "black",
+    textAlign: "left",
+    marginLeft: 0,
+    marginRight: "auto",
   }),
 
   valueContainer: (base) => ({
     ...base,
     padding: "0 2px",
     height: "18px",
+    textAlign: "left",
+    display: "flex",
+    justifyContent: "flex-start",
+    alignItems: "center",
   }),
 
   dropdownIndicator: (base) => ({
@@ -3818,6 +3827,8 @@ export default function FxSelect({
   advanceOnEnter = false,
   advanceOnSelect = false,
   nextRef,
+  className = "",
+  styles,
 }) {
   const selectRef = useRef(null);
   const [menuIsOpen, setMenuIsOpen] = useState(false);
@@ -3851,7 +3862,8 @@ export default function FxSelect({
   return (
     <Select
       ref={selectRef}
-      styles={customStyles}
+      className={className}
+      styles={styles ? { ...customStyles, ...styles } : customStyles}
       onInputChange={(value, { action }) => {
         if (action === "input-change") {
           return value.toUpperCase(); //  force uppercase typing
