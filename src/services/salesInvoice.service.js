@@ -554,7 +554,7 @@ async function create(body) {
       : [];
 
   await prisma.$transaction(async (tx) => {
-    data = await tx.orderEntry.create({
+    data = await tx.salesInvoice.create({
       data: {
         docId: newDocId,
         docDate: docDate ? new Date(docDate) : null,
@@ -626,7 +626,7 @@ async function create(body) {
       // ✅ Dynamic include — pulls every relation any Field master references
       const includeClause = await buildIncludeForModule(module.id);
 
-      const fullRecord = await tx.orderEntry.findUnique({
+      const fullRecord = await tx.salesInvoice.findUnique({
         where: { id: data.id },
         include: includeClause,
       });
@@ -771,7 +771,7 @@ async function update(id, body, files) {
       });
     }
 
-    data = await tx.orderEntry.update({
+    data = await tx.salesInvoice.update({
       where: {
         id: parseInt(id),
       },
@@ -796,7 +796,7 @@ async function update(id, body, files) {
         termsAndCondition,
         termsId: termsId ? parseInt(termsId) : null,
         remarks,
-        netTotalAmount: netTotalAmount ? parseFloat(item.netTotalAmount) : null,
+        netTotalAmount: netTotalAmount ? parseFloat(netTotalAmount) : null,
 
         salesFabricItems: {
           deleteMany: incomingFabricItemIds.length
@@ -977,7 +977,7 @@ async function update(id, body, files) {
         },
       });
 
-      const fullRecord = await tx.orderEntry.findUnique({
+      const fullRecord = await tx.salesInvoice.findUnique({
         where: { id: parseInt(id) },
         include: await buildIncludeForModule(module.id),
       });
@@ -999,13 +999,13 @@ async function update(id, body, files) {
 }
 
 async function remove(id) {
-  const orderEntryId = parseInt(id);
+  const salesInvoiceId = parseInt(id);
   await prisma.approvalLog.deleteMany({
-    where: { referencePage: REFERENCE_PAGE, referenceId: orderEntryId },
+    where: { referencePage: REFERENCE_PAGE, referenceId: salesInvoiceId },
   });
 
   const dataFound = await prisma.salesInvoice.findUnique({
-    where: { id: orderEntryId },
+    where: { id: salesInvoiceId },
     include: {
       attachments: { select: { filePath: true } },
       salesFabricItems: { select: { id: true } },
@@ -1036,7 +1036,7 @@ async function remove(id) {
   });
   const data = await prisma.salesInvoice.delete({
     where: {
-      id: orderEntryId,
+      id: salesInvoiceId,
     },
   });
 

@@ -256,7 +256,9 @@ const SalesInvoiceForm = ({
     params,
     skip: !id,
   });
-
+  useEffect(() => {
+    setSalesBranchId(parseInt(branchId));
+  }, [branchId]);
   const { data: uomList } = useGetUomQuery({ params });
   const filteredUomList = uomList?.data?.filter(
     (val) => val?.isFabricUom == true,
@@ -354,53 +356,6 @@ const SalesInvoiceForm = ({
         pricePerKg: item?.pricePerKg?.toFixed(2),
         totalPrice: item?.totalPrice?.toFixed(2),
         qty: item?.qty?.toFixed(3),
-        wastePercentage:
-          item?.wastePercentage != null
-            ? Number(item?.wastePercentage).toFixed(2)
-            : "",
-        requiredQty:
-          item?.requiredQty != null
-            ? Number(item?.requiredQty).toFixed(3)
-            : item?.qty != null
-              ? (
-                  Number(item?.qty) +
-                  (Number(item?.qty) * (Number(item?.wastePercentage) || 0)) /
-                    100
-                ).toFixed(3)
-              : "",
-        fabricYarnDetails: Array.isArray(item?.fabricYarnDetails)
-          ? item.fabricYarnDetails?.map((yd) => {
-              const reqNum =
-                item?.requiredQty != null
-                  ? Number(item?.requiredQty)
-                  : item?.qty != null
-                    ? Number(item?.qty) +
-                      (Number(item?.qty) *
-                        (Number(item?.wastePercentage) || 0)) /
-                        100
-                    : 0;
-              const pct = parseFloat(yd.percentage);
-              return {
-                ...yd,
-                percentage: yd?.percentage?.toFixed(2),
-                process: yd?.process || "No",
-                yarnProcessDetails: Array.isArray(yd?.yarnProcessDetails)
-                  ? yd.yarnProcessDetails?.map((yp) => ({
-                      ...yp,
-                      dyeing: yp?.dyeing || "No",
-                    }))
-                  : [],
-                yarnQty:
-                  reqNum > 0 && !isNaN(pct)
-                    ? ((reqNum * pct) / 100).toFixed(3)
-                    : yd.yarnQty,
-              };
-            })
-          : item?.fabricYarnDetails || [],
-        fabricProcess: Array.isArray(item?.fabricProcess)
-          ? item.fabricProcess
-          : [],
-        process: item?.process || "No",
         price: item?.price?.toFixed(2),
         amount: item?.amount?.toFixed(2),
       }));
@@ -409,18 +364,6 @@ const SalesInvoiceForm = ({
 
       const mappedYarnItems = data?.salesYarnItems?.map((item) => ({
         ...item,
-        wastePercentage:
-          item?.wastePercentage != null
-            ? Number(item?.wastePercentage)?.toFixed(2)
-            : "",
-        requiredQty:
-          item?.requiredQty != null
-            ? Number(item?.requiredQty)?.toFixed(3)
-            : "",
-        process: item?.process || "No",
-        yarnOrderProcess: Array.isArray(item?.yarnOrderProcess)
-          ? item.yarnOrderProcess
-          : [],
         weightPerBag: item?.weightPerBag?.toFixed(3),
         qty: item?.qty?.toFixed(3),
         price: item?.price?.toFixed(2),
@@ -443,8 +386,9 @@ const SalesInvoiceForm = ({
       setCustomerPoNo(data?.customerPoNo || "");
       setOrderGridType(data?.orderGridType || "FABRIC SALES");
       setNetTotalAmount(
-        data?.netTotalAmount != null ? data.netTotalAmount : "",
+        data?.netTotalAmount != null ? data.netTotalAmount?.toFixed(2) : "",
       );
+      setSalesBranchId(data?.salesBranchId || parseInt(branchId));
     },
     [id],
   );
@@ -670,6 +614,7 @@ const SalesInvoiceForm = ({
       },
 
       { condition: !data.deliveryDate, title: "Delivery Date is required!" },
+      { condition: !data.salesBranchId, title: "Sales Branch is required!" },
       {
         condition: data.deliveryDate < data.docDate,
         title: "Delivery Date cannot be smaller than Doc Date!",
@@ -1012,7 +957,21 @@ const SalesInvoiceForm = ({
                 />
               </div>
             </div>
-
+            <DropdownInput
+              name="Sales Branch"
+              salesBranchId
+              options={dropDownListObject(
+                branchList ? branchList.data : [],
+                "branchName",
+                "id",
+              )}
+              value={salesBranchId}
+              setValue={setSalesBranchId}
+              required={true}
+              readOnly={readOnly}
+              className={compactModalFieldClass}
+              addNewModalWidth="w-[90%] h-[95%]"
+            />
             {/* Order Type & Item Type */}
             <div className="grid grid-cols-2 gap-1.5 gap-x-1">
               {/* <div className={narrowFieldWrap}>
@@ -1372,21 +1331,6 @@ const SalesInvoiceForm = ({
                 className={`${compactFieldClass} w-full text-right pr-1`}
               />
             </div>
-            <DropdownInput
-              name="Sales Branch"
-              salesBranchId
-              options={dropDownListObject(
-                branchList ? branchList.data : [],
-                "branchName",
-                "id",
-              )}
-              value={salesBranchId}
-              setValue={setSalesBranchId}
-              required={true}
-              readOnly={readOnly}
-              className={compactModalFieldClass}
-              addNewModalWidth="w-[90%] h-[95%]"
-            />
           </div>
 
           {/* Bottom of Sidebar - Net Amount & View Summary */}

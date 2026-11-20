@@ -430,8 +430,8 @@ const SalesInvoicePrintFormat = ({
     findFromList(data?.currencyId, currencyList?.data, "code") || "INR";
 
   // Item rows filtering
-  const rawFabricItems = data?.orderFabricItems || [];
-  const rawYarnItems = data?.orderYarnItems || [];
+  const rawFabricItems = data?.salesFabricItems || [];
+  const rawYarnItems = data?.salesYarnItems || [];
 
   const fabricItems = rawFabricItems.filter(
     (i) => i.fabricId || parseFloat(i.qty) > 0 || parseFloat(i.price) > 0,
@@ -526,9 +526,7 @@ const SalesInvoicePrintFormat = ({
     return [...combined, ...others];
   })();
 
-  const finalAmountForWords = isExport
-    ? grandTotal
-    : netAmount;
+  const finalAmountForWords = isExport ? grandTotal : netAmount;
   const netInt = Math.floor(finalAmountForWords);
   const netDecimal = Math.round((finalAmountForWords - netInt) * 100);
 
@@ -697,7 +695,7 @@ const SalesInvoicePrintFormat = ({
                   </View>
 
                   {/* TITLE BAND */}
-                  <Text style={styles.titleBand}>ORDER ENTRY</Text>
+                  <Text style={styles.titleBand}>SALES INVOICE</Text>
 
                   {/* INTRO TEXT */}
                   <View
@@ -1661,20 +1659,19 @@ const SalesInvoicePrintFormat = ({
                         </View>
                       )}
 
-                      {!isExport &&
-                        parseFloat(roundOffAmount || 0) !== 0 && (
-                          <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Round Off</Text>
-                            <Text style={styles.summaryColon}>:</Text>
-                            <Text style={styles.summaryValue}>
-                              {currencySymbol}{" "}
-                              {formatCurrencyAmount(
-                                roundOffAmount || 0,
-                                currencyCode || currencySymbol,
-                              )}
-                            </Text>
-                          </View>
-                        )}
+                      {!isExport && parseFloat(roundOffAmount || 0) !== 0 && (
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>Round Off</Text>
+                          <Text style={styles.summaryColon}>:</Text>
+                          <Text style={styles.summaryValue}>
+                            {currencySymbol}{" "}
+                            {formatCurrencyAmount(
+                              roundOffAmount || 0,
+                              currencyCode || currencySymbol,
+                            )}
+                          </Text>
+                        </View>
+                      )}
 
                       <View
                         style={[
