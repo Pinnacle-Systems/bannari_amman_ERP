@@ -22,9 +22,9 @@ import { TransactionGrid } from "../../../Basic/components/Reuseable";
 import { Plus } from "lucide-react";
 
 const FabricItems = ({
-  orderFabricItems,
+  salesFabricItems,
   enrichedItems,
-  setFabricItems,
+  setSalesFabricItems,
   readOnly,
   isNewFieldsReadOnly,
   childRecord,
@@ -96,28 +96,28 @@ const FabricItems = ({
   const [focusedField, setFocusedField] = useState(null);
 
   const addRow = () => {
-    setFabricItems([
-      ...orderFabricItems,
+    setSalesFabricItems([
+      ...salesFabricItems,
       { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
     ]);
   };
 
   const deleteRow = (index) => {
-    if (orderFabricItems.length <= 10) {
-      const newItems = [...orderFabricItems];
+    if (salesFabricItems.length <= 10) {
+      const newItems = [...salesFabricItems];
       newItems[index] = {
         ...EMPTY_ROW,
         rowId:
           newItems[index].rowId || Math.random().toString(36).substring(2, 9),
       };
-      setFabricItems(newItems);
+      setSalesFabricItems(newItems);
     } else {
-      setFabricItems(orderFabricItems.filter((_, i) => i !== index));
+      setSalesFabricItems(salesFabricItems.filter((_, i) => i !== index));
     }
   };
 
   const handleInputChange = async (value, index, field) => {
-    const newItems = [...orderFabricItems];
+    const newItems = [...salesFabricItems];
     newItems[index] = {
       ...newItems[index],
       [field]: value,
@@ -196,7 +196,7 @@ const FabricItems = ({
       }
     }
 
-    setFabricItems(newItems);
+    setSalesFabricItems(newItems);
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -214,8 +214,8 @@ const FabricItems = ({
 
   const handleFocusNextRow = (index) => {
     const nextIndex = index + 1;
-    if (!orderFabricItems[nextIndex]) {
-      setFabricItems((prev) => [
+    if (!salesFabricItems[nextIndex]) {
+      setSalesFabricItems((prev) => [
         ...prev,
         { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
       ]);
@@ -230,12 +230,12 @@ const FabricItems = ({
   };
 
   const deleteSelectedRows = () => {
-    setFabricItems((rows) => rows.filter((r) => !r.selected));
+    setSalesFabricItems((rows) => rows.filter((r) => !r.selected));
     setContextMenu(null);
   };
 
   const handleDeleteAllRows = () => {
-    setFabricItems(
+    setSalesFabricItems(
       Array.from({ length: 10 }, () => ({
         ...EMPTY_ROW,
         rowId: Math.random().toString(36).substring(2, 9),
@@ -244,7 +244,7 @@ const FabricItems = ({
   };
 
   const enrichedFabricItems = useMemo(() => {
-    return (orderFabricItems || []).map((row) => {
+    return (salesFabricItems || []).map((row) => {
       const matched = enrichedItems?.items?.find((item) =>
         row.rowId
           ? item.rowId === row.rowId
@@ -252,7 +252,7 @@ const FabricItems = ({
       );
       return matched || row;
     });
-  }, [orderFabricItems, enrichedItems]);
+  }, [salesFabricItems, enrichedItems]);
 
   return (
     <>
@@ -267,7 +267,7 @@ const FabricItems = ({
             Weight Details
           </h2>
           {Number.isInteger(currentWeightSelectedIndex) &&
-            orderFabricItems[currentWeightSelectedIndex] && (
+            salesFabricItems[currentWeightSelectedIndex] && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -279,7 +279,7 @@ const FabricItems = ({
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        salesFabricItems[currentWeightSelectedIndex]
                           .numberOfRolls || ""
                       }
                       onChange={(e) =>
@@ -301,7 +301,7 @@ const FabricItems = ({
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        salesFabricItems[currentWeightSelectedIndex]
                           .weightPerRoll || ""
                       }
                       onChange={(e) =>
@@ -313,7 +313,7 @@ const FabricItems = ({
                       }
                       onBlur={() => {
                         const val =
-                          orderFabricItems[currentWeightSelectedIndex]
+                          salesFabricItems[currentWeightSelectedIndex]
                             .weightPerRoll;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(3) : "",
@@ -332,7 +332,7 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        salesFabricItems[currentWeightSelectedIndex]
                           ?.totalKgs || ""
                       }
                       readOnly
@@ -347,7 +347,7 @@ const FabricItems = ({
                       step="any"
                       className="mt-1 block w-full rounded-md border-gray-300 border p-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        salesFabricItems[currentWeightSelectedIndex]
                           .pricePerKg || ""
                       }
                       onChange={(e) =>
@@ -359,7 +359,7 @@ const FabricItems = ({
                       }
                       onBlur={() => {
                         const val =
-                          orderFabricItems[currentWeightSelectedIndex]
+                          salesFabricItems[currentWeightSelectedIndex]
                             .pricePerKg;
                         handleInputChange(
                           val ? parseFloat(val).toFixed(2) : "",
@@ -378,7 +378,7 @@ const FabricItems = ({
                       type="number"
                       className="mt-1 block w-full rounded-md border-gray-300 border bg-gray-100 p-2 text-sm"
                       value={
-                        orderFabricItems[currentWeightSelectedIndex]
+                        salesFabricItems[currentWeightSelectedIndex]
                           ?.totalPrice || ""
                       }
                       readOnly
@@ -452,7 +452,7 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="w-[2014px] min-w-[2014px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
+          tableClassName="w-[2198px] min-w-[2198px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
           headClassName="bg-[#3B698F] text-white sticky top-0 z-20 border-b border-gray-300"
           footClassName="bg-[#3B698F] text-white border-t border-gray-300"
@@ -471,7 +471,7 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[360px] min-w-[360px] max-w-[360px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-[#3B698F] text-white z-[34]",
+                "w-[480px] min-w-[480px] max-w-[480px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-[#3B698F] text-white z-[34]",
             },
             {
               key: "hsn",
@@ -484,7 +484,7 @@ const FabricItems = ({
               key: "color",
               label: "Color",
               className:
-                "w-64 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
+                "w-80 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "design",
@@ -584,7 +584,7 @@ const FabricItems = ({
             },
           ]}
           rows={
-            orderFabricItems?.map((item, index) => ({
+            salesFabricItems?.map((item, index) => ({
               row: item,
               originalIndex: index,
             })) || []
@@ -601,21 +601,21 @@ const FabricItems = ({
                 Total
               </td>
               <td className="w-28 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
-                {orderFabricItems
+                {salesFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
 
               <td className="w-28 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
-                {orderFabricItems
+                {salesFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
               <td className="w-32 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
-                  orderFabricItems?.reduce(
+                  salesFabricItems?.reduce(
                     (sum, i) => sum + (parseFloat(i.amount) || 0),
                     0,
                   ) || 0,
@@ -647,7 +647,7 @@ const FabricItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="w-[360px] min-w-[360px] max-w-[360px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
+                  className="w-[480px] min-w-[480px] max-w-[480px] grid-editable-cell border-r border-b border-gray-300 sticky left-[40px] bg-white group-hover:bg-gray-50 z-[11]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.fabricId}
@@ -668,7 +668,7 @@ const FabricItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px] px-2 sticky left-[400px] bg-white group-hover:bg-gray-50 z-[10]"
+                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] text-[11px]  sticky left-[400px] bg-white group-hover:bg-gray-50 z-[10]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
@@ -686,7 +686,7 @@ const FabricItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-64 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
+                  className="w-80 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -949,7 +949,7 @@ const FabricItems = ({
                       onKeyDown={(e) => {
                         if (
                           e.key === "Enter" &&
-                          index === orderFabricItems.length - 1
+                          index === salesFabricItems.length - 1
                         ) {
                           addRow();
                         }

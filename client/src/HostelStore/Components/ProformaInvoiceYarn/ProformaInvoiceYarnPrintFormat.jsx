@@ -499,13 +499,22 @@ const ProformaInvoiceYarnPrintFormat = ({
   const taxableTotal = parseFloat(taxDetails?.taxable || 0);
 
   const carriageCharge = parseFloat(carriageFinalAmt) || 0;
-  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
-
-  const totalTaxAmt = parseFloat(taxDetails?.net || 0) - taxableTotal;
-  const netAmount = parseFloat(taxDetails?.net || 0);
   const taxSlabBreakup = (taxDetails?.slabBreakup || [])?.filter(
     (s) => (s?.amount || 0) > 0,
   );
+  const totalTaxAmount = taxSlabBreakup.reduce(
+    (sum, s) => sum + (parseFloat(s?.amount) || 0),
+    0,
+  );
+  const printTotalAmount = isExport
+    ? taxableTotal
+    : parseFloat((taxableTotal + totalTaxAmount).toFixed(2));
+  const combinedBeforeRound = printTotalAmount + carriageCharge;
+  const netAmount = Math.round(combinedBeforeRound);
+  const roundOffAmount = parseFloat(
+    (netAmount - combinedBeforeRound).toFixed(2),
+  );
+  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
 
   const consolidatedTaxSlabs = (() => {
     const taxMap = {};
@@ -550,7 +559,7 @@ const ProformaInvoiceYarnPrintFormat = ({
 
   const finalAmountForWords = isExport
     ? grandTotal
-    : netAmount + carriageCharge;
+    : netAmount;
   const netInt = Math.floor(finalAmountForWords);
   const netDecimal = Math.round((finalAmountForWords - netInt) * 100);
 
@@ -1302,21 +1311,6 @@ const ProformaInvoiceYarnPrintFormat = ({
                             </Text>
                           </View>
                         ))}
-                      {!isExport &&
-                        parseFloat(taxDetails?.roundOff || 0) !== 0 && (
-                          <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Round Off</Text>
-                            <Text style={styles.summaryColon}>:</Text>
-                            <Text style={styles.summaryValue}>
-                              {currencySymbol}{" "}
-                              {formatCurrencyAmount(
-                                taxDetails?.roundOff || 0,
-                                currencyCode || currencySymbol,
-                              )}
-                            </Text>
-                          </View>
-                        )}
-
                       {!isExport && (
                         <View style={styles.summaryRow}>
                           <Text
@@ -1336,7 +1330,7 @@ const ProformaInvoiceYarnPrintFormat = ({
                           >
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
-                              netAmount,
+                              printTotalAmount,
                               currencyCode || currencySymbol,
                             )}
                           </Text>
@@ -1358,6 +1352,21 @@ const ProformaInvoiceYarnPrintFormat = ({
                           </Text>
                         </View>
                       )}
+
+                      {!isExport &&
+                        parseFloat(roundOffAmount || 0) !== 0 && (
+                          <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Round Off</Text>
+                            <Text style={styles.summaryColon}>:</Text>
+                            <Text style={styles.summaryValue}>
+                              {currencySymbol}{" "}
+                              {formatCurrencyAmount(
+                                roundOffAmount || 0,
+                                currencyCode || currencySymbol,
+                              )}
+                            </Text>
+                          </View>
+                        )}
 
                       <View
                         style={[
@@ -1389,7 +1398,7 @@ const ProformaInvoiceYarnPrintFormat = ({
                         <Text style={[styles.summaryValue, { color: "#fff" }]}>
                           {currencySymbol}{" "}
                           {formatCurrencyAmount(
-                            isExport ? grandTotal : netAmount + carriageCharge,
+                            isExport ? grandTotal : netAmount,
                             currencyCode || currencySymbol,
                           )}
                         </Text>

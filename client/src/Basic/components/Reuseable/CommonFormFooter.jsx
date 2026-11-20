@@ -169,7 +169,7 @@ const CommonFormFooter = ({
       <div
         key={row.key || row.label || index}
         className={[
-          "flex items-center justify-between gap-2 py-0.5 text-[12px]",
+          "flex items-center justify-between gap-4 py-0.5 text-[12px] whitespace-nowrap",
           row.emphasized ? "border-t border-slate-100 pt-1.5" : "",
           row.className || "",
         ]
@@ -189,7 +189,10 @@ const CommonFormFooter = ({
         </span>
         {row.renderValue ? (
           <div
-            className={["flex items-center", row.valueContainerClassName || ""]
+            className={[
+              "flex items-center shrink-0 ml-auto pl-2",
+              row.valueContainerClassName || "",
+            ]
               .filter(Boolean)
               .join(" ")}
           >
@@ -198,6 +201,7 @@ const CommonFormFooter = ({
         ) : (
           <span
             className={[
+              "shrink-0 ml-auto pl-2",
               row.emphasized ? "font-semibold text-indigo-700" : "font-medium",
               row.valueClassName || "",
             ]
@@ -306,7 +310,7 @@ const CommonFormFooter = ({
       </Modal>
 
       <div
-        className={["grid grid-cols-1 gap-2", stacked ? "" : "md:grid-cols-12"]
+        className={["grid grid-cols-1 gap-2 min-w-0", stacked ? "" : "md:grid-cols-12"]
           .filter(Boolean)
           .join(" ")}
       >
@@ -408,7 +412,7 @@ const CommonFormFooter = ({
         </div> */}
         <div
           className={[
-            "grid grid-cols-1 gap-2",
+            "grid grid-cols-1 gap-2 min-w-0",
             stacked ? "" : hideTerms ? "md:col-span-6" : summaryColClass,
             stacked
               ? ""
@@ -420,34 +424,44 @@ const CommonFormFooter = ({
             .join(" ")}
         >
           {hasLeftSummaryContent ? (
-            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm border-l-4 border-l-rose-500">
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm border-l-4 border-l-rose-500 min-w-0">
               {hasSummaryTitle && (
                 <h2 className="mb-1 text-[12px] font-bold text-slate-700">
                   {hasSummaryTitle}
                 </h2>
               )}
-              {renderSummaryRows(leftSummaryRows)}
+              <div className="overflow-x-auto min-w-0 pb-1 [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded">
+                <div className="min-w-max">
+                  {renderSummaryRows(leftSummaryRows)}
+                </div>
+              </div>
               {extraTotalsContent && extraTotalsContentColumn === "left" ? (
                 <div className="pt-0.5">{extraTotalsContent}</div>
               ) : null}
             </div>
           ) : null}
           {hasRightSummaryContent ? (
-            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm border-l-4 border-l-rose-500">
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm border-l-4 border-l-rose-500 min-w-0">
               {rightSummaryTitle && (
                 <h2 className="mb-1 text-[12px] font-bold text-slate-700">
                   {rightSummaryTitle}
                 </h2>
               )}
               {twoColumnRightSummary ? (
-                <div
-                  className="grid grid-flow-col gap-x-6 gap-y-1"
-                  style={{ gridTemplateRows: `repeat(2, auto)` }}
-                >
-                  {renderSummaryRows(rightSummaryRows)}
+                <div className="overflow-x-auto min-w-0 pb-1 [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded">
+                  <div
+                    className="grid grid-flow-col auto-cols-max gap-x-8 gap-y-1 min-w-max"
+                    style={{ gridTemplateRows: `repeat(2, auto)` }}
+                  >
+                    {renderSummaryRows(rightSummaryRows)}
+                  </div>
                 </div>
               ) : (
-                renderSummaryRows(rightSummaryRows)
+                <div className="overflow-x-auto min-w-0 pb-1 [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded">
+                  <div className="min-w-max">
+                    {renderSummaryRows(rightSummaryRows)}
+                  </div>
+                </div>
               )}
               {extraTotalsContent && extraTotalsContentColumn === "right" ? (
                 <div className="pt-0.5">{extraTotalsContent}</div>

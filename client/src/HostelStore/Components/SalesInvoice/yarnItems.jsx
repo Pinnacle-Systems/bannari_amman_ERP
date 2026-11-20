@@ -16,9 +16,9 @@ import { TransactionGrid } from "../../../Basic/components/Reuseable/index.js";
 import { Plus } from "lucide-react";
 
 const YarnItems = ({
-  orderYarnItems,
+  salesYarnItems,
   enrichedItems,
-  setYarnItems,
+  setSalesYarnItems,
   readOnly,
   taxTemplateId,
   id,
@@ -66,28 +66,28 @@ const YarnItems = ({
   const gridWrapperRef = useRef(null);
 
   const addRow = () => {
-    setYarnItems([
-      ...orderYarnItems,
+    setSalesYarnItems([
+      ...salesYarnItems,
       { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
     ]);
   };
 
   const deleteRow = (index) => {
-    if (orderYarnItems.length <= 10) {
-      const newItems = [...orderYarnItems];
+    if (salesYarnItems.length <= 10) {
+      const newItems = [...salesYarnItems];
       newItems[index] = {
         ...EMPTY_ROW,
         rowId:
           newItems[index].rowId || Math.random().toString(36).substring(2, 9),
       };
-      setYarnItems(newItems);
+      setSalesYarnItems(newItems);
     } else {
-      setYarnItems(orderYarnItems.filter((_, i) => i !== index));
+      setSalesYarnItems(salesYarnItems.filter((_, i) => i !== index));
     }
   };
 
   const handleInputChange = async (value, index, field) => {
-    const newItems = [...orderYarnItems];
+    const newItems = [...salesYarnItems];
     newItems[index] = {
       ...newItems[index],
       [field]: value,
@@ -137,7 +137,7 @@ const YarnItems = ({
         newItems[index].requiredQty = "";
       }
     }
-    setYarnItems(newItems);
+    setSalesYarnItems(newItems);
   };
 
   const handleRightClick = (event, rowIndex) => {
@@ -155,8 +155,8 @@ const YarnItems = ({
 
   const handleFocusNextRow = (index) => {
     const nextIndex = index + 1;
-    if (!orderYarnItems[nextIndex]) {
-      setYarnItems((prev) => [
+    if (!salesYarnItems[nextIndex]) {
+      setSalesYarnItems((prev) => [
         ...prev,
         { ...EMPTY_ROW, rowId: Math.random().toString(36).substring(2, 9) },
       ]);
@@ -171,12 +171,12 @@ const YarnItems = ({
   };
 
   const deleteSelectedRows = () => {
-    setYarnItems((rows) => rows.filter((r) => !r.selected));
+    setSalesYarnItems((rows) => rows.filter((r) => !r.selected));
     setContextMenu(null);
   };
 
   const handleDeleteAllRows = () => {
-    setYarnItems(
+    setSalesYarnItems(
       Array.from({ length: 10 }, () => ({
         ...EMPTY_ROW,
         rowId: Math.random().toString(36).substring(2, 9),
@@ -185,7 +185,7 @@ const YarnItems = ({
   };
 
   const enrichedYarnItems = useMemo(() => {
-    return (orderYarnItems || []).map((row) => {
+    return (salesYarnItems || []).map((row) => {
       const matched = enrichedItems?.items?.find((item) =>
         row.rowId
           ? item.rowId === row.rowId
@@ -193,7 +193,7 @@ const YarnItems = ({
       );
       return matched || row;
     });
-  }, [orderYarnItems, enrichedItems]);
+  }, [salesYarnItems, enrichedItems]);
 
   return (
     <>
@@ -343,7 +343,7 @@ const YarnItems = ({
             },
           ]}
           rows={
-            orderYarnItems?.map((item, index) => ({
+            salesYarnItems?.map((item, index) => ({
               row: item,
               originalIndex: index,
             })) || []
@@ -357,21 +357,21 @@ const YarnItems = ({
                 Total
               </td>
               <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
-                {orderYarnItems
+                {salesYarnItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
 
               <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
-                {orderYarnItems
+                {salesYarnItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
               <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
-                  orderYarnItems?.reduce(
+                  salesYarnItems?.reduce(
                     (sum, i) => sum + (parseFloat(i.amount) || 0),
                     0,
                   ) || 0,
@@ -379,7 +379,10 @@ const YarnItems = ({
                 )}
               </td>
 
-              <td className="border-r border-b border-gray-300 bg-[#3B698F]" colSpan={2} />
+              <td
+                className="border-r border-b border-gray-300 bg-[#3B698F]"
+                colSpan={2}
+              />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
@@ -641,7 +644,7 @@ const YarnItems = ({
                       onKeyDown={(e) => {
                         if (
                           e.key === "Enter" &&
-                          index === orderYarnItems.length - 1
+                          index === salesYarnItems.length - 1
                         ) {
                           addRow();
                         }

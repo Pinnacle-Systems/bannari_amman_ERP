@@ -468,12 +468,22 @@ const SalesInvoicePrintFormat = ({
 
   const taxableTotal = parseFloat(resolvedTaxDetails?.taxable || 0);
   const carriageCharge = parseFloat(carriageFinalAmt) || 0;
-  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
-
-  const netAmount = parseFloat(resolvedTaxDetails?.net || 0);
   const taxSlabBreakup = (resolvedTaxDetails?.slabBreakup || []).filter(
     (s) => (s?.amount || 0) > 0,
   );
+  const totalTaxAmount = taxSlabBreakup.reduce(
+    (sum, s) => sum + (parseFloat(s?.amount) || 0),
+    0,
+  );
+  const printTotalAmount = isExport
+    ? taxableTotal
+    : parseFloat((taxableTotal + totalTaxAmount).toFixed(2));
+  const combinedBeforeRound = printTotalAmount + carriageCharge;
+  const netAmount = Math.round(combinedBeforeRound);
+  const roundOffAmount = parseFloat(
+    (netAmount - combinedBeforeRound).toFixed(2),
+  );
+  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
 
   const consolidatedTaxSlabs = (() => {
     const taxMap = {};
@@ -518,7 +528,7 @@ const SalesInvoicePrintFormat = ({
 
   const finalAmountForWords = isExport
     ? grandTotal
-    : netAmount + carriageCharge;
+    : netAmount;
   const netInt = Math.floor(finalAmountForWords);
   const netDecimal = Math.round((finalAmountForWords - netInt) * 100);
 
@@ -1609,21 +1619,6 @@ const SalesInvoicePrintFormat = ({
                             </Text>
                           </View>
                         ))}
-                      {!isExport &&
-                        parseFloat(resolvedTaxDetails?.roundOff || 0) !== 0 && (
-                          <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Round Off</Text>
-                            <Text style={styles.summaryColon}>:</Text>
-                            <Text style={styles.summaryValue}>
-                              {currencySymbol}{" "}
-                              {formatCurrencyAmount(
-                                resolvedTaxDetails?.roundOff || 0,
-                                currencyCode || currencySymbol,
-                              )}
-                            </Text>
-                          </View>
-                        )}
-
                       {!isExport && (
                         <View style={styles.summaryRow}>
                           <Text
@@ -1643,7 +1638,7 @@ const SalesInvoicePrintFormat = ({
                           >
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
-                              netAmount,
+                              printTotalAmount,
                               currencyCode || currencySymbol,
                             )}
                           </Text>
@@ -1665,6 +1660,21 @@ const SalesInvoicePrintFormat = ({
                           </Text>
                         </View>
                       )}
+
+                      {!isExport &&
+                        parseFloat(roundOffAmount || 0) !== 0 && (
+                          <View style={styles.summaryRow}>
+                            <Text style={styles.summaryLabel}>Round Off</Text>
+                            <Text style={styles.summaryColon}>:</Text>
+                            <Text style={styles.summaryValue}>
+                              {currencySymbol}{" "}
+                              {formatCurrencyAmount(
+                                roundOffAmount || 0,
+                                currencyCode || currencySymbol,
+                              )}
+                            </Text>
+                          </View>
+                        )}
 
                       <View
                         style={[
@@ -1696,7 +1706,7 @@ const SalesInvoicePrintFormat = ({
                         <Text style={[styles.summaryValue, { color: "#fff" }]}>
                           {currencySymbol}{" "}
                           {formatCurrencyAmount(
-                            isExport ? grandTotal : netAmount + carriageCharge,
+                            isExport ? grandTotal : netAmount,
                             currencyCode || currencySymbol,
                           )}
                         </Text>

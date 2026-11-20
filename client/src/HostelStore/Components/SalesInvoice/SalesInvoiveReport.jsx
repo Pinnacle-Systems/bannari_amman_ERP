@@ -400,10 +400,10 @@ const SalesInvoiveReport = ({
                   <div>S No</div>
                 </th>
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
-                  <div>Order No</div>
+                  <div>Sales Invoice No</div>
                 </th>
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
-                  <div>Order Date</div>
+                  <div> Date</div>
                 </th>
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
                   <div>Order Type</div>

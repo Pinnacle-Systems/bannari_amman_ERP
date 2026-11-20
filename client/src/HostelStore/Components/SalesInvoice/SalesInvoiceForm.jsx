@@ -114,16 +114,12 @@ const EMPTY_FABRIC_ROW = {
   pricePerKg: "",
   totalPrice: "",
   qty: "",
-  wastePercentage: "",
-  requiredQty: "",
-  process: "No",
+
   price: "",
   amount: "",
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
-  fabricYarnDetails: [],
-  fabricProcess: [],
 };
 
 const EMPTY_YARN_ROW = {
@@ -134,15 +130,12 @@ const EMPTY_YARN_ROW = {
   noOfbags: "",
   weightPerBag: "",
   qty: "",
-  wastePercentage: "",
-  requiredQty: "",
-  process: "No",
+
   price: "",
   amount: "",
   taxPercent: "",
   discountvalue: "",
   discounttype: "",
-  yarnOrderProcess: [],
 };
 
 const padFabricItems = (itemsArray = [], minLength = 10) => {
@@ -213,8 +206,8 @@ const SalesInvoiceForm = ({
   const [termsId, setTermsId] = useState("");
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
-  const [orderFabricItems, setFabricItems] = useState(padFabricItems([]));
-  const [orderYarnItems, setYarnItems] = useState(padYarnItems([]));
+  const [salesFabricItems, setSalesFabricItems] = useState(padFabricItems([]));
+  const [salesYarnItems, setSalesYarnItems] = useState(padYarnItems([]));
   const [approvalModal, setApprovalModal] = useState(false);
   const [actionType, setActionType] = useState("");
   const [approvalRemarks, setApprovalRemarks] = useState("");
@@ -236,6 +229,8 @@ const SalesInvoiceForm = ({
   const [orderGridType, setOrderGridType] = useState("FABRIC SALES");
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
+  const [netTotalAmount, setNetTotalAmount] = useState("");
+  const [salesBranchId, setSalesBranchId] = useState("");
   const qrRef = useRef(null);
   const customerRef = useRef(null);
   const childRecord = useRef(0);
@@ -352,7 +347,7 @@ const SalesInvoiceForm = ({
       setTermsId(data?.termsId || "");
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
 
-      const mappedItems = data?.orderFabricItems?.map((item) => ({
+      const mappedItems = data?.salesFabricItems?.map((item) => ({
         ...item,
         weightPerRoll: item?.weightPerRoll?.toFixed(3),
         totalKgs: item?.totalKgs?.toFixed(3),
@@ -410,9 +405,9 @@ const SalesInvoiceForm = ({
         amount: item?.amount?.toFixed(2),
       }));
 
-      setFabricItems(padFabricItems(mappedItems || []));
+      setSalesFabricItems(padFabricItems(mappedItems || []));
 
-      const mappedYarnItems = data?.orderYarnItems?.map((item) => ({
+      const mappedYarnItems = data?.salesYarnItems?.map((item) => ({
         ...item,
         wastePercentage:
           item?.wastePercentage != null
@@ -432,7 +427,7 @@ const SalesInvoiceForm = ({
         amount: item?.amount?.toFixed(2),
       }));
 
-      setYarnItems(padYarnItems(mappedYarnItems || []));
+      setSalesYarnItems(padYarnItems(mappedYarnItems || []));
       setProFormaIFabricId(data?.proFormaFabricId || "");
       setProFormaIYarnId(data?.proFormaYarnId || "");
       setTaxTemplateId(data?.taxTemplateId || "");
@@ -447,6 +442,9 @@ const SalesInvoiceForm = ({
       setDeliveryId(data?.deliveryId || "");
       setCustomerPoNo(data?.customerPoNo || "");
       setOrderGridType(data?.orderGridType || "FABRIC SALES");
+      setNetTotalAmount(
+        data?.netTotalAmount != null ? data.netTotalAmount : "",
+      );
     },
     [id],
   );
@@ -469,8 +467,7 @@ const SalesInvoiceForm = ({
     customerId: parseInt(customerId),
     orderType,
     orderGridType,
-    proFormaFabricId: parseInt(proFormaFabricId),
-    proFormaYarnId: parseInt(proFormaYarnId),
+    salesBranchId: parseInt(salesBranchId),
     customerPoNo,
     taxTemplateId,
     payTermId,
@@ -481,38 +478,8 @@ const SalesInvoiceForm = ({
     carriageCharge,
     carriageTax,
     bankId,
-    orderFabricItems: orderFabricItems
-      ?.filter((i) => i.fabricId)
-      .map((item) => ({
-        ...item,
-        fabricYarnDetails: (item.fabricYarnDetails || [])
-          .filter(
-            (yd) =>
-              yd.yarnId ||
-              (yd.percentage && Number(yd.percentage) > 0) ||
-              yd.colorId,
-          )
-          .map((yd) => ({
-            ...yd,
-            yarnProcessDetails: (yd.yarnProcessDetails || [])
-              .filter((yp) => yp.processId)
-              .map((yp) => ({
-                ...yp,
-                yarnProcessColors: (yp.yarnProcessColors || []).filter(
-                  (yc) => yc.colorId,
-                ),
-              })),
-          })),
-        fabricProcess: (item.fabricProcess || []).filter((fp) => fp.processId),
-      })),
-    orderYarnItems: orderYarnItems
-      ?.filter((i) => i.yarnId)
-      ?.map((item) => ({
-        ...item,
-        yarnOrderProcess: (item.yarnOrderProcess || []).filter(
-          (yp) => yp.processId,
-        ),
-      })),
+    salesFabricItems: salesFabricItems?.filter((i) => i.fabricId),
+    salesYarnItems: salesYarnItems?.filter((i) => i.yarnId),
     termsAndCondition,
     termsId,
     remarks,
@@ -521,6 +488,7 @@ const SalesInvoiceForm = ({
     discountValue,
     attachments: attachments?.filter((i) => i.filePath),
     docId,
+    netTotalAmount: parseFloat(netTotalAmount) || 0,
   };
 
   const handleSubmitCustom = async (callback, data, text, nextProcess) => {
@@ -629,55 +597,7 @@ const SalesInvoiceForm = ({
         if (!item.price || Number(item.price) <= 0) {
           errors.push(`Row ${index + 1}: Price is required`);
         }
-        const yarnDetails = (item.fabricYarnDetails || []).filter(
-          (yd) =>
-            yd.yarnId ||
-            (yd.percentage && Number(yd.percentage) > 0) ||
-            yd.colorId,
-        );
-        const totalPercentage = yarnDetails.reduce(
-          (sum, yd) => sum + (parseFloat(yd.percentage) || 0),
-          0,
-        );
-        if (yarnDetails.length === 0) {
-          errors.push(
-            `Row ${index + 1}: Yarn Details must have at least one row with percentage`,
-          );
-        } else {
-          const seenYarnColors = new Set();
-          yarnDetails.forEach((yd, yIdx) => {
-            if (!yd.yarnId) {
-              errors.push(
-                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Yarn is required`,
-              );
-            }
-            if (!yd.colorId) {
-              errors.push(
-                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Color is required`,
-              );
-            }
-            if (!yd.percentage || Number(yd.percentage) <= 0) {
-              errors.push(
-                `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Percentage is required`,
-              );
-            }
-            if (yd.yarnId && yd.colorId) {
-              const yarnColorKey = `${yd.yarnId}_${yd.colorId}`;
-              if (seenYarnColors.has(yarnColorKey)) {
-                errors.push(
-                  `Row ${index + 1}, Yarn Details Row ${yIdx + 1}: Duplicate yarn and color found`,
-                );
-              } else {
-                seenYarnColors.add(yarnColorKey);
-              }
-            }
-          });
-        }
-        if (parseFloat(totalPercentage.toFixed(2)) !== 100) {
-          errors.push(
-            `Row ${index + 1}: Yarn consumption is not 100 percentage`,
-          );
-        }
+
         const key = `${item.fabricId}_${item.hsnId}_${item.colorId}_${item.designId}_${item.loopLengthId}_${item.gsmId}_${item.kDiaId}_${item.fDiaId}_${item.uomId}`;
         if (seen.has(key)) {
           errors.push(`Row ${index + 1}: Duplicate item found`);
@@ -729,8 +649,8 @@ const SalesInvoiceForm = ({
   const validateData = (data) => {
     const items =
       data.orderGridType === "FABRIC SALES"
-        ? data?.orderFabricItems || []
-        : data?.orderYarnItems || [];
+        ? data?.salesFabricItems || []
+        : data?.salesYarnItems || [];
     const checks = [
       { condition: !data.customerId, title: "Customer is required!" },
       { condition: !data.orderType, title: "Order Type is required!" },
@@ -756,7 +676,13 @@ const SalesInvoiceForm = ({
       },
 
       { condition: items.length === 0, title: "Order Items are required!" },
-      {},
+      {
+        condition:
+          parseFloat(netTotalAmount || 0).toFixed(2) !==
+          Number(calculatedGrandTotal || 0).toFixed(2),
+        title: "Total Invoice Amount and Net Amount do not match!",
+        text: `Total Invoice Amount (${parseFloat(netTotalAmount || 0).toFixed(2)}) is not equal to Net Amount (${Number(calculatedGrandTotal || 0).toFixed(2)})`,
+      },
     ];
 
     const failed = checks.find((c) => c.condition);
@@ -764,9 +690,10 @@ const SalesInvoiceForm = ({
       Swal.fire({
         icon: "warning",
         title: failed.title,
+        text: failed.text,
         html: failed.html,
-        timer: failed.html ? undefined : 1500,
-        showConfirmButton: !!failed.html,
+        timer: failed.html || failed.text ? undefined : 1500,
+        showConfirmButton: !!failed.html || !!failed.text,
         confirmButtonText: "OK",
       });
       return false;
@@ -886,7 +813,7 @@ const SalesInvoiceForm = ({
         remarks: approvalRemarks || null,
         actionType,
         referenceId: id,
-        referencePage: "ORDER ENTRY",
+        referencePage: "Sales Invoice",
         recordData: {},
       }).unwrap();
 
@@ -894,7 +821,7 @@ const SalesInvoiceForm = ({
         toast.success(
           result.message ||
             (actionType === "APPROVE"
-              ? "Order Entry Approved!"
+              ? "Sales Invoice Approved!"
               : "Sent Back for Review!"),
         );
         setApprovalModal(false);
@@ -920,8 +847,8 @@ const SalesInvoiceForm = ({
     const isFabric = orderGridType === "FABRIC SALES";
     const filteredItems = (
       isFabric
-        ? (orderFabricItems || []).filter((i) => i.fabricId)
-        : (orderYarnItems || []).filter((i) => i.yarnId)
+        ? (salesFabricItems || []).filter((i) => i.fabricId)
+        : (salesYarnItems || []).filter((i) => i.yarnId)
     ).map((i) => ({
       ...i,
       qty: i.qty,
@@ -944,8 +871,8 @@ const SalesInvoiceForm = ({
     );
   }, [
     orderGridType,
-    orderFabricItems,
-    orderYarnItems,
+    salesFabricItems,
+    salesYarnItems,
     isSupplierOutside,
     discountType,
     discountValue,
@@ -954,18 +881,45 @@ const SalesInvoiceForm = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  const calculatedGrandTotal = useMemo(() => {
-    const baseNet = !isCustomerExport
-      ? enrichedData.net
-      : (enrichedData.items?.reduce(
+  const totalTaxAmount = useMemo(() => {
+    return (enrichedData?.slabBreakup || []).reduce(
+      (acc, curr) => acc + (Number(curr?.amount) || 0),
+      0,
+    );
+  }, [enrichedData]);
+
+  const totalAmount = useMemo(() => {
+    if (isCustomerExport) {
+      const itemsTotal =
+        enrichedData?.items?.reduce(
           (sum, item) => sum + (parseFloat(item.amount) || 0),
           0,
-        ) || 0) -
-        (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-          ? enrichedData.itemDiscount + enrichedData.overallDiscount
-          : 0);
-    return (baseNet || 0) + (parseFloat(carriageFinalAmt) || 0);
-  }, [enrichedData, isCustomerExport, carriageFinalAmt]);
+        ) || 0;
+      const totalDisc =
+        (enrichedData?.itemDiscount || 0) +
+        (enrichedData?.overallDiscount || 0);
+      return Math.max(0, itemsTotal - (totalDisc > 0 ? totalDisc : 0));
+    }
+    return Number(
+      ((Number(enrichedData?.taxable) || 0) + totalTaxAmount).toFixed(2),
+    );
+  }, [enrichedData, isCustomerExport, totalTaxAmount]);
+
+  const carriageChargesAmt = useMemo(() => {
+    return parseFloat(carriageFinalAmt) || 0;
+  }, [carriageFinalAmt]);
+
+  const roundOffAmount = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Number((Math.round(sum) - sum).toFixed(2));
+  }, [totalAmount, carriageChargesAmt]);
+
+  const calculatedGrandTotal = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Math.round(sum);
+  }, [totalAmount, carriageChargesAmt]);
 
   const compactFieldClass = "!h-7 text-xs";
   const compactModalFieldClass = "!h-7 !py-0 text-xs";
@@ -999,13 +953,13 @@ const SalesInvoiceForm = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
-                    Order Entry
+                    Sales Invoice
                   </span>
                   {id && <ModeChip id={id} readOnly={readOnly} />}
                 </div>
                 <div className="flex items-center gap-2 flex-nowrap mt-1 h-7">
                   <h2 className="text-md font-extrabold tracking-tight truncate leading-none select-none text-white">
-                    {docId && docId !== "New" ? docId : "New Order"}
+                    {docId && docId !== "New" ? docId : "New Sales Invoice"}
                   </h2>
                 </div>
               </div>
@@ -1038,7 +992,7 @@ const SalesInvoiceForm = ({
             <div className="grid grid-cols-2 gap-1.5 gap-x-1">
               <div className={narrowFieldWrap}>
                 <ReusableInput
-                  label="Order No"
+                  label="Sales Invoice No"
                   readOnly
                   value={docId}
                   className={`${compactFieldClass} w-full`}
@@ -1047,7 +1001,7 @@ const SalesInvoiceForm = ({
               </div>
               <div className={narrowFieldWrap}>
                 <ReusableInput
-                  label="Order Date"
+                  label="Date"
                   value={docDate}
                   type={"date"}
                   required={true}
@@ -1071,8 +1025,8 @@ const SalesInvoiceForm = ({
                     setProFormaIFabricId("");
                     setProFormaIYarnId("");
                     if (value === "GENERAL") {
-                      setFabricItems(padFabricItems([]));
-                      setYarnItems(padYarnItems([]));
+                      setSalesFabricItems(padFabricItems([]));
+                      setSalesYarnItems(padYarnItems([]));
                       setTaxTemplateId("");
                       setDiscountType("");
                       setDiscountValue();
@@ -1156,7 +1110,7 @@ const SalesInvoiceForm = ({
                     setValue={async (val) => {
                       setProFormaIFabricId(val);
                       if (!val) {
-                        setFabricItems(padFabricItems([]));
+                        setSalesFabricItems(padFabricItems([]));
                         return;
                       }
 
@@ -1235,7 +1189,7 @@ const SalesInvoiceForm = ({
                           : "",
                       }));
 
-                      setFabricItems(padFabricItems(mappedItems));
+                      setSalesFabricItems(padFabricItems(mappedItems));
                     }}
                     required={orderType === "AGAINSTPI"}
                     readOnly={
@@ -1273,7 +1227,7 @@ const SalesInvoiceForm = ({
                   setValue={async (val) => {
                     setProFormaIYarnId(val);
                     if (!val) {
-                      setYarnItems(padYarnItems([]));
+                      setSalesYarnItems(padYarnItems([]));
                       return;
                     }
 
@@ -1330,7 +1284,7 @@ const SalesInvoiceForm = ({
                         : "",
                     }));
 
-                    setYarnItems(padYarnItems(mappedItems));
+                    setSalesYarnItems(padYarnItems(mappedItems));
                   }}
                   required={orderType === "AGAINSTPI"}
                   readOnly={
@@ -1401,7 +1355,38 @@ const SalesInvoiceForm = ({
             </div>
 
             {/* Currency & Customer Po No */}
-            <div className="grid grid-cols-2 gap-1.5"></div>
+            <div className="grid grid-cols-1 gap-1.5 max-w-40">
+              <TextInput
+                name="Total Invoice Amount"
+                placeholder="0.00"
+                value={netTotalAmount}
+                setValue={setNetTotalAmount}
+                disabled={
+                  childRecord.current > 0 ||
+                  readOnly ||
+                  orderType === "AGAINSTPI"
+                }
+                required={true}
+                readOnly={readOnly}
+                type="number"
+                className={`${compactFieldClass} w-full text-right pr-1`}
+              />
+            </div>
+            <DropdownInput
+              name="Sales Branch"
+              salesBranchId
+              options={dropDownListObject(
+                branchList ? branchList.data : [],
+                "branchName",
+                "id",
+              )}
+              value={salesBranchId}
+              setValue={setSalesBranchId}
+              required={true}
+              readOnly={readOnly}
+              className={compactModalFieldClass}
+              addNewModalWidth="w-[90%] h-[95%]"
+            />
           </div>
 
           {/* Bottom of Sidebar - Net Amount & View Summary */}
@@ -1982,27 +1967,10 @@ const SalesInvoiceForm = ({
             }))
           : []),
         {
-          key: "roundOff",
-          label: "Round Off",
-          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            enrichedData.roundOff || 0,
-            currencyCode || isCurrencySymbol,
-          )}`,
-          summaryColumn: "right",
-        },
-        {
-          key: "netAmount",
+          key: "totalAmount",
           label: "Total Amount",
           value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            !isCustomerExport
-              ? enrichedData.net
-              : (enrichedData.items?.reduce(
-                  (sum, item) => sum + (parseFloat(item.amount) || 0),
-                  0,
-                ) || 0) -
-                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
-                    : 0),
+            totalAmount || 0,
             currencyCode || isCurrencySymbol,
           )}`,
           summaryColumn: "right",
@@ -2020,6 +1988,15 @@ const SalesInvoiceForm = ({
                 )
               : "0.00"
           }`,
+          summaryColumn: "right",
+        },
+        {
+          key: "roundOff",
+          label: "Round Off",
+          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+            roundOffAmount || 0,
+            currencyCode || isCurrencySymbol,
+          )}`,
           summaryColumn: "right",
         },
         {
@@ -2042,7 +2019,7 @@ const SalesInvoiceForm = ({
       <Modal isOpen={summary} onClose={() => setSummary(false)} widthClass="">
         <PoSummary
           poItems={
-            orderGridType === "FABRIC SALES" ? orderFabricItems : orderYarnItems
+            orderGridType === "FABRIC SALES" ? salesFabricItems : salesYarnItems
           }
           totals={enrichedData}
           readOnly={readOnly || isDisabled || childRecord.current > 0}
@@ -2067,13 +2044,13 @@ const SalesInvoiceForm = ({
             }`}
           >
             {actionType === "APPROVE"
-              ? "✅ Approve Order Entry"
+              ? "✅ Approve Sales Invoice"
               : "↩️ Send Back for Review"}
           </h2>
 
           <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs space-y-1.5">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Order Entry No</span>
+              <span className="text-gray-500">Sales Invoice No</span>
               <span className="font-medium text-gray-800">{docId}</span>
             </div>
             <div className="flex justify-between items-center">
@@ -2473,7 +2450,7 @@ const SalesInvoiceForm = ({
       <TransactionLayout
         className="po-form-geist"
         showTabs={true}
-        title="Order Entry"
+        title="Sales Invoice"
         badge={<ModeChip id={id} readOnly={readOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-6 h-6" />}
         onClose={onClose}
@@ -2487,8 +2464,8 @@ const SalesInvoiceForm = ({
         gridItems={
           orderGridType === "FABRIC SALES" ? (
             <FabricItems
-              orderFabricItems={orderFabricItems}
-              setFabricItems={setFabricItems}
+              salesFabricItems={salesFabricItems}
+              setSalesFabricItems={setSalesFabricItems}
               readOnly={
                 readOnly ||
                 childRecord?.current > 0 ||
@@ -2522,8 +2499,8 @@ const SalesInvoiceForm = ({
             />
           ) : (
             <YarnItems
-              orderYarnItems={orderYarnItems}
-              setYarnItems={setYarnItems}
+              salesYarnItems={salesYarnItems}
+              setSalesYarnItems={setSalesYarnItems}
               readOnly={
                 readOnly ||
                 childRecord?.current > 0 ||

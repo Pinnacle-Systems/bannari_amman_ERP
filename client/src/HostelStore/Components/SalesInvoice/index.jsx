@@ -31,7 +31,7 @@ const index = () => {
 
   const openTabs = useSelector((state) => state.openTabs);
   const previewOrderId = useMemo(
-    () => openTabs.tabs.find((i) => i.name === "ORDER ENTRY")?.previewId,
+    () => openTabs.tabs.find((i) => i.name === "Sales Invoice")?.previewId,
     [openTabs],
   );
 
@@ -50,7 +50,7 @@ const index = () => {
   const [dispatchInvalidate] = useInvalidateTags();
 
   const { data: userData } = useGetUserByIdQuery(userId);
-  const { canApprove } = useIsApprover("ORDER ENTRY", userData?.data?.id);
+  const { canApprove } = useIsApprover("Sales Invoice", userData?.data?.id);
   const { data: cityList } = useGetCityQuery({ params });
 
   const handleView = (orderId) => {
