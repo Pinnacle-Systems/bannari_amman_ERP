@@ -556,8 +556,7 @@ export default function YarnMaster({
     {
       header: "Yarn Name",
       accessor: (item) => item?.name,
-      className:
-        "font-medium text-gray-900 text-left uppercase w-96 min-w-[380px]",
+      className: "font-medium text-gray-900 text-left uppercase w-[65%]",
       filterType: "search",
       filterValue: searchYarnName,
       onFilterChange: setSearchYarnName,

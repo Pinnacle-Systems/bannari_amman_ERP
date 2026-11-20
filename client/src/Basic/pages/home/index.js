@@ -38,7 +38,7 @@ const Home = () => {
         <LogoutConfirm setLogout={setLogout} />
       </Modal>
       <div
-        className="flex flex-col h-screen overflow-hidden"
+        className="flex flex-col h-full h-screen overflow-hidden"
         style={{ backgroundColor: "#F1F1F0" }}
       >
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">

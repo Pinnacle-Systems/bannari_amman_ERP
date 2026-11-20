@@ -452,14 +452,16 @@ const FabricItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="w-[2014px] min-w-[2014px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300 "
+          tableClassName="w-[2014px] min-w-[2014px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
+          headClassName="bg-[#3B698F] text-white sticky top-0 z-20 border-b border-gray-300"
+          footClassName="bg-[#3B698F] text-white border-t border-gray-300"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-0 bg-slate-50 z-[35]",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-0 bg-[#3B698F] text-white z-[35]",
             },
             {
               key: "desc",
@@ -469,62 +471,62 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-[360px] min-w-[360px] max-w-[360px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-slate-50 z-[34]",
+                "w-[360px] min-w-[360px] max-w-[360px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 sticky top-0 left-[40px] bg-[#3B698F] text-white z-[34]",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[400px] bg-slate-50 z-[30]",
+                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)] sticky left-[400px] bg-[#3B698F] text-white z-[30]",
             },
 
             {
               key: "color",
               label: "Color",
               className:
-                "w-64 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-64 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "design",
               label: "Design",
               className:
-                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-40 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "gauge",
               label: "Gauge",
               className:
-                "w-20 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-20 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "loop",
               label: "Loop Length",
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "gsm",
               label: "GSM",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "kDia",
               label: "K-Dia",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "fDia",
               label: "F-Dia",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "uom",
               label: "UOM",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
 
             // {
@@ -537,7 +539,7 @@ const FabricItems = ({
               key: "weight",
               label: "Weight",
               className:
-                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "qty",
@@ -547,7 +549,7 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
 
             {
@@ -559,26 +561,26 @@ const FabricItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "tax",
               label: "Tax",
               className:
-                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-12 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
 
             {
               key: "actions",
               label: "Actions",
               className:
-                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
           ]}
           rows={
@@ -588,29 +590,29 @@ const FabricItems = ({
             })) || []
           }
           footer={
-            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
-              <td className="w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-[22] bg-slate-50 border-r border-b border-gray-300" />
-              <td className="w-[360px] min-w-[360px] max-w-[360px] sticky left-[40px] z-[21] bg-slate-50 border-r border-b border-gray-300" />
-              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[400px] z-[20] bg-slate-50 border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
+            <tr className="bg-[#3B698F] h-7 font-bold text-white text-[12px]">
+              <td className="w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-[22] bg-[#3B698F] border-r border-b border-gray-300" />
+              <td className="w-[360px] min-w-[360px] max-w-[360px] sticky left-[40px] z-[21] bg-[#3B698F] border-r border-b border-gray-300" />
+              <td className="w-[110px] min-w-[110px] max-w-[110px] sticky left-[400px] z-[20] bg-[#3B698F] border-r border-b border-gray-300 shadow-[2px_0_4px_-1px_rgba(0,0,0,0.1)]" />
               <td
-                className="text-right px-2 border-r border-b border-gray-300 bg-slate-50"
+                className="text-right px-2 border-r border-b border-gray-300 bg-[#3B698F] text-white"
                 colSpan={9}
               >
                 Total
               </td>
-              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {orderFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
 
-              <td className="w-28 text-right px-1 border-r border-b border-gray-300">
+              <td className="w-28 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderFabricItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
-              <td className="w-32 text-right px-1 border-r border-b border-gray-300 text-black">
+              <td className="w-32 text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
                   orderFabricItems?.reduce(
@@ -622,7 +624,7 @@ const FabricItems = ({
               </td>
 
               <td
-                className="border-r border-b border-gray-300 bg-slate-50"
+                className="border-r border-b border-gray-300 bg-[#3B698F]"
                 colSpan={2}
               />
             </tr>

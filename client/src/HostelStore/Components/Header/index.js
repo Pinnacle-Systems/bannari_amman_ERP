@@ -208,7 +208,7 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
     .filter((g) => g.name);
 
   return (
-    <div className="py-1 px-3 w-full flex justify-between items-center bg-white shadow-sm fixed z-50">
+    <div className="py-1 px-3 w-full flex justify-between items-center bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
       <Modal
         isOpen={logout}
         onClose={() => {

@@ -6,6 +6,7 @@ const TransactionGrid = ({
   headClassName = "bg-slate-50 text-slate-800 sticky top-0 z-20 border-b border-slate-200/80",
   bodyClassName = "",
   footer,
+  footClassName = "bg-slate-50 border-t border-slate-200/80",
   columns = [],
   rows = [],
   getRowKey,
@@ -77,7 +78,7 @@ const TransactionGrid = ({
           </tbody>
 
           {footer ? (
-            <tfoot className="sticky bottom-0 z-20 bg-slate-50 border-t border-slate-200/80">{footer}</tfoot>
+            <tfoot className={`sticky bottom-0 z-20 ${footClassName}`}>{footer}</tfoot>
           ) : null}
         </table>
       </div>

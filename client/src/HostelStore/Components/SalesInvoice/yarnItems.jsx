@@ -250,14 +250,16 @@ const YarnItems = ({
       >
         <TransactionGrid
           title=""
-          tableClassName="min-w-[1700px] w-full border-collapse table-fixed"
+          tableClassName="w-[1750px] min-w-[1750px] border-separate border-spacing-0 table-fixed border-l border-t border-gray-300"
           containerClassName="h-full min-h-0 min-w-0 flex-1"
+          headClassName="bg-[#3B698F] text-white sticky top-0 z-20 border-b border-gray-300"
+          footClassName="bg-[#3B698F] text-white border-t border-gray-300"
           columns={[
             {
               key: "serial",
               label: "S.No",
               className:
-                "w-10 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-[40px] min-w-[40px] max-w-[40px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "desc",
@@ -267,37 +269,37 @@ const YarnItems = ({
                 </>
               ),
               className:
-                "w-[480px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-[480px] min-w-[480px] max-w-[480px] px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "hsn",
               label: "HSN",
               className:
-                "w-28 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-[110px] min-w-[110px] max-w-[110px] px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "color",
               label: "Color",
               className:
-                "w-80 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-80 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "uom",
               label: "UOM",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "noOfbags",
               label: "No of Bags",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "weightPerBag",
               label: "Weight per Bag",
               className:
-                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-24 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "qty",
@@ -307,7 +309,7 @@ const YarnItems = ({
                 </>
               ),
               className:
-                "w-36 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-36 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
 
             {
@@ -319,25 +321,25 @@ const YarnItems = ({
                 </>
               ),
               className:
-                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-28 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "gross",
               label: "Gross",
               className:
-                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-32 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "tax",
               label: "Tax",
               className:
-                "w-16 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-16 px-1 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
             {
               key: "actions",
               label: "Actions",
               className:
-                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300",
+                "w-16 px-2 py-2 text-center font-medium text-[11px] border-r border-b border-gray-300 bg-[#3B698F] text-white",
             },
           ]}
           rows={
@@ -347,26 +349,26 @@ const YarnItems = ({
             })) || []
           }
           footer={
-            <tr className="bg-slate-50 h-7 font-bold text-slate-800 text-[12px]">
+            <tr className="bg-[#3B698F] h-7 font-bold text-white text-[12px]">
               <td
-                className="text-right px-2 border border-gray-300 bg-slate-50"
+                className="text-right px-2 border-r border-b border-gray-300 bg-[#3B698F] text-white"
                 colSpan={7}
               >
                 Total
               </td>
-              <td className="text-right px-1 border border-gray-300">
+              <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {orderYarnItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.qty) || 0), 0)
                   .toFixed(3)}
               </td>
 
-              <td className="text-right px-1 border border-gray-300">
+              <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {orderYarnItems
                   ?.reduce((sum, i) => sum + (parseFloat(i.price) || 0), 0)
                   .toFixed(2)}
               </td>
-              <td className="text-right px-1 border border-gray-300 text-black">
+              <td className="text-right px-1 border-r border-b border-gray-300 bg-[#3B698F] text-white">
                 {isCurrencySymbol ? ` ${isCurrencySymbol}` : ""}
                 {formatCurrencyAmount(
                   orderYarnItems?.reduce(
@@ -377,13 +379,11 @@ const YarnItems = ({
                 )}
               </td>
 
-              <td className="border border-gray-300 bg-slate-50" colSpan={2} />
+              <td className="border-r border-b border-gray-300 bg-[#3B698F]" colSpan={2} />
             </tr>
           }
           getRowKey={(item) => item.row.rowId || item.originalIndex}
-          getRowClassName={() =>
-            `bg-white hover:bg-gray-50 border border-blue-gray-200 cursor-pointer h-6`
-          }
+          getRowClassName={() => `h-6 bg-white hover:bg-gray-50 group`}
           renderRow={(item, index) => {
             const rowItem = item.row;
             const originalIndex = item.originalIndex;
@@ -392,7 +392,7 @@ const YarnItems = ({
                 <td
                   data-grid-row={index}
                   data-grid-col={0}
-                  className="w-12 border border-gray-300 text-[11px] text-center"
+                  className="w-[40px] min-w-[40px] max-w-[40px] text-[11px] text-center border-r border-b border-gray-300"
                 >
                   {index + 1}
                 </td>
@@ -400,7 +400,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={1}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300"
+                  className="w-[480px] min-w-[480px] max-w-[480px] grid-editable-cell border-r border-b border-gray-300"
                 >
                   <FxSelectWithAdd
                     value={rowItem.yarnId}
@@ -421,7 +421,7 @@ const YarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] "
+                  className="w-[110px] min-w-[110px] max-w-[110px] grid-editable-cell border-r border-b border-gray-300 text-[11px]"
                 >
                   <FxSelect
                     value={rowItem.hsnId}
@@ -481,7 +481,7 @@ const YarnItems = ({
                 </td> */}
                 <td
                   data-grid-row={index}
-                  className="grid-editable-cell border border-gray-300 text-[11px] "
+                  className="w-80 grid-editable-cell border-r border-b border-gray-300 text-[11px]"
                 >
                   <FxSelectWithAdd
                     value={rowItem.colorId}
@@ -503,7 +503,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={2}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-[11px] items-center"
+                  className="w-24 grid-editable-cell border-r border-b border-gray-300 text-[11px] items-center"
                 >
                   <FxSelectWithAdd
                     value={rowItem.uomId}
@@ -525,7 +525,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-24 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="number"
@@ -546,7 +546,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-24 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="number"
@@ -577,7 +577,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-36 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <input
                     type="number"
@@ -596,7 +596,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={7}
                   data-grid-editable="true"
-                  className="grid-editable-cell text-[11px] border border-gray-300 text-right"
+                  className="w-28 grid-editable-cell text-[11px] border-r border-b border-gray-300 text-right"
                 >
                   <div className="relative w-full">
                     <input
@@ -651,7 +651,7 @@ const YarnItems = ({
                 </td>
                 <td
                   data-grid-row={index}
-                  className="text-[11px] text-right px-1 border border-gray-300 bg-gray-50 bg-transparent gap-x-2"
+                  className="w-32 text-[11px] text-right px-1 border-r border-b border-gray-300 bg-gray-50 bg-transparent gap-x-2"
                 >
                   <span className="pr-1">
                     {isCurrencySymbol && rowItem.yarnId
@@ -669,7 +669,7 @@ const YarnItems = ({
                   data-grid-row={index}
                   data-grid-col={6}
                   data-grid-editable="true"
-                  className="grid-editable-cell border border-gray-300 text-center text-[11px]"
+                  className="w-16 grid-editable-cell border-r border-b border-gray-300 text-center text-[11px]"
                 >
                   <button
                     disabled={!rowItem.yarnId || isCustomerExport}
@@ -692,7 +692,7 @@ const YarnItems = ({
 
                 <td
                   data-grid-row={index}
-                  className="w-12 border border-gray-300 align-top pt-1 bg-gray-50"
+                  className="w-16 border-r border-b border-gray-300 align-top pt-1 bg-gray-50"
                 >
                   {!readOnly && (
                     <div className="flex items-center justify-center">
