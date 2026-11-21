@@ -12,6 +12,7 @@ import { multerUploadForGrid } from "../utils/multerUpload.js";
 router.post("/", multerUploadForGrid.array("images"), create);
 
 router.get("/", get);
+router.get("/report/all", get);
 
 router.put("/:id", multerUploadForGrid.array("images"), update);
 

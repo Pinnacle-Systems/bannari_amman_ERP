@@ -6,7 +6,7 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { Tooltip } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { push } from "../../../redux/features/opentabs";
-import { useGetFabricSalesInvoiceReportQuery } from "../../../redux/uniformService/FabricSalesInvoiceServics";
+import { useGetFabricSalesInvoiceQuery } from "../../../redux/uniformService/FabricSalesInvoiceServics";
 import { FileText } from "lucide-react";
 import { useAddApprovalStausMutation } from "../../../redux/uniformService/PoServices";
 import { ApprovalBadge } from "../../../Utils/ApprovalHelper";
@@ -109,7 +109,7 @@ const FabricSalesInvoiveReport = ({
     data: allData,
     isFetching,
     isLoading,
-  } = useGetFabricSalesInvoiceReportQuery({
+  } = useGetFabricSalesInvoiceQuery({
     params: {
       branchId,
       ...searchFields,

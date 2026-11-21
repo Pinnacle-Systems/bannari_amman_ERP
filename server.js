@@ -238,6 +238,7 @@ app.use("/loopLengthMaster", loopLengthMaster);
 app.use("/diaMaster", diaMaster);
 app.use("/yarnProformaInvoice", proformaInvoiceYarn);
 app.use("/salesInvoice", salesInvoice);
+app.use("/fabricSalesInvoice", fabricSalesInvoice);
 app.use("/faricSalesInvoice", fabricSalesInvoice);
 
 app.get("/retreiveFile/:fileName", (req, res) => {
