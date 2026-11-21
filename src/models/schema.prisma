@@ -564,7 +564,9 @@ model Party {
   SalesBillDeliveryTo      SalesBillEntry[]          @relation(name: "deliveryTo")
   proformaInvoiceYarns     ProformaInvoiceYarn[]
   salesInvoices            SalesInvoice[]
+  customerDelivery         SalesInvoice[]            @relation(name: "customerDelivery")
   fabricSalesInvoices      FabricSalesInvoice[]
+  fabricCustomerDelivery   FabricSalesInvoice[]      @relation(name: "customerDelivery")
 }
 
 model PartyBranch {
@@ -3309,50 +3311,53 @@ model ProcessGroupList {
 }
 
 model SalesInvoice {
-  id                Int                 @id @default(autoincrement())
-  docId             String              @unique
-  docDate           DateTime?
-  deliveryDate      DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  createdBy         User?               @relation("createdBy", fields: [createdById], references: [id])
-  createdById       Int?
-  updatedBy         User?               @relation("updatedBy", fields: [updatedById], references: [id])
-  updatedById       Int?
-  Branch            Branch?             @relation(fields: [branchId], references: [id])
-  branchId          Int?
-  FinYear           FinYear?            @relation(fields: [finYearId], references: [id])
-  finYearId         Int?
-  Company           Company?            @relation(fields: [companyId], references: [id])
-  companyId         Int?
-  customer          Party?              @relation(fields: [customerId], references: [id])
-  customerId        Int?
-  orderType         String?
-  orderGridType     String?
-  customerPoNo      String?
-  remarks           String?
-  termsAndCondition String?
-  Terms             TermsAndConditions? @relation(fields: [termsId], references: [id])
-  termsId           Int?
-  attachments       attachments[]
-  TaxTemplate       TaxTemplate?        @relation(fields: [taxTemplateId], references: [id])
-  taxTemplateId     Int?
-  discountType      String?
-  discountValue     Float?
-  PayTerm           PayTerm?            @relation(fields: [payTermId], references: [id])
-  payTermId         Int?
-  Bank              Bank?               @relation(fields: [bankId], references: [id])
-  bankId            Int?
-  Currency          Currency?           @relation(fields: [currencyId], references: [id])
-  currencyId        Int?
-  carriageCharge    Float?
-  carriageTax       Float?
-  Loading           City?               @relation("loading", fields: [loadingId], references: [id])
-  loadingId         Int?
-  Delivery          City?               @relation("delivery", fields: [deliveryId], references: [id])
-  deliveryId        Int?
-  netTotalAmount    Float?
-  salesYarnItems    SalesYarnItems[]
+  id                 Int                 @id @default(autoincrement())
+  docId              String              @unique
+  docDate            DateTime?
+  deliveryDate       DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  createdBy          User?               @relation("createdBy", fields: [createdById], references: [id])
+  createdById        Int?
+  updatedBy          User?               @relation("updatedBy", fields: [updatedById], references: [id])
+  updatedById        Int?
+  Branch             Branch?             @relation(fields: [branchId], references: [id])
+  branchId           Int?
+  FinYear            FinYear?            @relation(fields: [finYearId], references: [id])
+  finYearId          Int?
+  Company            Company?            @relation(fields: [companyId], references: [id])
+  companyId          Int?
+  customer           Party?              @relation(fields: [customerId], references: [id])
+  customerId         Int?
+  customerDelivery   Party?              @relation("customerDelivery", fields: [customerDeliveryId], references: [id])
+  customerDeliveryId Int?
+  orderType          String?
+  orderGridType      String?
+  customerPoNo       String?
+  remarks            String?
+  termsAndCondition  String?
+  Terms              TermsAndConditions? @relation(fields: [termsId], references: [id])
+  termsId            Int?
+  attachments        attachments[]
+  TaxTemplate        TaxTemplate?        @relation(fields: [taxTemplateId], references: [id])
+  taxTemplateId      Int?
+  discountType       String?
+  discountValue      Float?
+  PayTerm            PayTerm?            @relation(fields: [payTermId], references: [id])
+  payTermId          Int?
+  Bank               Bank?               @relation(fields: [bankId], references: [id])
+  bankId             Int?
+  Currency           Currency?           @relation(fields: [currencyId], references: [id])
+  currencyId         Int?
+  carriageCharge     Float?
+  carriageTax        Float?
+  Loading            City?               @relation("loading", fields: [loadingId], references: [id])
+  loadingId          Int?
+  Delivery           City?               @relation("delivery", fields: [deliveryId], references: [id])
+  deliveryId         Int?
+  netTotalAmount     Float?
+  vehicleNo          String?
+  salesYarnItems     SalesYarnItems[]
 }
 
 model SalesYarnItems {
@@ -3382,50 +3387,53 @@ model SalesYarnItems {
 }
 
 model FabricSalesInvoice {
-  id                Int                 @id @default(autoincrement())
-  docId             String              @unique
-  docDate           DateTime?
-  deliveryDate      DateTime?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  createdBy         User?               @relation("createdBy", fields: [createdById], references: [id])
-  createdById       Int?
-  updatedBy         User?               @relation("updatedBy", fields: [updatedById], references: [id])
-  updatedById       Int?
-  Branch            Branch?             @relation(fields: [branchId], references: [id])
-  branchId          Int?
-  FinYear           FinYear?            @relation(fields: [finYearId], references: [id])
-  finYearId         Int?
-  Company           Company?            @relation(fields: [companyId], references: [id])
-  companyId         Int?
-  customer          Party?              @relation(fields: [customerId], references: [id])
-  customerId        Int?
-  orderType         String?
-  orderGridType     String?
-  customerPoNo      String?
-  remarks           String?
-  termsAndCondition String?
-  Terms             TermsAndConditions? @relation(fields: [termsId], references: [id])
-  termsId           Int?
-  attachments       attachments[]
-  TaxTemplate       TaxTemplate?        @relation(fields: [taxTemplateId], references: [id])
-  taxTemplateId     Int?
-  discountType      String?
-  discountValue     Float?
-  PayTerm           PayTerm?            @relation(fields: [payTermId], references: [id])
-  payTermId         Int?
-  Bank              Bank?               @relation(fields: [bankId], references: [id])
-  bankId            Int?
-  Currency          Currency?           @relation(fields: [currencyId], references: [id])
-  currencyId        Int?
-  carriageCharge    Float?
-  carriageTax       Float?
-  Loading           City?               @relation("loading", fields: [loadingId], references: [id])
-  loadingId         Int?
-  Delivery          City?               @relation("delivery", fields: [deliveryId], references: [id])
-  deliveryId        Int?
-  netTotalAmount    Float?
-  salesFabricItems  SalesFabricItems[]
+  id                 Int                 @id @default(autoincrement())
+  docId              String              @unique
+  docDate            DateTime?
+  deliveryDate       DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  createdBy          User?               @relation("createdBy", fields: [createdById], references: [id])
+  createdById        Int?
+  updatedBy          User?               @relation("updatedBy", fields: [updatedById], references: [id])
+  updatedById        Int?
+  Branch             Branch?             @relation(fields: [branchId], references: [id])
+  branchId           Int?
+  FinYear            FinYear?            @relation(fields: [finYearId], references: [id])
+  finYearId          Int?
+  Company            Company?            @relation(fields: [companyId], references: [id])
+  companyId          Int?
+  customer           Party?              @relation(fields: [customerId], references: [id])
+  customerId         Int?
+  customerDelivery   Party?              @relation("customerDelivery", fields: [customerDeliveryId], references: [id])
+  customerDeliveryId Int?
+  orderType          String?
+  orderGridType      String?
+  customerPoNo       String?
+  remarks            String?
+  termsAndCondition  String?
+  Terms              TermsAndConditions? @relation(fields: [termsId], references: [id])
+  termsId            Int?
+  attachments        attachments[]
+  TaxTemplate        TaxTemplate?        @relation(fields: [taxTemplateId], references: [id])
+  taxTemplateId      Int?
+  discountType       String?
+  discountValue      Float?
+  PayTerm            PayTerm?            @relation(fields: [payTermId], references: [id])
+  payTermId          Int?
+  Bank               Bank?               @relation(fields: [bankId], references: [id])
+  bankId             Int?
+  Currency           Currency?           @relation(fields: [currencyId], references: [id])
+  currencyId         Int?
+  carriageCharge     Float?
+  carriageTax        Float?
+  Loading            City?               @relation("loading", fields: [loadingId], references: [id])
+  loadingId          Int?
+  Delivery           City?               @relation("delivery", fields: [deliveryId], references: [id])
+  deliveryId         Int?
+  netTotalAmount     Float?
+  vehicleNo          String?
+  salesFabricItems   SalesFabricItems[]
 }
 
 model SalesFabricItems {

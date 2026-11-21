@@ -405,9 +405,9 @@ const SalesInvoiveReport = ({
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
                   <div> Date</div>
                 </th>
-                <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                {/* <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
                   <div>Order Type</div>
-                </th>
+                </th> */}
 
                 <th className="w-80 min-w-[320px] px-3 font-medium text-[13px] text-gray-900 text-left">
                   <div>Customer</div>
@@ -445,7 +445,7 @@ const SalesInvoiveReport = ({
                     onChange={(e) => setSearchDocDate(e.target.value)}
                   />
                 </th>
-                <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                {/* <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
                   <input
                     type="text"
                     className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
@@ -453,7 +453,7 @@ const SalesInvoiveReport = ({
                     value={searchOrderType}
                     onChange={(e) => setSearchOrderType(e.target.value)}
                   />
-                </th>
+                </th> */}
 
                 <th className="w-80 min-w-[320px] px-1 font-medium text-[13px] text-gray-900 text-left">
                   <input
@@ -517,9 +517,9 @@ const SalesInvoiveReport = ({
                       <td className="w-32 min-w-[128px] py-1.5 text-center">
                         {getDateFromDateTimeToDisplay(dataObj.docDate)}
                       </td>
-                      <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
+                      {/* <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
                         {dataObj.orderType}
-                      </td>
+                      </td> */}
 
                       <td className="w-80 min-w-[320px] py-1.5 text-left px-3">
                         {dataObj?.customer?.name}
