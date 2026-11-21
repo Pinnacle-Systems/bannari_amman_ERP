@@ -108,6 +108,7 @@ import {
   OrderEntryReport,
   ProformaInvoiceYarn,
   SalesInvoice,
+  FabricSalesInvoice,
 } from "../../../HostelStore/Components";
 
 const ActiveTabList = () => {
@@ -218,7 +219,8 @@ const ActiveTabList = () => {
     "DIA MASTER": <DiaMaster />,
     "DESIGN MASTER": <DesignMaster />,
     "YARN PROFROMA INVOICE": <ProformaInvoiceYarn />,
-    "SALES INVOICE": <SalesInvoice />,
+    "YARN SALES INVOICE": <SalesInvoice />,
+    "FABRIC SALES INVOICE": <FabricSalesInvoice />,
   };
   const innerWidth = window.innerWidth;
   const itemsToShow = innerWidth / 130;
@@ -306,7 +308,8 @@ export const PAGES_WITH_HEADER_TABS = [
   "FABRIC  PROFORMA INVOICE",
   "PROCESS GROUP MASTER",
   "PROCESS MASTER",
-  "SALES INVOICE",
+  "YARN SALES INVOICE",
+  "FABRIC SALES INVOICE",
 ];
 export { default as ActiveTabsHeader } from "./ActiveTabsHeader";
 export { default as MasterHeader } from "./MasterHeader";

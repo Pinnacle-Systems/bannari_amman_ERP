@@ -400,7 +400,7 @@ const SalesInvoiveReport = ({
                   <div>S No</div>
                 </th>
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
-                  <div>Sales Invoice No</div>
+                  <div>Yarn Sales Invoice No</div>
                 </th>
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
                   <div> Date</div>
@@ -408,9 +408,7 @@ const SalesInvoiveReport = ({
                 <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
                   <div>Order Type</div>
                 </th>
-                <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
-                  <div>Sales Type</div>
-                </th>
+
                 <th className="w-80 min-w-[320px] px-3 font-medium text-[13px] text-gray-900 text-left">
                   <div>Customer</div>
                 </th>
@@ -456,17 +454,7 @@ const SalesInvoiveReport = ({
                     onChange={(e) => setSearchOrderType(e.target.value)}
                   />
                 </th>
-                <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
-                  <select
-                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md text-[11px] bg-white cursor-pointer"
-                    value={searchOrderGridType}
-                    onChange={(e) => setSearchOrderGridType(e.target.value)}
-                  >
-                    <option value="">All</option>
-                    <option value="FABRIC SALES">FABRIC SALES</option>
-                    <option value="YARN SALES">YARN SALES</option>
-                  </select>
-                </th>
+
                 <th className="w-80 min-w-[320px] px-1 font-medium text-[13px] text-gray-900 text-left">
                   <input
                     type="text"
@@ -522,7 +510,7 @@ const SalesInvoiveReport = ({
                           1}
                       </td>
 
-                      <td className="w-44 min-w-[176px] py-1.5 text-center">
+                      <td className="w-44 min-w-[176px] py-1.5 text-left">
                         {dataObj.docId}
                       </td>
 
@@ -531,13 +519,6 @@ const SalesInvoiveReport = ({
                       </td>
                       <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
                         {dataObj.orderType}
-                      </td>
-                      <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
-                        {dataObj.orderGridType === "FABRIC SALES"
-                          ? "FABRIC SALES"
-                          : dataObj.orderGridType === "YARN SALES"
-                            ? "YARN SALES"
-                            : dataObj.orderGridType || "—"}
                       </td>
 
                       <td className="w-80 min-w-[320px] py-1.5 text-left px-3">

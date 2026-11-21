@@ -19,7 +19,7 @@ import {
   createApprovalLog,
 } from "../utils/approvalHelper.js";
 
-const REFERENCE_PAGE = "SALES INVOICE";
+const REFERENCE_PAGE = "YARN SALES INVOICE";
 
 async function getNextDocId(
   branchId,
@@ -48,10 +48,10 @@ async function getNextDocId(
     const branchObj = await getTableRecordWithId(branchId, "branch");
     let newDocId = `${branchObj.branchCode}${getYearShortCode(
       new Date(),
-    )}/SIV/1`;
+    )}/YRN/SIV/1`;
 
     if (lastObject) {
-      newDocId = `${branchObj.branchCode}${getYearShortCode(new Date())}/SIV/${
+      newDocId = `${branchObj.branchCode}${getYearShortCode(new Date())}/YRN/SIV/${
         parseInt(lastObject.docId.split("/").at(-1)) + 1
       }`;
     }
@@ -80,7 +80,7 @@ async function getNextDocId(
     });
 
     const branchObj = await getTableRecordWithId(branchId, "branch");
-    let newDocId = `${branchObj.branchCode}/${shortCode}/SIV/1`;
+    let newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/1`;
     if (lastObject) {
       if (lastObject.docId === "Draft Save") {
         const records = await prisma.salesInvoice.findMany({
@@ -109,11 +109,11 @@ async function getNextDocId(
 
           return currentNo > maxNo ? current.docId : max;
         }, null);
-        newDocId = `${branchObj.branchCode}/${shortCode}/SIV/${
+        newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/${
           parseInt(maxDocId.split("/").at(-1)) + 1
         }`;
       } else {
-        newDocId = `${branchObj.branchCode}/${shortCode}/SIV/${
+        newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/${
           parseInt(lastObject.docId.split("/").at(-1)) + 1
         }`;
       }
@@ -349,7 +349,6 @@ async function getOne(id) {
       },
 
       salesYarnItems: true,
-      salesFabricItems: true,
       // _count: {
       //   select: {
       //     JobCard: true,
@@ -420,19 +419,6 @@ async function getOne(id) {
   };
 }
 
-const safeJsonParse = (val, fallback = []) => {
-  if (Array.isArray(val)) return val;
-  if (typeof val === "string") {
-    try {
-      const parsed = JSON.parse(val);
-      return Array.isArray(parsed) ? parsed : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-  return fallback;
-};
-
 async function create(body) {
   const {
     userId,
@@ -485,53 +471,10 @@ async function create(body) {
   );
   let data;
 
-  const parsedFabricItems =
-    typeof salesFabricItems === "string"
-      ? JSON.parse(salesFabricItems)
-      : salesFabricItems;
   const parsedyarnItems =
     typeof salesYarnItems === "string"
       ? JSON.parse(salesYarnItems)
       : salesYarnItems;
-
-  const safeFabricItems =
-    parsedFabricItems?.length > 0
-      ? parsedFabricItems
-          .filter((item) => item?.fabricId)
-          .map((item) => {
-            return {
-              fabricId: item.fabricId ? parseInt(item.fabricId) : null,
-              hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-              colorId: item.colorId ? parseInt(item.colorId) : null,
-              designId: item.designId ? parseInt(item.designId) : null,
-              gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
-              loopLengthId: item.loopLengthId
-                ? parseInt(item.loopLengthId)
-                : null,
-              gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-              kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
-              fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
-              uomId: item.uomId ? parseInt(item.uomId) : null,
-              width: item.width || null,
-              numberOfRolls: item.numberOfRolls
-                ? parseFloat(item.numberOfRolls)
-                : null,
-              weightPerRoll: item.weightPerRoll
-                ? parseFloat(item.weightPerRoll)
-                : null,
-              totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
-              pricePerKg: item.pricePerKg ? parseFloat(item.pricePerKg) : null,
-              totalPrice: item.totalPrice ? parseFloat(item.totalPrice) : null,
-              qty: parseFloat(item.qty || 0),
-
-              price: parseFloat(item.price || 0),
-              amount: item.amount ? parseFloat(item.amount) : null,
-              taxPercent: parseFloat(item.taxPercent || 0),
-              discountType: item.discountType || null,
-              discountValue: parseFloat(item.discountValue || 0),
-            };
-          })
-      : [];
 
   const safeYarnItems =
     parsedyarnItems?.length > 0
@@ -599,12 +542,7 @@ async function create(body) {
                 create: safeYarnItems,
               }
             : undefined,
-        salesFabricItems:
-          safeFabricItems.length > 0
-            ? {
-                create: safeFabricItems,
-              }
-            : undefined,
+
         attachments:
           JSON.parse(attachments)?.length > 0
             ? {
@@ -682,15 +620,6 @@ async function update(id, body, files) {
     ?.filter((i) => i.id)
     .map((i) => parseInt(i.id));
 
-  const validFabricItems = (
-    typeof salesFabricItems === "string"
-      ? safeJsonParse(salesFabricItems)
-      : salesFabricItems || []
-  ).filter((i) => i && i.fabricId);
-  const incomingFabricItemIds = validFabricItems
-    ?.filter((i) => i.id)
-    .map((i) => parseInt(i.id));
-
   const parsedYarnItems =
     typeof salesYarnItems === "string"
       ? JSON.parse(salesYarnItems || "[]")
@@ -710,19 +639,15 @@ async function update(id, body, files) {
     },
     include: {
       attachments: { select: { id: true, filePath: true } },
-      salesFabricItems: true,
       salesYarnItems: true,
     },
   });
   if (!dataFound) return NoRecordFound("Sales Invoice");
 
-  const removedFabricItemIds = (dataFound.salesFabricItems || [])
-    .filter((item) => !incomingFabricItemIds.includes(item.id))
-    .map((item) => item.id);
   const removedYarnItemIds = (dataFound.salesYarnItems || [])
     .filter((item) => !incomingYarnItemIds.includes(item.id))
     .map((item) => item.id);
-  const allRemovedItemIds = [...removedFabricItemIds, ...removedYarnItemIds];
+  const allRemovedItemIds = [...removedYarnItemIds];
 
   const removedAttachments = dataFound.attachments.filter(
     (existing) => !incomingIds.includes(existing.id),
@@ -794,91 +719,6 @@ async function update(id, body, files) {
         termsId: termsId ? parseInt(termsId) : null,
         remarks,
         netTotalAmount: netTotalAmount ? parseFloat(netTotalAmount) : null,
-
-        salesFabricItems: {
-          deleteMany: incomingFabricItemIds.length
-            ? { id: { notIn: incomingFabricItemIds } }
-            : {},
-          update: validFabricItems
-            .filter((item) => item.id)
-            .map((item) => {
-              return {
-                where: { id: parseInt(item.id) },
-                data: {
-                  fabricId: item.fabricId ? parseInt(item.fabricId) : null,
-                  hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-                  colorId: item.colorId ? parseInt(item.colorId) : null,
-                  designId: item.designId ? parseInt(item.designId) : null,
-                  gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
-                  loopLengthId: item.loopLengthId
-                    ? parseInt(item.loopLengthId)
-                    : null,
-                  gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-                  kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
-                  fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
-                  uomId: item.uomId ? parseInt(item.uomId) : null,
-                  width: item.width || null,
-                  numberOfRolls: item.numberOfRolls
-                    ? parseFloat(item.numberOfRolls)
-                    : null,
-                  weightPerRoll: item.weightPerRoll
-                    ? parseFloat(item.weightPerRoll)
-                    : null,
-                  totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
-                  pricePerKg: item.pricePerKg
-                    ? parseFloat(item.pricePerKg)
-                    : null,
-                  totalPrice: item.totalPrice
-                    ? parseFloat(item.totalPrice)
-                    : null,
-                  qty: parseFloat(item.qty || 0),
-                  price: parseFloat(item.price || 0),
-                  amount: item.amount ? parseFloat(item.amount) : null,
-                  taxPercent: parseFloat(item.taxPercent || 0),
-                  discountType: item.discountType || null,
-                  discountValue: parseFloat(item.discountValue || 0),
-                },
-              };
-            }),
-          create: validFabricItems
-            .filter((item) => !item.id)
-            .map((item) => {
-              return {
-                fabricId: item.fabricId ? parseInt(item.fabricId) : null,
-                hsnId: item.hsnId ? parseInt(item.hsnId) : null,
-                colorId: item.colorId ? parseInt(item.colorId) : null,
-                designId: item.designId ? parseInt(item.designId) : null,
-                gaugeId: item.gaugeId ? parseInt(item.gaugeId) : null,
-                loopLengthId: item.loopLengthId
-                  ? parseInt(item.loopLengthId)
-                  : null,
-                gsmId: item.gsmId ? parseInt(item.gsmId) : null,
-                kDiaId: item.kDiaId ? parseInt(item.kDiaId) : null,
-                fDiaId: item.fDiaId ? parseInt(item.fDiaId) : null,
-                uomId: item.uomId ? parseInt(item.uomId) : null,
-                width: item.width || null,
-                numberOfRolls: item.numberOfRolls
-                  ? parseFloat(item.numberOfRolls)
-                  : null,
-                weightPerRoll: item.weightPerRoll
-                  ? parseFloat(item.weightPerRoll)
-                  : null,
-                totalKgs: item.totalKgs ? parseFloat(item.totalKgs) : null,
-                pricePerKg: item.pricePerKg
-                  ? parseFloat(item.pricePerKg)
-                  : null,
-                totalPrice: item.totalPrice
-                  ? parseFloat(item.totalPrice)
-                  : null,
-                qty: parseFloat(item.qty || 0),
-                price: parseFloat(item.price || 0),
-                amount: item.amount ? parseFloat(item.amount) : null,
-                taxPercent: parseFloat(item.taxPercent || 0),
-                discountType: item.discountType || null,
-                discountValue: parseFloat(item.discountValue || 0),
-              };
-            }),
-        },
 
         salesYarnItems: {
           deleteMany: incomingYarnItemIds.length
@@ -1005,14 +845,10 @@ async function remove(id) {
     where: { id: salesInvoiceId },
     include: {
       attachments: { select: { filePath: true } },
-      salesFabricItems: { select: { id: true } },
       salesYarnItems: { select: { id: true } },
     },
   });
-  const allItemIds = [
-    ...(dataFound?.salesFabricItems || []),
-    ...(dataFound?.salesYarnItems || []),
-  ];
+  const allItemIds = [...(dataFound?.salesYarnItems || [])];
   await Promise.all(
     allItemIds.map((item) =>
       prisma.notification.deleteMany({

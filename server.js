@@ -95,6 +95,7 @@ import {
   diaMaster,
   proformaInvoiceYarn,
   salesInvoice,
+  fabricSalesInvoice,
 } from "./src/routes/index.js";
 import { setIo } from "./src/utils/notificationHelper.js";
 import { socketMain } from "./src/sockets/socket.js";
@@ -237,6 +238,7 @@ app.use("/loopLengthMaster", loopLengthMaster);
 app.use("/diaMaster", diaMaster);
 app.use("/yarnProformaInvoice", proformaInvoiceYarn);
 app.use("/salesInvoice", salesInvoice);
+app.use("/faricSalesInvoice", fabricSalesInvoice);
 
 app.get("/retreiveFile/:fileName", (req, res) => {
   const { fileName } = req.params;

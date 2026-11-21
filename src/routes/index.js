@@ -95,3 +95,4 @@ export { default as loopLengthMaster } from "./looplengthMaster.route.js";
 export { default as diaMaster } from "./diaMaster.route.js";
 export { default as proformaInvoiceYarn } from "./profromaInvoiceYarn.route.js";
 export { default as salesInvoice } from "./salesInvoice.route.js";
+export { default as fabricSalesInvoice } from "./fabricSalesInvoice.route.js";

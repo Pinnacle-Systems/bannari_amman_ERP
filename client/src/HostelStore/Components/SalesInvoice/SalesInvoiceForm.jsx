@@ -83,7 +83,6 @@ import {
   useLazyGetYarnProformaInvoiceByIdQuery,
 } from "../../../redux/uniformService/YarnProformaInvoiceService.js";
 import YarnItems from "./yarnItems.jsx";
-import FabricItems from "./fabricItems.jsx";
 import { useGetColorMasterQuery } from "../../../redux/services/ColorMasterService.js";
 import { useGetYarnMasterQuery } from "../../../redux/services/YarnMasterService.js";
 import { useGetFabricMasterQuery } from "../../../redux/services/FabricMasterService.js";
@@ -226,7 +225,7 @@ const SalesInvoiceForm = ({
   const [carriageTax, setCarriageTax] = useState("");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
-  const [orderGridType, setOrderGridType] = useState("FABRIC SALES");
+  const [orderGridType, setOrderGridType] = useState("YARN SALES");
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
   const [netTotalAmount, setNetTotalAmount] = useState("");
@@ -395,7 +394,7 @@ const SalesInvoiceForm = ({
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
       setCustomerPoNo(data?.customerPoNo || "");
-      setOrderGridType(data?.orderGridType || "FABRIC SALES");
+      setOrderGridType(data?.orderGridType || "YARN SALES");
       setNetTotalAmount(
         data?.netTotalAmount != null ? data.netTotalAmount?.toFixed(2) : "",
       );
@@ -772,7 +771,7 @@ const SalesInvoiceForm = ({
         remarks: approvalRemarks || null,
         actionType,
         referenceId: id,
-        referencePage: "Sales Invoice",
+        referencePage: "YARN SALES INCOICE",
         recordData: {},
       }).unwrap();
 
@@ -780,7 +779,7 @@ const SalesInvoiceForm = ({
         toast.success(
           result.message ||
             (actionType === "APPROVE"
-              ? "Sales Invoice Approved!"
+              ? "Yarn Sales Invoice Approved!"
               : "Sent Back for Review!"),
         );
         setApprovalModal(false);
@@ -912,13 +911,15 @@ const SalesInvoiceForm = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-bold text-[#7098BC] tracking-[0.14em] uppercase block leading-tight">
-                    Sales Invoice
+                    Yarn Sales Invoice
                   </span>
                   {id && <ModeChip id={id} readOnly={readOnly} />}
                 </div>
                 <div className="flex items-center gap-2 flex-nowrap mt-1 h-7">
                   <h2 className="text-md font-extrabold tracking-tight truncate leading-none select-none text-white">
-                    {docId && docId !== "New" ? docId : "New Sales Invoice"}
+                    {docId && docId !== "New"
+                      ? docId
+                      : "New Yarn Sales Invoice"}
                   </h2>
                 </div>
               </div>
@@ -951,7 +952,7 @@ const SalesInvoiceForm = ({
             <div className="grid grid-cols-2 gap-1.5 gap-x-1">
               <div className={narrowFieldWrap}>
                 <ReusableInput
-                  label="Sales Invoice No"
+                  label="Invoice No"
                   readOnly
                   value={docId}
                   className={`${compactFieldClass} w-full`}
@@ -1009,7 +1010,7 @@ const SalesInvoiceForm = ({
                   className={`${compactFieldClass} w-full max-w-none`}
                 />
               </div> */}
-              <div className={narrowFieldWrap}>
+              {/* <div className={narrowFieldWrap}>
                 <DropdownInput
                   name="Sales Type"
                   options={gridTypes}
@@ -1031,7 +1032,7 @@ const SalesInvoiceForm = ({
                   disabled={childRecord.current > 0 || readOnly || id}
                   className={`${compactFieldClass} w-full max-w-none`}
                 />
-              </div>
+              </div> */}
               <div className={narrowFieldWrap}>
                 <DropdownInput
                   name="Tax Type"
@@ -2010,13 +2011,13 @@ const SalesInvoiceForm = ({
             }`}
           >
             {actionType === "APPROVE"
-              ? "✅ Approve Sales Invoice"
+              ? "✅ Approve Yarn Sales Invoice"
               : "↩️ Send Back for Review"}
           </h2>
 
           <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs space-y-1.5">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Sales Invoice No</span>
+              <span className="text-gray-500">Yarn Sales Invoice No</span>
               <span className="font-medium text-gray-800">{docId}</span>
             </div>
             <div className="flex justify-between items-center">
@@ -2416,7 +2417,7 @@ const SalesInvoiceForm = ({
       <TransactionLayout
         className="po-form-geist"
         showTabs={true}
-        title="Sales Invoice"
+        title="Yarn Sales Invoice"
         badge={<ModeChip id={id} readOnly={readOnly} />}
         closeIcon={<IoArrowBackCircleSharp className="w-6 h-6" />}
         onClose={onClose}
@@ -2428,67 +2429,28 @@ const SalesInvoiceForm = ({
         detailsContent={headerContent}
         detailsTitle="Transaction Details"
         gridItems={
-          orderGridType === "FABRIC SALES" ? (
-            <FabricItems
-              salesFabricItems={salesFabricItems}
-              setSalesFabricItems={setSalesFabricItems}
-              readOnly={
-                readOnly ||
-                childRecord?.current > 0 ||
-                orderType === "AGAINSTPI"
-              }
-              isNewFieldsReadOnly={Boolean(
-                readOnly || childRecord?.current > 0,
-              )}
-              uomList={filteredUomList}
-              hsnList={hsnList}
-              colorList={colorList}
-              gsmList={gsmList}
-              designList={designList}
-              kDiaList={kDiaList}
-              fDiaList={fDiaList}
-              loopLengthList={loopLengthList}
-              gaugeList={gaugeList}
-              fabricList={fabricList}
-              yarnList={yarnList}
-              processList={processList}
-              id={id}
-              termsRef={termsRef}
-              childRecord={childRecord}
-              enrichedItems={enrichedData}
-              taxTemplateId={taxTemplateId}
-              isSupplierOutside={isSupplierOutside}
-              orderType={orderType}
-              isCustomerExport={isCustomerExport}
-              currencyCode={currencyCode}
-              isCurrencySymbol={isCurrencySymbol}
-            />
-          ) : (
-            <YarnItems
-              salesYarnItems={salesYarnItems}
-              setSalesYarnItems={setSalesYarnItems}
-              readOnly={
-                readOnly ||
-                childRecord?.current > 0 ||
-                orderType === "AGAINSTPI"
-              }
-              uomList={uomList}
-              hsnList={hsnList}
-              colorList={colorList}
-              yarnList={yarnList}
-              processList={processList}
-              id={id}
-              termsRef={termsRef}
-              childRecord={childRecord}
-              enrichedItems={enrichedData}
-              taxTemplateId={taxTemplateId}
-              isSupplierOutside={isSupplierOutside}
-              orderType={orderType}
-              isCustomerExport={isCustomerExport}
-              currencyCode={currencyCode}
-              isCurrencySymbol={isCurrencySymbol}
-            />
-          )
+          <YarnItems
+            salesYarnItems={salesYarnItems}
+            setSalesYarnItems={setSalesYarnItems}
+            readOnly={
+              readOnly || childRecord?.current > 0 || orderType === "AGAINSTPI"
+            }
+            uomList={uomList}
+            hsnList={hsnList}
+            colorList={colorList}
+            yarnList={yarnList}
+            processList={processList}
+            id={id}
+            termsRef={termsRef}
+            childRecord={childRecord}
+            enrichedItems={enrichedData}
+            taxTemplateId={taxTemplateId}
+            isSupplierOutside={isSupplierOutside}
+            orderType={orderType}
+            isCustomerExport={isCustomerExport}
+            currencyCode={currencyCode}
+            isCurrencySymbol={isCurrencySymbol}
+          />
         }
         footer={footerContent}
       />

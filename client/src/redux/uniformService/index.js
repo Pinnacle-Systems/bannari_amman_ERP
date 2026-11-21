@@ -19,3 +19,4 @@ export { default as PackingControlApi } from "./PackingControl";
 export { default as SalesBillEntryApi } from "./SalesBillEntryService";
 export { default as YarnProformaInvoiceApi } from "./YarnProformaInvoiceService";
 export { default as SalesInvoiceApi } from "./SalesInvoiceService";
+export { default as FabricSalesInvoice } from "./FabricSalesInvoiceServics";
