@@ -152,6 +152,7 @@ model Branch {
   processGroups         ProcessGroup[]
   SalesInvoice          SalesInvoice[]
   SalesBranch           SalesInvoice[]         @relation("salesBranch")
+  banks                 Bank[]
 }
 
 model UserOnBranch {
@@ -2467,6 +2468,8 @@ model Bank {
   Branch               City?                 @relation(fields: [branchId], references: [id])
   active               Boolean               @default(true)
   bankHolderName       String?
+  bankBranchid         Int?
+  BankBranch           Branch?               @relation(fields: [bankBranchid], references: [id])
   proformaInvoices     ProformaInvoice[]
   salesDeliveries      SalesDelivery[]
   orderEntries         OrderEntry[]

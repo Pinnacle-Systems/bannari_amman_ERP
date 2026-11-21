@@ -413,7 +413,7 @@ const SalesInvoicePrintFormat = ({
   const isFabric = (data?.orderGridType || "FABRIC SALES") === "FABRIC SALES";
 
   const customer = customerDetails || data?.customer || {};
-  const branch = branchData || data?.Branch || {};
+  const branch = data?.SalesBranch || {};
   const bank = data?.Bank || findFromList(data?.bankId, bankList?.data) || {};
 
   const isExport =

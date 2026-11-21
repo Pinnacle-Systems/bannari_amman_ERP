@@ -336,6 +336,18 @@ async function getOne(id) {
           branchName: true,
         },
       },
+      SalesBranch: {
+        select: {
+          branchName: true,
+          address: true,
+          gstNo: true,
+          panNo: true,
+          udyam: true,
+          contactEmail: true,
+          contactMobile: true,
+          telephone: true,
+        },
+      },
       customer: {
         select: {
           name: true,
