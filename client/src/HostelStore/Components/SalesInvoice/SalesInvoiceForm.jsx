@@ -230,7 +230,6 @@ const SalesInvoiceForm = ({
   const [fabricPIDocId, setFabricPIDocId] = useState("");
   const [yarnPIDocId, setYarnPIDocId] = useState("");
   const [netTotalAmount, setNetTotalAmount] = useState("");
-  const [salesBranchId, setSalesBranchId] = useState("");
   const qrRef = useRef(null);
   const customerRef = useRef(null);
   const childRecord = useRef(0);
@@ -242,6 +241,7 @@ const SalesInvoiceForm = ({
     companyId,
     finYearId,
   };
+  console.log(branchId, "SalesBranch");
 
   const { data: payTermList } = useGetPaytermMasterQuery({ params });
   const { data: bankList } = useGetbankQuery({ params });
@@ -256,30 +256,20 @@ const SalesInvoiceForm = ({
     params,
     skip: !id,
   });
-  useEffect(() => {
-    if (id) return;
-    setSalesBranchId(parseInt(branchId));
-  }, [branchId]);
 
   useEffect(() => {
-    if (
-      (!id || !bankId) &&
-      orderType !== "AGAINSTPI" &&
-      bankList?.data?.length
-    ) {
-      const activeBranch = salesBranchId || branchId;
-      if (activeBranch) {
-        const matchedBank = bankList.data.find(
-          (b) =>
-            String(b?.bankBranchid) === String(activeBranch) &&
-            b?.active !== false,
-        );
-        if (matchedBank) {
-          setBankId(matchedBank.id);
-        }
+    if (!id && bankList?.data?.length && branchId) {
+      const matchedBank = bankList.data.find(
+        (b) =>
+          String(b?.bankBranchid ?? b?.bankBranchId) === String(branchId) &&
+          b?.active !== false,
+      );
+      if (matchedBank) {
+        setBankId(matchedBank.id);
       }
     }
-  }, [salesBranchId, branchId, bankList, id, orderType]);
+  }, [branchId, bankList, id]);
+
   const { data: uomList } = useGetUomQuery({ params });
   const filteredUomList = uomList?.data?.filter(
     (val) => val?.isFabricUom == true,
@@ -409,7 +399,6 @@ const SalesInvoiceForm = ({
       setNetTotalAmount(
         data?.netTotalAmount != null ? data.netTotalAmount?.toFixed(2) : "",
       );
-      setSalesBranchId(data?.salesBranchId || parseInt(branchId));
     },
     [id],
   );
@@ -432,7 +421,6 @@ const SalesInvoiceForm = ({
     customerId: parseInt(customerId),
     orderType,
     orderGridType,
-    salesBranchId: parseInt(salesBranchId),
     customerPoNo,
     taxTemplateId,
     payTermId,
@@ -443,8 +431,14 @@ const SalesInvoiceForm = ({
     carriageCharge,
     carriageTax,
     bankId,
-    salesFabricItems: salesFabricItems?.filter((i) => i.fabricId),
-    salesYarnItems: salesYarnItems?.filter((i) => i.yarnId),
+    salesFabricItems:
+      orderGridType === "FABRIC SALES"
+        ? salesFabricItems?.filter((i) => i.fabricId)
+        : [],
+    salesYarnItems:
+      orderGridType === "YARN SALES"
+        ? salesYarnItems?.filter((i) => i.yarnId)
+        : [],
     termsAndCondition,
     termsId,
     remarks,
@@ -635,7 +629,6 @@ const SalesInvoiceForm = ({
       },
 
       // { condition: !data.deliveryDate, title: "Delivery Date is required!" },
-      { condition: !data.salesBranchId, title: "Sales Branch is required!" },
       // {
       //   condition: data.deliveryDate < data.docDate,
       //   title: "Delivery Date cannot be smaller than Doc Date!",
@@ -978,30 +971,7 @@ const SalesInvoiceForm = ({
                 />
               </div>
             </div>
-            <DropdownInput
-              name="Sales Branch"
-              options={dropDownListObject(
-                branchList ? branchList.data : [],
-                "branchName",
-                "id",
-              )}
-              value={salesBranchId}
-              setValue={(val) => {
-                setSalesBranchId(val);
-                if (orderType !== "AGAINSTPI" && bankList?.data?.length) {
-                  const matchedBank = bankList.data.find(
-                    (b) =>
-                      String(b?.bankBranchid) === String(val) &&
-                      b?.active !== false,
-                  );
-                  setBankId(matchedBank ? matchedBank.id : "");
-                }
-              }}
-              required={true}
-              readOnly={readOnly}
-              className={compactModalFieldClass}
-              addNewModalWidth="w-[90%] h-[95%]"
-            />
+
             {/* Order Type & Item Type */}
             <div className="grid grid-cols-2 gap-1.5 gap-x-1">
               {/* <div className={narrowFieldWrap}>
@@ -1045,7 +1015,16 @@ const SalesInvoiceForm = ({
                   options={gridTypes}
                   value={orderGridType}
                   setValue={(value) => {
-                    setOrderGridType(value);
+                    if (value !== orderGridType) {
+                      setOrderGridType(value);
+                      if (value === "FABRIC SALES") {
+                        setSalesYarnItems(padYarnItems([]));
+                        setProFormaIYarnId("");
+                      } else if (value === "YARN SALES") {
+                        setSalesFabricItems(padFabricItems([]));
+                        setProFormaIFabricId("");
+                      }
+                    }
                   }}
                   required={true}
                   readOnly={readOnly}
@@ -1125,8 +1104,8 @@ const SalesInvoiceForm = ({
                         res?.data?.bankId ||
                           bankList?.data?.find(
                             (b) =>
-                              String(b?.bankBranchid) ===
-                                String(salesBranchId || branchId) &&
+                              String(b?.bankBranchid ?? b?.bankBranchId) ===
+                                String(branchId) &&
                               b?.active !== false,
                           )?.id ||
                           "",
@@ -1249,8 +1228,8 @@ const SalesInvoiceForm = ({
                       res?.data?.bankId ||
                         bankList?.data?.find(
                           (b) =>
-                            String(b?.bankBranchid) ===
-                              String(salesBranchId || branchId) &&
+                            String(b?.bankBranchid ?? b?.bankBranchId) ===
+                              String(branchId) &&
                             b?.active !== false,
                         )?.id ||
                         "",
@@ -1630,7 +1609,7 @@ const SalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          {/* <div className="min-w-0">
+          <div className="min-w-0">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1652,7 +1631,7 @@ const SalesInvoiceForm = ({
                 childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
             />
-          </div> */}
+          </div>
           {/* <div className="max-w-32">
             <DateInputNew
               name="Delivery Date"

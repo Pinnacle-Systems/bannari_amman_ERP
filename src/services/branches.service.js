@@ -79,6 +79,7 @@ async function create(body) {
     panNo,
     udyam,
     msmeNo,
+    isSalesInvoiceDiffer,
   } = await body;
   const data = await prisma.branch.create({
     data: {
@@ -96,6 +97,7 @@ async function create(body) {
       panNo,
       udyam,
       msmeNo,
+      isSalesInvoiceDiffer,
     },
   });
   return { statusCode: 0, data };
@@ -120,6 +122,7 @@ async function update(id, body) {
     panNo,
     udyam,
     msmeNo,
+    isSalesInvoiceDiffer,
   } = await body;
 
   const dataFound = await prisma.branch.findUnique({
@@ -150,6 +153,7 @@ async function update(id, body) {
       panNo,
       udyam,
       msmeNo,
+      isSalesInvoiceDiffer,
     },
   });
   return { statusCode: 0, data };

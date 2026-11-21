@@ -336,18 +336,7 @@ async function getOne(id) {
           branchName: true,
         },
       },
-      SalesBranch: {
-        select: {
-          branchName: true,
-          address: true,
-          gstNo: true,
-          panNo: true,
-          udyam: true,
-          contactEmail: true,
-          contactMobile: true,
-          telephone: true,
-        },
-      },
+
       customer: {
         select: {
           name: true,
@@ -474,7 +463,6 @@ async function create(body) {
     draftSave,
     customerPoNo,
     netTotalAmount,
-    salesBranchId,
   } = await body;
   let finYearDate = await getFinYearStartTimeEndTime(finYearId);
   const shortCode = finYearDate
@@ -572,7 +560,6 @@ async function create(body) {
         docDate: docDate ? new Date(docDate) : null,
         createdById: parseInt(userId),
         branchId: parseInt(branchId),
-        salesBranchId: parseInt(salesBranchId),
         companyId: companyId ? parseInt(companyId) : null,
         finYearId: finYearId ? parseInt(finYearId) : null,
         customerId: customerId ? parseInt(customerId) : null,
@@ -665,7 +652,6 @@ async function update(id, body, files) {
     customerId,
     orderType,
     orderGridType,
-    salesBranchId,
     taxTemplateId,
     payTermId,
     currencyId,
@@ -790,7 +776,6 @@ async function update(id, body, files) {
       data: {
         updatedById: parseInt(userId),
         customerId: customerId ? parseInt(customerId) : null,
-        salesBranchId: salesBranchId ? parseInt(salesBranchId) : null,
         orderType,
         orderGridType,
         taxTemplateId: taxTemplateId ? parseInt(taxTemplateId) : null,
