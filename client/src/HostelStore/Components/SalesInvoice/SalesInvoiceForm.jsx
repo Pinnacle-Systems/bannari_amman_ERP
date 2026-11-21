@@ -192,6 +192,8 @@ const SalesInvoiceForm = ({
     moment.utc(today).format("YYYY-MM-DD"),
   );
   const [customerId, setCustomerId] = useState("");
+  const [customerDeliveryId, setCustomerDeliveryId] = useState("");
+  const [vehicleNo, setVehicleNo] = useState("");
   const [remarks, setRemarks] = useState("");
   const [requirements, setRequirements] = useState("");
   const [orderType, setOrderType] = useState("GENERAL");
@@ -407,6 +409,8 @@ const SalesInvoiceForm = ({
       setCarriageTax(data?.carriageTax?.toFixed(2) || "");
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
+      setCustomerDeliveryId(data?.customerDeliveryId || "");
+      setVehicleNo(data?.vehicleNo || "");
       setCustomerPoNo(data?.customerPoNo || "");
       setOrderGridType(data?.orderGridType || "YARN SALES");
       setNetTotalAmount(
@@ -432,6 +436,10 @@ const SalesInvoiceForm = ({
     finYearId: parseInt(finYearId),
     companyId: parseInt(companyId),
     customerId: parseInt(customerId),
+    customerDeliveryId: customerDeliveryId
+      ? parseInt(customerDeliveryId)
+      : null,
+    vehicleNo,
     orderType,
     orderGridType,
     customerPoNo,
@@ -900,9 +908,9 @@ const SalesInvoiceForm = ({
   const supplierCompactGridClass =
     "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end";
   const shippingPortsGridClass =
-    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 items-end";
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 items-end";
   const shippingChargesGridClass =
-    "grid grid-cols-2 sm:grid-cols-[minmax(0,120px)_minmax(0,120px)_minmax(0,95px)_minmax(0,130px)] gap-2 items-end";
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-2 items-end";
 
   const basicDetailsSidebar = (
     <aside
@@ -1589,6 +1597,29 @@ const SalesInvoiceForm = ({
         {/* Row 1: Ports & Advising Bank */}
         <div className={shippingPortsGridClass}>
           <div className="min-w-0">
+            <DropdownWithModal
+              name="Delivery To"
+              options={dropDownListObject(
+                id
+                  ? customerList?.data
+                  : customerList?.data?.filter((item) => item?.active),
+                "name",
+                "id",
+              )}
+              value={customerDeliveryId}
+              setValue={setCustomerDeliveryId}
+              readOnly={
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+              }
+              className={compactModalFieldClass}
+              dropdownMinWidth={partyDropdownMinWidth}
+              addNewLabel="+ Add New Party"
+              childComponent={PartyMaster}
+              addNewModalWidth="w-[90%] h-[95%]"
+              disabled={childRecord.current > 0 || readOnly}
+            />
+          </div>
+          <div className="min-w-0">
             <DropdownInput
               name="Loading Port"
               options={dropDownListObject(
@@ -1624,7 +1655,38 @@ const SalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          <div className="min-w-0">
+
+          {/* <div className="max-w-32">
+            <DateInputNew
+              name="Delivery Date"
+              value={deliveryDate}
+              setValue={setDeliveryDate}
+              required={true}
+              readOnly={childRecord.current > 0 || readOnly}
+              min={docDate}
+              type={"date"}
+              className={compactFieldClass}
+            />
+          </div> */}
+        </div>
+
+        {/* Row 2: Delivery Date & Carriage Charges */}
+        <div className={shippingChargesGridClass}>
+          <div className="col-span-2">
+            <TextInput
+              name="Vehicle Number"
+              value={vehicleNo}
+              setValue={setVehicleNo}
+              readOnly={
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+              }
+              disabled={
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+              }
+              className={compactFieldClass}
+            />
+          </div>
+          <div className="col-span-4">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1647,23 +1709,7 @@ const SalesInvoiceForm = ({
               }
             />
           </div>
-          {/* <div className="max-w-32">
-            <DateInputNew
-              name="Delivery Date"
-              value={deliveryDate}
-              setValue={setDeliveryDate}
-              required={true}
-              readOnly={childRecord.current > 0 || readOnly}
-              min={docDate}
-              type={"date"}
-              className={compactFieldClass}
-            />
-          </div> */}
-        </div>
-
-        {/* Row 2: Delivery Date & Carriage Charges */}
-        <div className={shippingChargesGridClass}>
-          <div className="min-w-0">
+          <div className="col-span-2">
             <TextInput
               name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
               value={carriageCharge}
@@ -1684,7 +1730,7 @@ const SalesInvoiceForm = ({
               }}
             />
           </div>
-          <div className="min-w-0">
+          <div className="col-span-2">
             <TextInput
               name="Carriage Tax%"
               value={carriageTax}
@@ -1705,9 +1751,9 @@ const SalesInvoiceForm = ({
               }}
             />
           </div>
-          <div className="min-w-32">
+          <div className="col-span-2">
             <TextInput
-              name="Carriage Final Amount"
+              name="Carriage Amount"
               value={carriageFinalAmt}
               disabled={true}
               type="number"
