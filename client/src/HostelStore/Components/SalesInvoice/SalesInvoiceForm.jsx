@@ -257,8 +257,29 @@ const SalesInvoiceForm = ({
     skip: !id,
   });
   useEffect(() => {
+    if (id) return;
     setSalesBranchId(parseInt(branchId));
   }, [branchId]);
+
+  useEffect(() => {
+    if (
+      (!id || !bankId) &&
+      orderType !== "AGAINSTPI" &&
+      bankList?.data?.length
+    ) {
+      const activeBranch = salesBranchId || branchId;
+      if (activeBranch) {
+        const matchedBank = bankList.data.find(
+          (b) =>
+            String(b?.bankBranchid) === String(activeBranch) &&
+            b?.active !== false,
+        );
+        if (matchedBank) {
+          setBankId(matchedBank.id);
+        }
+      }
+    }
+  }, [salesBranchId, branchId, bankList, id, orderType]);
   const { data: uomList } = useGetUomQuery({ params });
   const filteredUomList = uomList?.data?.filter(
     (val) => val?.isFabricUom == true,
@@ -613,12 +634,12 @@ const SalesInvoiceForm = ({
         title: "Yarn PI No is required!",
       },
 
-      { condition: !data.deliveryDate, title: "Delivery Date is required!" },
+      // { condition: !data.deliveryDate, title: "Delivery Date is required!" },
       { condition: !data.salesBranchId, title: "Sales Branch is required!" },
-      {
-        condition: data.deliveryDate < data.docDate,
-        title: "Delivery Date cannot be smaller than Doc Date!",
-      },
+      // {
+      //   condition: data.deliveryDate < data.docDate,
+      //   title: "Delivery Date cannot be smaller than Doc Date!",
+      // },
 
       { condition: items.length === 0, title: "Order Items are required!" },
       {
@@ -959,14 +980,23 @@ const SalesInvoiceForm = ({
             </div>
             <DropdownInput
               name="Sales Branch"
-              salesBranchId
               options={dropDownListObject(
                 branchList ? branchList.data : [],
                 "branchName",
                 "id",
               )}
               value={salesBranchId}
-              setValue={setSalesBranchId}
+              setValue={(val) => {
+                setSalesBranchId(val);
+                if (orderType !== "AGAINSTPI" && bankList?.data?.length) {
+                  const matchedBank = bankList.data.find(
+                    (b) =>
+                      String(b?.bankBranchid) === String(val) &&
+                      b?.active !== false,
+                  );
+                  setBankId(matchedBank ? matchedBank.id : "");
+                }
+              }}
               required={true}
               readOnly={readOnly}
               className={compactModalFieldClass}
@@ -1091,7 +1121,16 @@ const SalesInvoiceForm = ({
                       if (res?.data?.remarks) setRemarks(res.data.remarks);
 
                       setPayTermId(res?.data?.payTermId || "");
-                      setBankId(res?.data?.bankId || "");
+                      setBankId(
+                        res?.data?.bankId ||
+                          bankList?.data?.find(
+                            (b) =>
+                              String(b?.bankBranchid) ===
+                                String(salesBranchId || branchId) &&
+                              b?.active !== false,
+                          )?.id ||
+                          "",
+                      );
                       setCurrencyId(res?.data?.currencyId || "");
 
                       setCarriageCharge(
@@ -1206,7 +1245,16 @@ const SalesInvoiceForm = ({
                     if (res?.data?.remarks) setRemarks(res.data.remarks);
 
                     setPayTermId(res?.data?.payTermId || "");
-                    setBankId(res?.data?.bankId || "");
+                    setBankId(
+                      res?.data?.bankId ||
+                        bankList?.data?.find(
+                          (b) =>
+                            String(b?.bankBranchid) ===
+                              String(salesBranchId || branchId) &&
+                            b?.active !== false,
+                        )?.id ||
+                        "",
+                    );
                     setCurrencyId(res?.data?.currencyId || "");
 
                     setCarriageCharge(
@@ -1557,12 +1605,10 @@ const SalesInvoiceForm = ({
               value={loadingId}
               setValue={setLoadingId}
               readOnly={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI" ||
-                !isCustomerExport
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+                //  ||   !isCustomerExport
               }
-              required={isCustomerExport}
+              // required={isCustomerExport}
               className={compactFieldClass}
             />
           </div>
@@ -1577,16 +1623,14 @@ const SalesInvoiceForm = ({
               value={deliveryId}
               setValue={setDeliveryId}
               readOnly={
-                childRecord.current > 0 ||
-                readOnly ||
-                orderType === "AGAINSTPI" ||
-                !isCustomerExport
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+                //  ||  !isCustomerExport
               }
-              required={isCustomerExport}
+              // required={isCustomerExport}
               className={compactFieldClass}
             />
           </div>
-          <div className="min-w-0">
+          {/* <div className="min-w-0">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1608,12 +1652,8 @@ const SalesInvoiceForm = ({
                 childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
             />
-          </div>
-        </div>
-
-        {/* Row 2: Delivery Date & Carriage Charges */}
-        <div className={shippingChargesGridClass}>
-          <div className="min-w-0">
+          </div> */}
+          {/* <div className="max-w-32">
             <DateInputNew
               name="Delivery Date"
               value={deliveryDate}
@@ -1624,8 +1664,11 @@ const SalesInvoiceForm = ({
               type={"date"}
               className={compactFieldClass}
             />
-          </div>
+          </div> */}
+        </div>
 
+        {/* Row 2: Delivery Date & Carriage Charges */}
+        <div className={shippingChargesGridClass}>
           <div className="min-w-0">
             <TextInput
               name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
@@ -1668,7 +1711,7 @@ const SalesInvoiceForm = ({
               }}
             />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-32">
             <TextInput
               name="Carriage Final Amount"
               value={carriageFinalAmt}

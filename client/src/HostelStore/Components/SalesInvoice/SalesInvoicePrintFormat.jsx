@@ -1740,7 +1740,7 @@ const SalesInvoicePrintFormat = ({
                     >
                       Bank Details
                     </Text>
-                    <View style={{ flexDirection: "row", marginBottom: 2 }}>
+                    {/* <View style={{ flexDirection: "row", marginBottom: 2 }}>
                       <Text
                         style={{
                           width: 95,
@@ -1760,7 +1760,7 @@ const SalesInvoicePrintFormat = ({
                       >
                         : {bank?.bankHolderName || data?.bankHolderName || "-"}
                       </Text>
-                    </View>
+                    </View> */}
                     <View style={{ flexDirection: "row", marginBottom: 2 }}>
                       <Text
                         style={{
