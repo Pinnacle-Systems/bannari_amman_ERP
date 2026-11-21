@@ -33,93 +33,63 @@ async function getNextDocId(
   // Case 1: Draft save
   if (saveType) {
     return "Draft Save";
-  } else if (isUpdate === "drift") {
-    lastObject = await prisma.fabricSalesInvoice.findFirst({
-      where: {
-        branchId: parseInt(branchId),
-        draftSave: false,
-        AND: [
-          { createdAt: { gte: startTime } },
-          { createdAt: { lte: endTime } },
-        ],
-      },
+  }
+
+  // Fetch branch to check isSalesInvoiceDiffer
+  const branchObj = await getTableRecordWithId(branchId, "branch");
+  const isSalesInvoiceDiffer = branchObj?.isSalesInvoiceDiffer ?? false;
+
+  const dateFilter =
+    startTime && endTime
+      ? { AND: [{ createdAt: { gte: startTime } }, { createdAt: { lte: endTime } }] }
+      : {};
+
+  if (isSalesInvoiceDiffer) {
+    // ── SEPARATE mode: Fabric uses FAB-{N} ──────────────────────────────────
+    const lastObject = await prisma.fabricSalesInvoice.findFirst({
+      where: { branchId: parseInt(branchId), ...dateFilter },
       orderBy: { id: "desc" },
     });
-    const branchObj = await getTableRecordWithId(branchId, "branch");
-    let newDocId = `${branchObj.branchCode}${getYearShortCode(
-      new Date(),
-    )}/FBR/SIV/1`;
 
-    if (lastObject) {
-      newDocId = `${branchObj.branchCode}${getYearShortCode(new Date())}/FBR/SIV/${
-        parseInt(lastObject.docId.split("/").at(-1)) + 1
-      }`;
+    const FAB_START = 21; // first docId will be FAB-22
+
+    if (!lastObject) return `FAB-${FAB_START + 1}`;
+
+    if (lastObject.docId === "Draft Save") {
+      const records = await prisma.fabricSalesInvoice.findMany({
+        select: { docId: true },
+        where: { branchId: parseInt(branchId), ...dateFilter },
+      });
+      const maxNum = records.reduce((max, r) => {
+        const n = parseInt(r.docId.replace("FAB-", "")) || 0;
+        return n > max ? n : max;
+      }, FAB_START);
+      return `FAB-${maxNum + 1}`;
     }
 
-    return newDocId;
-  } else {
-    let lastObject = await prisma.fabricSalesInvoice.findFirst({
-      where: {
-        branchId: parseInt(branchId),
-        AND: [
-          {
-            createdAt: {
-              gte: startTime,
-            },
-          },
-          {
-            createdAt: {
-              lte: endTime,
-            },
-          },
-        ],
-      },
-      orderBy: {
-        id: "desc",
-      },
-    });
-
-    const branchObj = await getTableRecordWithId(branchId, "branch");
-    let newDocId = `${branchObj.branchCode}/${shortCode}/FBR/SIV/1`;
-    if (lastObject) {
-      if (lastObject.docId === "Draft Save") {
-        const records = await prisma.fabricSalesInvoice.findMany({
-          select: {
-            docId: true,
-          },
-          where: {
-            branchId: parseInt(branchId),
-            AND: [
-              {
-                createdAt: {
-                  gte: startTime,
-                },
-              },
-              {
-                createdAt: {
-                  lte: endTime,
-                },
-              },
-            ],
-          },
-        });
-        const maxDocId = records.reduce((max, current) => {
-          const currentNo = Number(current.docId.split("/").pop());
-          const maxNo = max ? Number(max.split("/").pop()) : 0;
-
-          return currentNo > maxNo ? current.docId : max;
-        }, null);
-        newDocId = `${branchObj.branchCode}/${shortCode}/FBR/SIV/${
-          parseInt(maxDocId.split("/").at(-1)) + 1
-        }`;
-      } else {
-        newDocId = `${branchObj.branchCode}/${shortCode}/FBR/SIV/${
-          parseInt(lastObject.docId.split("/").at(-1)) + 1
-        }`;
-      }
-    }
-    return newDocId;
+    const lastNum = parseInt(lastObject.docId.replace("FAB-", "")) || FAB_START;
+    return `FAB-${lastNum + 1}`;
   }
+
+  // ── SHARED mode: Yarn and Fabric share one counter, starts at 060 ─────────
+  const [yarnRecords, fabricRecords] = await Promise.all([
+    prisma.salesInvoice.findMany({
+      select: { docId: true },
+      where: { branchId: parseInt(branchId), ...dateFilter },
+    }),
+    prisma.fabricSalesInvoice.findMany({
+      select: { docId: true },
+      where: { branchId: parseInt(branchId), ...dateFilter },
+    }),
+  ]);
+
+  const sharedMax = [...yarnRecords, ...fabricRecords].reduce((max, r) => {
+    if (!r.docId || r.docId === "Draft Save") return max;
+    const n = parseInt(r.docId);
+    return !isNaN(n) && n > max ? n : max;
+  }, 59); // floor 59 so first value is 60 → "060"
+
+  return (sharedMax + 1).toString().padStart(3, "0");
 }
 
 async function get(req) {

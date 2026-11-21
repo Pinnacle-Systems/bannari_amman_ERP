@@ -33,93 +33,64 @@ async function getNextDocId(
   // Case 1: Draft save
   if (saveType) {
     return "Draft Save";
-  } else if (isUpdate === "drift") {
-    lastObject = await prisma.salesInvoice.findFirst({
-      where: {
-        branchId: parseInt(branchId),
-        draftSave: false,
-        AND: [
-          { createdAt: { gte: startTime } },
-          { createdAt: { lte: endTime } },
-        ],
-      },
-      orderBy: { id: "desc" },
-    });
-    const branchObj = await getTableRecordWithId(branchId, "branch");
-    let newDocId = `${branchObj.branchCode}${getYearShortCode(
-      new Date(),
-    )}/YRN/SIV/1`;
-
-    if (lastObject) {
-      newDocId = `${branchObj.branchCode}${getYearShortCode(new Date())}/YRN/SIV/${
-        parseInt(lastObject.docId.split("/").at(-1)) + 1
-      }`;
-    }
-
-    return newDocId;
-  } else {
-    let lastObject = await prisma.salesInvoice.findFirst({
-      where: {
-        branchId: parseInt(branchId),
-        AND: [
-          {
-            createdAt: {
-              gte: startTime,
-            },
-          },
-          {
-            createdAt: {
-              lte: endTime,
-            },
-          },
-        ],
-      },
-      orderBy: {
-        id: "desc",
-      },
-    });
-
-    const branchObj = await getTableRecordWithId(branchId, "branch");
-    let newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/1`;
-    if (lastObject) {
-      if (lastObject.docId === "Draft Save") {
-        const records = await prisma.salesInvoice.findMany({
-          select: {
-            docId: true,
-          },
-          where: {
-            branchId: parseInt(branchId),
-            AND: [
-              {
-                createdAt: {
-                  gte: startTime,
-                },
-              },
-              {
-                createdAt: {
-                  lte: endTime,
-                },
-              },
-            ],
-          },
-        });
-        const maxDocId = records.reduce((max, current) => {
-          const currentNo = Number(current.docId.split("/").pop());
-          const maxNo = max ? Number(max.split("/").pop()) : 0;
-
-          return currentNo > maxNo ? current.docId : max;
-        }, null);
-        newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/${
-          parseInt(maxDocId.split("/").at(-1)) + 1
-        }`;
-      } else {
-        newDocId = `${branchObj.branchCode}/${shortCode}/YRN/SIV/${
-          parseInt(lastObject.docId.split("/").at(-1)) + 1
-        }`;
-      }
-    }
-    return newDocId;
   }
+
+  // Guard: if branchId is not yet available, avoid Prisma query with NaN
+  if (!branchId) {
+    return "";
+  }
+
+  // Fetch branch to check isSalesInvoiceDiffer
+  const branchObj = await getTableRecordWithId(branchId, "branch");
+  const isSalesInvoiceDiffer = branchObj?.isSalesInvoiceDiffer ?? false;
+
+  const dateFilter =
+    startTime && endTime
+      ? { AND: [{ createdAt: { gte: startTime } }, { createdAt: { lte: endTime } }] }
+      : {};
+
+  if (isSalesInvoiceDiffer) {
+    // ── SEPARATE mode: Yarn uses Y-{N} (starts from Y-36) ──────────────────
+    const records = await prisma.salesInvoice.findMany({
+      select: { docId: true },
+      where: { branchId: parseInt(branchId), ...dateFilter },
+    });
+
+    const YARN_START = 35; // floor 35 → first docId will be Y-36
+    const maxNum = records.reduce((max, r) => {
+      if (r.docId && r.docId.startsWith("Y-")) {
+        const n = parseInt(r.docId.slice(2), 10);
+        return !isNaN(n) && n > max ? n : max;
+      }
+      return max;
+    }, YARN_START);
+
+    return `Y-${maxNum + 1}`;
+  }
+
+  // ── SHARED mode: Yarn and Fabric share one counter, starts at 060 ─────────
+  const [yarnRecords, fabricRecords] = await Promise.all([
+    prisma.salesInvoice.findMany({
+      select: { docId: true },
+      where: { branchId: parseInt(branchId), ...dateFilter },
+    }),
+    prisma.fabricSalesInvoice.findMany({
+      select: { docId: true },
+      where: { branchId: parseInt(branchId), ...dateFilter },
+    }),
+  ]);
+
+  const sharedMax = [...yarnRecords, ...fabricRecords].reduce((max, r) => {
+    if (!r.docId || r.docId === "Draft Save") return max;
+    // Shared docIds are purely numeric strings, e.g. "060", "061"
+    if (/^\d+$/.test(r.docId)) {
+      const n = parseInt(r.docId, 10);
+      return !isNaN(n) && n > max ? n : max;
+    }
+    return max;
+  }, 59); // floor 59 so first value is 60 → "060"
+
+  return (sharedMax + 1).toString().padStart(3, "0");
 }
 
 async function get(req) {
