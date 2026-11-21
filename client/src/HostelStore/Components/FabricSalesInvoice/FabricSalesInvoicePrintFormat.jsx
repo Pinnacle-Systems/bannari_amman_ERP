@@ -373,10 +373,10 @@ const ContinuationBar = ({ docId, branchName }) => (
         letterSpacing: 2,
       }}
     >
-      ORDER ENTRY — Continued
+      Sales Invoice — Continued
     </Text>
     <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
-      Order No: {docId} | {branchName}
+      Invoice No: {docId} | {branchName}
     </Text>
   </View>
 );
@@ -413,7 +413,7 @@ const FabricSalesInvoicePrintFormat = ({
   const isFabric = (data?.orderGridType || "FABRIC SALES") === "FABRIC SALES";
 
   const customer = customerDetails || data?.customer || {};
-  const branch = data?.SalesBranch || {};
+  const branch = data?.Branch || {};
   const bank = data?.Bank || findFromList(data?.bankId, bankList?.data) || {};
 
   const isExport =
@@ -601,12 +601,12 @@ const FabricSalesInvoicePrintFormat = ({
   }, []);
 
   const metaPills = [
-    { label: "Order No", value: data?.docId },
+    { label: "Invoice No", value: data?.docId },
     {
-      label: "Order Date",
+      label: "Invoice Date",
       value: data?.docDate ? moment(data.docDate).format("DD-MM-YYYY") : "",
     },
-    { label: "Order Type", value: data?.orderType || "—" },
+    // { label: "Order Type", value: data?.orderType || "—" },
     {
       label: "Sales Type",
       value: data?.orderGridType || (isFabric ? "FABRIC SALES" : "YARN SALES"),
@@ -698,7 +698,7 @@ const FabricSalesInvoicePrintFormat = ({
                   <Text style={styles.titleBand}>SALES INVOICE</Text>
 
                   {/* INTRO TEXT */}
-                  <View
+                  {/* <View
                     style={{
                       marginHorizontal: 8,
                       marginBottom: 5,
@@ -720,7 +720,7 @@ const FabricSalesInvoicePrintFormat = ({
                       items. If you have any questions about this order, please
                       contact us.
                     </Text>
-                  </View>
+                  </View> */}
 
                   {/* META PILLS */}
                   <View style={styles.metaRow}>
@@ -822,36 +822,30 @@ const FabricSalesInvoicePrintFormat = ({
                   </View>
 
                   {/* EXPORT DETAILS GRID */}
-                  {isExport && (
-                    <View style={styles.exportGrid}>
-                      <View style={styles.exportCol}>
-                        <View style={styles.exportItem}>
-                          <Text style={styles.exportLabel}>
-                            Country of Origin
-                          </Text>
-                          <Text style={styles.exportValue}>: INDIA</Text>
-                        </View>
-                        <View style={styles.exportItem}>
-                          <Text style={styles.exportLabel}>
-                            Port of Loading
-                          </Text>
-                          <Text style={styles.exportValue}>
-                            : {loadingPort || "—"}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={[styles.exportCol, { borderRight: "none" }]}>
-                        <View style={styles.exportItem}>
-                          <Text style={styles.exportLabel}>
-                            Port of Delivery
-                          </Text>
-                          <Text style={styles.exportValue}>
-                            : {deliveryPort || "—"}
-                          </Text>
-                        </View>
+                  <View style={styles.exportGrid}>
+                    <View style={styles.exportCol}>
+                      {/* <View style={styles.exportItem}>
+                        <Text style={styles.exportLabel}>
+                          Country of Origin
+                        </Text>
+                        <Text style={styles.exportValue}>: INDIA</Text>
+                      </View> */}
+                      <View style={styles.exportItem}>
+                        <Text style={styles.exportLabel}>Port of Loading</Text>
+                        <Text style={styles.exportValue}>
+                          : {loadingPort || "—"}
+                        </Text>
                       </View>
                     </View>
-                  )}
+                    <View style={[styles.exportCol, { borderRight: "none" }]}>
+                      <View style={styles.exportItem}>
+                        <Text style={styles.exportLabel}>Port of Delivery</Text>
+                        <Text style={styles.exportValue}>
+                          : {deliveryPort || "—"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 </>
               ) : (
                 <ContinuationBar

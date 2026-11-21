@@ -263,7 +263,7 @@ const FabricSalesInvoiceForm = ({
           b?.active !== false,
       );
       if (matchedBank) {
-        setBankId(matchedBank.id);
+        setBankId((prev) => prev || matchedBank.id);
       }
     }
   }, [branchId, bankList, id]);
@@ -386,7 +386,21 @@ const FabricSalesInvoiceForm = ({
       setDiscountType(data?.discountType || "");
       setDiscountValue(data?.discountValue || "");
       setPayTermId(data?.payTermId || "");
-      setBankId(data?.bankId || "");
+      if (data?.bankId) {
+        setBankId(data.bankId);
+      } else if (!id) {
+        setBankId((prev) => {
+          if (prev) return prev;
+          const matched = bankList?.data?.find(
+            (b) =>
+              String(b?.bankBranchid ?? b?.bankBranchId) === String(branchId) &&
+              b?.active !== false,
+          );
+          return matched ? matched.id : "";
+        });
+      } else {
+        setBankId("");
+      }
       setCurrencyId(data?.currencyId || "");
       setCarriageCharge(data?.carriageCharge?.toFixed(2) || "");
       setCarriageTax(data?.carriageTax?.toFixed(2) || "");
@@ -398,16 +412,16 @@ const FabricSalesInvoiceForm = ({
         data?.netTotalAmount != null ? data.netTotalAmount?.toFixed(2) : "",
       );
     },
-    [id],
+    [id, bankList, branchId],
   );
 
   useEffect(() => {
     if (id && singleData?.data) {
       syncFormWithDb(singleData.data);
-    } else {
+    } else if (!id) {
       syncFormWithDb(undefined);
     }
-  }, [isSingleFetching, isSingleLoading, id, syncFormWithDb, singleData]);
+  }, [id, singleData]);
 
   let data = {
     id,
@@ -1009,7 +1023,7 @@ const FabricSalesInvoiceForm = ({
                   className={`${compactFieldClass} w-full max-w-none`}
                 />
               </div> */}
-              <div className={narrowFieldWrap}>
+              {/* <div className={narrowFieldWrap}>
                 <DropdownInput
                   name="Sales Type"
                   options={gridTypes}
@@ -1031,7 +1045,7 @@ const FabricSalesInvoiceForm = ({
                   disabled={childRecord.current > 0 || readOnly || id}
                   className={`${compactFieldClass} w-full max-w-none`}
                 />
-              </div>
+              </div> */}
               <div className={narrowFieldWrap}>
                 <DropdownInput
                   name="Tax Type"

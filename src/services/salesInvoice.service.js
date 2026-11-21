@@ -330,10 +330,16 @@ async function getOne(id) {
     },
     include: {
       attachments: true,
-
       Branch: {
         select: {
           branchName: true,
+          address: true,
+          gstNo: true,
+          panNo: true,
+          udyam: true,
+          contactEmail: true,
+          contactMobile: true,
+          telephone: true,
         },
       },
 
