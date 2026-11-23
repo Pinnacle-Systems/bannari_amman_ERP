@@ -9,6 +9,7 @@ import {
   TextInputNew,
   TextInputNew1,
   DropdownInputNew,
+  DropdownInput,
 } from "../../../Inputs";
 import { statusDropdown } from "../../../Utils/DropdownData";
 import Modal from "../../../UiComponents/Modal";
@@ -30,8 +31,12 @@ import {
 } from "../../../redux/services/BankMasterService";
 import { CityMaster } from "..";
 import { DropdownWithModal } from "../../../Inputs/Reuseable";
-import { dropDownListMergedObject } from "../../../Utils/contructObject";
+import {
+  dropDownListMergedObject,
+  dropDownListObject,
+} from "../../../Utils/contructObject";
 import { useGetCityQuery } from "../../../redux/services/CityMasterService";
+import { useGetBranchQuery } from "../../../redux/services/BranchMasterService";
 
 export default function Form({
   onSuccess,
@@ -55,7 +60,7 @@ export default function Form({
   const [searchValue, setSearchValue] = useState("");
   const [searchBankName, setSearchBankName] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
+  const [bankBranchid, setBankBranchId] = useState("");
   const { refs, handlers, focusFirstInput } = useFormKeyboardNavigation();
   const formRef = useRef(null);
 
@@ -72,6 +77,7 @@ export default function Form({
     isLoading,
     isFetching,
   } = useGetbankQuery({ params, searchParams: searchValue });
+  const { data: branchList } = useGetBranchQuery({ params: { ...params } });
 
   const filteredData = React.useMemo(() => {
     if (!allData?.data) return [];
@@ -119,6 +125,7 @@ export default function Form({
       setSwiftCode(data?.swiftCode || "");
       setBranchId(data?.branchId || "");
       setActive(data?.active ?? true);
+      setBankBranchId(data?.bankBranchid);
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
     [id],
@@ -142,6 +149,7 @@ export default function Form({
     ),
     active,
     id,
+    bankBranchid,
   };
 
   const validateData = (data) => {
@@ -150,7 +158,8 @@ export default function Form({
       data.bankHolderName &&
       data.accNo &&
       data.ifsc &&
-      data.branchId
+      data.branchId &&
+      data.bankBranchid
     ) {
       return true;
     }
@@ -433,6 +442,20 @@ export default function Form({
               />
             </div>
           </div>
+          <DropdownInput
+            name="Bank Branch"
+            options={dropDownListObject(
+              branchList ? branchList.data : [],
+              "branchName",
+              "id",
+            )}
+            value={bankBranchid}
+            setValue={setBankBranchId}
+            required={true}
+            readOnly={readOnly}
+            // disabled={childRecord.current > 0}
+            className="!h-7 !py-0 text-xs"
+          />
           <div className="w-[50%] mb-3">
             <DropdownWithModal
               name="Branch/City Name"

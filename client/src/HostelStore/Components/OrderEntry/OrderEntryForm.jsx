@@ -952,18 +952,44 @@ const OrderEntryForm = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
-  const calculatedGrandTotal = useMemo(() => {
-    const baseNet = !isCustomerExport
-      ? enrichedData.net
-      : (enrichedData.items?.reduce(
+  const totalTaxAmount = useMemo(() => {
+    return (enrichedData?.slabBreakup || []).reduce(
+      (acc, curr) => acc + (Number(curr?.amount) || 0),
+      0,
+    );
+  }, [enrichedData]);
+
+  const totalAmount = useMemo(() => {
+    if (isCustomerExport) {
+      const itemsTotal =
+        enrichedData?.items?.reduce(
           (sum, item) => sum + (parseFloat(item.amount) || 0),
           0,
-        ) || 0) -
-        (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-          ? enrichedData.itemDiscount + enrichedData.overallDiscount
-          : 0);
-    return (baseNet || 0) + (parseFloat(carriageFinalAmt) || 0);
-  }, [enrichedData, isCustomerExport, carriageFinalAmt]);
+        ) || 0;
+      const totalDisc =
+        (enrichedData?.itemDiscount || 0) + (enrichedData?.overallDiscount || 0);
+      return Math.max(0, itemsTotal - (totalDisc > 0 ? totalDisc : 0));
+    }
+    return Number(
+      ((Number(enrichedData?.taxable) || 0) + totalTaxAmount).toFixed(2),
+    );
+  }, [enrichedData, isCustomerExport, totalTaxAmount]);
+
+  const carriageChargesAmt = useMemo(() => {
+    return parseFloat(carriageFinalAmt) || 0;
+  }, [carriageFinalAmt]);
+
+  const roundOffAmount = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Number((Math.round(sum) - sum).toFixed(2));
+  }, [totalAmount, carriageChargesAmt]);
+
+  const calculatedGrandTotal = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Math.round(sum);
+  }, [totalAmount, carriageChargesAmt]);
 
   const compactFieldClass = "!h-7 text-xs";
   const compactModalFieldClass = "!h-7 !py-0 text-xs";
@@ -2005,27 +2031,10 @@ const OrderEntryForm = ({
             }))
           : []),
         {
-          key: "roundOff",
-          label: "Round Off",
-          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            enrichedData.roundOff || 0,
-            currencyCode || isCurrencySymbol,
-          )}`,
-          summaryColumn: "right",
-        },
-        {
-          key: "netAmount",
+          key: "totalAmount",
           label: "Total Amount",
           value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            !isCustomerExport
-              ? enrichedData.net
-              : (enrichedData.items?.reduce(
-                  (sum, item) => sum + (parseFloat(item.amount) || 0),
-                  0,
-                ) || 0) -
-                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
-                    : 0),
+            totalAmount || 0,
             currencyCode || isCurrencySymbol,
           )}`,
           summaryColumn: "right",
@@ -2043,6 +2052,15 @@ const OrderEntryForm = ({
                 )
               : "0.00"
           }`,
+          summaryColumn: "right",
+        },
+        {
+          key: "roundOff",
+          label: "Round Off",
+          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+            roundOffAmount || 0,
+            currencyCode || isCurrencySymbol,
+          )}`,
           summaryColumn: "right",
         },
         {

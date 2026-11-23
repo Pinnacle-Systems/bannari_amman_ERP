@@ -35,7 +35,7 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
   const [panNoBranch, setPanNoBranch] = useState("");
   const [udyamBranch, setUdyamBranch] = useState("");
   const [msmeNoBranch, setMsmeNoBranch] = useState("");
-
+  const [isSalesInvoiceDiffer, setIsSalesInvoiceDiffer] = useState(false);
   const childRecord = useRef(0);
 
   const companyId = secureLocalStorage.getItem(
@@ -73,6 +73,9 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
       setPanNoBranch(data?.panNo ? data.panNo : "");
       setUdyamBranch(data?.udyam ? data.udyam : "");
       setMsmeNoBranch(data?.msmeNo ? data.msmeNo : "");
+      setIsSalesInvoiceDiffer(
+        data?.isSalesInvoiceDiffer ? data?.isSalesInvoiceDiffer : false,
+      );
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
     },
     [id],
@@ -97,6 +100,7 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
     panNo: panNoBranch,
     udyam: udyamBranch,
     msmeNo: msmeNoBranch,
+    isSalesInvoiceDiffer,
   };
 
   const validateData = (data) => {
@@ -327,6 +331,14 @@ export default function BranchMaster({ companyCode, setBranchForm }) {
                   readOnly={readOnly}
                   value={activeBranch}
                   setValue={setActiveBranch}
+                />
+              </div>
+              <div className="flex justify-between text-sm">
+                <CheckBox
+                  name="Active"
+                  readOnly={readOnly}
+                  value={isSalesInvoiceDiffer}
+                  setValue={setIsSalesInvoiceDiffer}
                 />
               </div>
             </div>

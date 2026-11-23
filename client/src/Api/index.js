@@ -89,3 +89,5 @@ export const DIA_MASTER_API = "diaMaster";
 export const GAUGE_MASTER_API = "gaugeMaster";
 export const DESIGN_MASTER_API = "designMaster";
 export const YARN_PROFORMA_INVOICE_API = "yarnProformaInvoice";
+export const SALES_INVOIVE_API = "salesInvoice";
+export const FABRIC_SALES_INVOIVE_API = "faricSalesInvoice";

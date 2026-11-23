@@ -63,3 +63,5 @@ export { default as Packing } from "./Packing/index";
 export { default as SaleOrder } from "./SaleOrder/index";
 export { default as OrderEntryReport } from "./OrderEntryReport/OrderEntryReport";
 export { default as ProformaInvoiceYarn } from "./ProformaInvoiceYarn/ProfomaInvoiceYarn";
+export { default as SalesInvoice } from "./SalesInvoice";
+export { default as FabricSalesInvoice } from "./FabricSalesInvoice";

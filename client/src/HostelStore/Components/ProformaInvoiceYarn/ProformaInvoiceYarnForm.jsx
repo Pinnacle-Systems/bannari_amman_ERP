@@ -648,18 +648,44 @@ const ProformaInvoiceYarnForm = ({
     );
   }, [yarnItems, isSupplierOutside, discountType, discountValue]);
 
-  const calculatedGrandTotal = useMemo(() => {
-    const base = !isCustomerExport
-      ? enrichedData.net
-      : (enrichedData.items?.reduce(
+  const totalTaxAmount = useMemo(() => {
+    return (enrichedData?.slabBreakup || []).reduce(
+      (acc, curr) => acc + (Number(curr?.amount) || 0),
+      0,
+    );
+  }, [enrichedData]);
+
+  const totalAmount = useMemo(() => {
+    if (isCustomerExport) {
+      const itemsTotal =
+        enrichedData?.items?.reduce(
           (sum, item) => sum + (parseFloat(item.amount) || 0),
           0,
-        ) || 0) -
-        (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-          ? enrichedData.itemDiscount + enrichedData.overallDiscount
-          : 0);
-    return (base || 0) + (parseFloat(carriageFinalAmt) || 0);
-  }, [enrichedData, isCustomerExport, carriageFinalAmt]);
+        ) || 0;
+      const totalDisc =
+        (enrichedData?.itemDiscount || 0) + (enrichedData?.overallDiscount || 0);
+      return Math.max(0, itemsTotal - (totalDisc > 0 ? totalDisc : 0));
+    }
+    return Number(
+      ((Number(enrichedData?.taxable) || 0) + totalTaxAmount).toFixed(2),
+    );
+  }, [enrichedData, isCustomerExport, totalTaxAmount]);
+
+  const carriageChargesAmt = useMemo(() => {
+    return parseFloat(carriageFinalAmt) || 0;
+  }, [carriageFinalAmt]);
+
+  const roundOffAmount = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Number((Math.round(sum) - sum).toFixed(2));
+  }, [totalAmount, carriageChargesAmt]);
+
+  const calculatedGrandTotal = useMemo(() => {
+    const sum = totalAmount + carriageChargesAmt;
+    if (!sum) return 0;
+    return Math.round(sum);
+  }, [totalAmount, carriageChargesAmt]);
 
   const versionDropdown = (
     <div className="inline-flex items-center bg-[#102438] border border-[#28496D] px-1.5 py-0 rounded-md shadow-lg h-6">
@@ -1401,27 +1427,10 @@ const ProformaInvoiceYarnForm = ({
             }))
           : []),
         {
-          key: "roundOff",
-          label: "Round Off",
-          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            enrichedData.roundOff || 0,
-            currencyCode || isCurrencySymbol,
-          )}`,
-          summaryColumn: "right",
-        },
-        {
-          key: "netAmount",
+          key: "totalAmount",
           label: "Total Amount",
           value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            !isCustomerExport
-              ? enrichedData.net
-              : (enrichedData.items?.reduce(
-                  (sum, item) => sum + (parseFloat(item.amount) || 0),
-                  0,
-                ) || 0) -
-                  (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-                    ? enrichedData.itemDiscount + enrichedData.overallDiscount
-                    : 0),
+            totalAmount || 0,
             currencyCode || isCurrencySymbol,
           )}`,
           summaryColumn: "right",
@@ -1442,18 +1451,19 @@ const ProformaInvoiceYarnForm = ({
           summaryColumn: "right",
         },
         {
+          key: "roundOff",
+          label: "Round Off",
+          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+            roundOffAmount || 0,
+            currencyCode || isCurrencySymbol,
+          )}`,
+          summaryColumn: "right",
+        },
+        {
           key: "grandTotal",
           label: "Net Amount",
           value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
-            (!isCustomerExport
-              ? enrichedData.net
-              : (enrichedData.items?.reduce(
-                  (sum, item) => sum + (parseFloat(item.amount) || 0),
-                  0,
-                ) || 0) -
-                (enrichedData.itemDiscount + enrichedData.overallDiscount > 0
-                  ? enrichedData.itemDiscount + enrichedData.overallDiscount
-                  : 0)) + (parseFloat(carriageFinalAmt) || 0),
+            calculatedGrandTotal || 0,
             currencyCode || isCurrencySymbol,
           )}`,
           summaryColumn: "right",

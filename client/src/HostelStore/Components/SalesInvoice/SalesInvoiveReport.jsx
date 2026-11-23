@@ -1,0 +1,708 @@
+import { useEffect, useState } from "react";
+import { Loader } from "../../../Basic/components";
+import { getDateFromDateTimeToDisplay } from "../../../Utils/helper";
+import secureLocalStorage from "react-secure-storage";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { Tooltip } from "@mui/material";
+import { useDispatch } from "react-redux";
+import { push } from "../../../redux/features/opentabs";
+import { useGetSalesInvoiceQuery } from "../../../redux/uniformService/SalesInvoiceService";
+import { FileText } from "lucide-react";
+import { useAddApprovalStausMutation } from "../../../redux/uniformService/PoServices";
+import { ApprovalBadge } from "../../../Utils/ApprovalHelper";
+import Modal from "../../../UiComponents/Modal";
+import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
+import { FiCheck } from "react-icons/fi";
+import { toast } from "react-toastify";
+import { UserPermissions } from "../../../Utils/UserPermissions";
+const SalesInvoiveReport = ({
+  onClick,
+  onView,
+  itemsPerPage = 15,
+  onEdit,
+  onDelete,
+  rowActions = true,
+  onCreateJobCard,
+  userData,
+  canApprove,
+}) => {
+  const branchId = secureLocalStorage.getItem(
+    sessionStorage.getItem("sessionId") + "currentBranchId",
+  );
+
+  const [dataPerPage, setDataPerPage] = useState(String(itemsPerPage || 15));
+  const [serachDocNo, setSerachDocNo] = useState("");
+  const [searchDocDate, setSearchDocDate] = useState("");
+  const [searchCustomer, setSearchCustomer] = useState("");
+  const [searchOrderType, setSearchOrderType] = useState("");
+  const [searchOrderGridType, setSearchOrderGridType] = useState("");
+
+  const [debouncedDocNo, setDebouncedDocNo] = useState("");
+  const [debouncedDocDate, setDebouncedDocDate] = useState("");
+  const [debouncedCustomer, setDebouncedCustomer] = useState("");
+  const [debouncedOrderType, setDebouncedOrderType] = useState("");
+
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPageNumber, setCurrentPageNumber] = useState(1);
+  const [approvalModal, setApprovalModal] = useState(false);
+  const [selectedJobEntry, setSelectedJobEntry] = useState(null);
+  const [actionType, setActionType] = useState(""); // "APPROVE" | "REJECT"
+  const [remarks, setRemarks] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const { hasPermission } = UserPermissions();
+
+  const dispatch = useDispatch();
+  const [addApprovalStatus] = useAddApprovalStausMutation();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocNo(serachDocNo);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [serachDocNo]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedDocDate(searchDocDate);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchDocDate]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCustomer(searchCustomer);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchCustomer]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedOrderType(searchOrderType);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchOrderType]);
+
+  useEffect(() => {
+    setCurrentPageNumber(1);
+  }, [
+    debouncedDocNo,
+    debouncedDocDate,
+    debouncedCustomer,
+    debouncedOrderType,
+    searchOrderGridType,
+    dataPerPage,
+  ]);
+
+  const searchFields = {
+    serachDocNo: debouncedDocNo,
+    searchDocDate: debouncedDocDate,
+    searchCustomer: debouncedCustomer,
+    searchOrderType: debouncedOrderType,
+    searchOrderGridType,
+  };
+
+  const companyId = secureLocalStorage.getItem(
+    sessionStorage.getItem("sessionId") + "userCompanyId",
+  );
+
+  const {
+    data: allData,
+    isFetching,
+    isLoading,
+  } = useGetSalesInvoiceQuery({
+    params: {
+      branchId,
+      ...searchFields,
+      pagination: true,
+      dataPerPage,
+      pageNumber: currentPageNumber,
+    },
+  });
+
+  useEffect(() => {
+    if (typeof allData?.totalCount === "number") {
+      setTotalCount(allData.totalCount);
+    }
+  }, [allData]);
+
+  const isLoadingIndicator = isLoading || isFetching;
+
+  const totalPages = Math.ceil(totalCount / parseInt(dataPerPage)) || 1;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPageNumber(newPage);
+    }
+  };
+
+  const Pagination = () => {
+    return (
+      <div className="h-10 w-full flex flex-col sm:flex-row justify-between items-center p-2 bg-white border-t border-gray-200">
+        <div className="text-[11px] text-gray-600 mb-2 sm:mb-0">
+          Showing{" "}
+          {totalCount === 0
+            ? 0
+            : (currentPageNumber - 1) * parseInt(dataPerPage) + 1}{" "}
+          to {Math.min(currentPageNumber * parseInt(dataPerPage), totalCount)}{" "}
+          of {totalCount} entries
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={() => handlePageChange(currentPageNumber - 1)}
+            disabled={currentPageNumber === 1}
+            className={`px-2 py-0.5 rounded text-[11px] ${
+              currentPageNumber === 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+            }`}
+          >
+            <FaChevronLeft className="inline w-2.5 h-2.5" />
+          </button>
+
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPageNumber <= 3) {
+              pageNum = i + 1;
+            } else if (currentPageNumber >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPageNumber - 2 + i;
+            }
+
+            return (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-2 py-0.5 rounded text-[11px] ${
+                  currentPageNumber === pageNum
+                    ? "bg-indigo-800 text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          {totalPages > 5 && currentPageNumber < totalPages - 2 && (
+            <span className="px-2 py-0.5 text-[11px]">...</span>
+          )}
+
+          {totalPages > 5 && currentPageNumber < totalPages - 2 && (
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              className={`px-2 py-0.5 rounded text-[11px] ${
+                currentPageNumber === totalPages
+                  ? "bg-indigo-800 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+              }`}
+            >
+              {totalPages}
+            </button>
+          )}
+
+          <button
+            onClick={() => handlePageChange(currentPageNumber + 1)}
+            disabled={currentPageNumber === totalPages}
+            className={`px-2 py-0.5 rounded text-[11px] ${
+              currentPageNumber === totalPages
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+            }`}
+          >
+            <FaChevronRight className="inline w-2.5 h-2.5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const handleApprovalAction = (jobEntry, type) => {
+    setSelectedJobEntry(jobEntry);
+    setActionType(type);
+    setRemarks("");
+    setApprovalModal(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (actionType === "REJECT" && !remarks.trim()) {
+      toast.warning("Remarks required for sending back!");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const result = await addApprovalStatus({
+        userId: userData?.id,
+        remarks: remarks || null,
+        actionType, // "APPROVE" or "REJECT"
+        referenceId: selectedJobEntry.id,
+        referencePage: "ORDER ENTRY",
+        recordData: {},
+      }).unwrap();
+
+      if (result.statusCode === 0) {
+        toast.success(
+          result.message
+            ? result?.message
+            : actionType === "APPROVE"
+              ? "Order Entry Approved!"
+              : "Order Entry Sent Back for Review!",
+        );
+        setApprovalModal(false);
+      } else {
+        toast.error(result.message || "Action failed");
+        setApprovalModal(false);
+      }
+    } catch (err) {
+      toast.error(err?.data?.message || "Something went wrong!");
+      setApprovalModal(false);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const totalColSpan = 6 + (canApprove ? 1 : 0) + (rowActions ? 1 : 0);
+
+  return (
+    <>
+      <Modal
+        isOpen={approvalModal}
+        onClose={() => setApprovalModal(false)}
+        widthClass="w-[420px]"
+      >
+        <div className="space-y-4">
+          {/* Header */}
+          <h2
+            className={`text-base font-semibold ${
+              actionType === "APPROVE" ? "text-green-700" : "text-blue-700"
+            }`}
+          >
+            {actionType === "APPROVE"
+              ? "✅ Approve Order Entry"
+              : "↩️ Send Back for Review"}
+          </h2>
+
+          {/* PO Info Card */}
+          <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-xs space-y-1.5">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Order Entry No</span>
+              <span className="font-medium text-gray-800">
+                {selectedJobEntry?.docId}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Customer</span>
+              <span className="font-medium text-gray-800">
+                {selectedJobEntry?.Customer?.name}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Current Approval</span>
+              <ApprovalBadge
+                approvalStatus={selectedJobEntry?.approvalStatus}
+              />
+            </div>
+          </div>
+
+          {/* Remarks */}
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              Remarks{" "}
+              {actionType === "REJECT" && (
+                <span className="text-red-500">* required</span>
+              )}
+            </label>
+            <textarea
+              rows={3}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300 resize-none"
+              placeholder={
+                actionType === "APPROVE"
+                  ? "Optional remarks..."
+                  : "Reason for sending back (required)..."
+              }
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setApprovalModal(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setApprovalModal(false);
+                }
+              }}
+              className="px-4 py-1.5 text-xs rounded borde text-white hover:bg-red-600 bg-red-500"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={actionLoading}
+              onClick={handleConfirmAction}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleConfirmAction();
+                }
+              }}
+              className={`px-4 py-1.5 text-xs rounded text-white font-semibold transition ${
+                actionType === "APPROVE"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1`}
+            >
+              {actionLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-3 w-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  Processing...
+                </>
+              ) : actionType === "APPROVE" ? (
+                " Confirm Approve"
+              ) : (
+                " Send Back"
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+      <div className="flex flex-col w-full h-full overflow-hidden bg-[#F1F1F0] rounded-lg shadow-sm">
+        <div className="flex-1 overflow-auto">
+          <table className="border-collapse table-fixed text-left">
+            <thead className="bg-gray-200 text-gray-800 sticky top-0 z-10">
+              <tr className="border-b border-gray-300">
+                <th className="px-1 py-1.5 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                  <div>S No</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
+                  <div>Yarn Sales Invoice No</div>
+                </th>
+                <th className="px-3 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                  <div> Date</div>
+                </th>
+                {/* <th className="px-3 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <div>Order Type</div>
+                </th> */}
+
+                <th className="w-80 min-w-[320px] px-3 font-medium text-[13px] text-gray-900 text-left">
+                  <div>Customer</div>
+                </th>
+                {canApprove && (
+                  <th className="w-36 min-w-[140px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                    <div>Approval Actions</div>
+                  </th>
+                )}
+                {rowActions && (
+                  <th className="w-24 min-w-[96px] px-3 font-medium text-[13px] text-gray-900 text-center">
+                    <div>Actions</div>
+                  </th>
+                )}
+              </tr>
+              <tr className="border-b border-gray-200">
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-14 min-w-[56px]">
+                  <div className="h-3"></div>
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-44 min-w-[176px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={serachDocNo}
+                    onChange={(e) => setSerachDocNo(e.target.value)}
+                  />
+                </th>
+                <th className="px-1 font-medium text-[13px] text-gray-900 text-center w-32 min-w-[128px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchDocDate}
+                    onChange={(e) => setSearchDocDate(e.target.value)}
+                  />
+                </th>
+                {/* <th className="px-1 font-medium text-[13px] text-gray-900 text-left w-36 min-w-[140px]">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchOrderType}
+                    onChange={(e) => setSearchOrderType(e.target.value)}
+                  />
+                </th> */}
+
+                <th className="w-80 min-w-[320px] px-1 font-medium text-[13px] text-gray-900 text-left">
+                  <input
+                    type="text"
+                    className="text-black h-5 w-full px-1 focus:outline-none border border-gray-400 rounded-md"
+                    placeholder="Search"
+                    value={searchCustomer}
+                    onChange={(e) => setSearchCustomer(e.target.value)}
+                  />
+                </th>
+                {canApprove && <th className="w-36 min-w-[140px] px-3"></th>}
+                {rowActions && <th className="w-24 min-w-[96px] px-3"></th>}
+              </tr>
+            </thead>
+            <tbody className="border-2">
+              {isLoadingIndicator ? (
+                <tr>
+                  <td colSpan={totalColSpan} className="px-6 py-10 text-center">
+                    <Loader />
+                  </td>
+                </tr>
+              ) : allData?.data?.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={totalColSpan}
+                    className="px-6 py-10 text-center text-gray-500 italic"
+                  >
+                    No records found
+                  </td>
+                </tr>
+              ) : (
+                allData?.data?.map((dataObj, index) => {
+                  return (
+                    <tr
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (onClick) onClick(dataObj.id);
+                          else if (onView) onView(dataObj.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      key={dataObj.id}
+                      className={`hover:bg-gray-50 transition-colors border-b border-gray-200 text-[12px] cursor-pointer ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-100"
+                      }`}
+                      onClick={() => {
+                        if (onClick) onClick(dataObj.id);
+                        else if (onView) onView(dataObj.id);
+                      }}
+                    >
+                      <td className="w-14 min-w-[56px] text-center py-1.5">
+                        {(currentPageNumber - 1) * parseInt(dataPerPage) +
+                          index +
+                          1}
+                      </td>
+
+                      <td className="w-44 min-w-[176px] py-1.5 text-left">
+                        {dataObj.docId}
+                      </td>
+
+                      <td className="w-32 min-w-[128px] py-1.5 text-center">
+                        {getDateFromDateTimeToDisplay(dataObj.docDate)}
+                      </td>
+                      {/* <td className="w-36 min-w-[140px] py-1.5 text-left px-3">
+                        {dataObj.orderType}
+                      </td> */}
+
+                      <td className="w-80 min-w-[320px] py-1.5 text-left px-3">
+                        {dataObj?.customer?.name}
+                      </td>
+
+                      {canApprove && (
+                        <td
+                          className="w-36 min-w-[140px] px-2 py-1 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            {/* ↩️ Send Back — show when PENDING */}
+                            {["PENDING"].includes(
+                              dataObj?.approvalStatus?.status,
+                            ) && (
+                              <Tooltip title="Send Back for Review" arrow>
+                                <button
+                                  onClick={() =>
+                                    handleApprovalAction(dataObj, "REJECT")
+                                  }
+                                  className="p-1.5 rounded-md bg-blue-200 text-blue-700 hover:bg-blue-300 transition"
+                                >
+                                  <MdKeyboardDoubleArrowLeft size={16} />
+                                </button>
+                              </Tooltip>
+                            )}
+
+                            {/* ✅ Approve — show only when PENDING */}
+                            {dataObj?.approvalStatus?.status === "PENDING" && (
+                              <Tooltip title="Approve" arrow>
+                                <button
+                                  onClick={() =>
+                                    handleApprovalAction(dataObj, "APPROVE")
+                                  }
+                                  className="p-1.5 rounded-md bg-green-200 text-green-700 hover:bg-green-300 transition"
+                                >
+                                  <FiCheck size={16} />
+                                </button>
+                              </Tooltip>
+                            )}
+
+                            {dataObj?.approvalStatus?.status ===
+                              "NOT_CONFIGURED" && (
+                              <span className="text-[10px] text-gray-400 italic">
+                                —
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      )}
+
+                      {rowActions && (
+                        <td
+                          className="w-24 min-w-[96px] px-2 py-1 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-center">
+                            <div className="flex items-center gap-1 pl-2">
+                              {onView && (
+                                <Tooltip title="View" arrow>
+                                  <button
+                                    className="text-blue-600 flex items-center px-1 bg-blue-50 rounded"
+                                    onClick={() =>
+                                      hasPermission(
+                                        () => onView(dataObj.id),
+                                        "read",
+                                      )
+                                    }
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              )}
+                              {onEdit &&
+                                (dataObj.isEditAllowed === false ? (
+                                  <Tooltip
+                                    title="Edit expired: Invoices can only be edited within 1 day of creation"
+                                    arrow
+                                  >
+                                    <button
+                                      disabled
+                                      className="text-gray-400 gap-1 px-1 bg-gray-100 rounded cursor-not-allowed opacity-50"
+                                      title="Edit expired"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                      >
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                      </svg>
+                                    </button>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title="Edit" arrow>
+                                    <button
+                                      className="text-green-600 gap-1 px-1 bg-green-50 rounded"
+                                      onClick={() =>
+                                        hasPermission(
+                                          () => onEdit(dataObj.id),
+                                          "edit",
+                                        )
+                                      }
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                      >
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                      </svg>
+                                    </button>
+                                  </Tooltip>
+                                ))}
+                              {/* {onDelete && (
+                                <Tooltip
+                                  title={
+                                    dataObj.childRecord > 0
+                                      ? "Cannot Delete. Child Record Exists"
+                                      : "Delete"
+                                  }
+                                  arrow
+                                >
+                                  <button
+                                    className={`flex items-center gap-1 px-1 rounded transition ${
+                                      dataObj.childRecord > 0
+                                        ? "bg-red-50 text-red-500 opacity-40 cursor-not-allowed"
+                                        : "bg-red-50 text-red-800 hover:bg-red-100"
+                                    }`}
+                                    onClick={() =>
+                                      hasPermission(
+                                        () => onDelete(dataObj.id),
+                                        "delete",
+                                      )
+                                    }
+                                    disabled={dataObj.childRecord > 0}
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-4 w-4"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </button>
+                                </Tooltip>
+                              )} */}
+                            </div>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex-none">
+          <Pagination />
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default SalesInvoiveReport;

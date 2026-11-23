@@ -30,11 +30,20 @@ import Notification from "./Notification";
 import { GLOBE_ICON } from "../../../icons";
 import useLogout from "../../../CustomHooks/useLogout";
 import { useGetCompanyQuery } from "../../../redux/services/CompanyMasterService";
+import { findFromList, getCommonParams } from "../../../Utils/helper";
+import { useGetBranchQuery } from "../../../redux/services/BranchMasterService";
 const BASE_URL = process.env.REACT_APP_SERVER_URL;
 
 const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
   useLogout();
-
+  const { branchId, companyId, finYearId, userId } = getCommonParams();
+  const params = {
+    branchId,
+    companyId,
+    finYearId,
+  };
+  const { data: branchList } = useGetBranchQuery({ params: { ...params } });
+  let branchName = findFromList(branchId, branchList?.data, "branchName");
   const [logout, setLogout] = useState(false);
   const [hideNavBar, sethideNavBar] = useState(true);
 
@@ -208,7 +217,7 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
     .filter((g) => g.name);
 
   return (
-    <div className="py-1 px-3 w-full flex justify-between items-center bg-white shadow-sm fixed z-50">
+    <div className="py-1 px-3 w-full flex justify-between items-center bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
       <Modal
         isOpen={logout}
         onClose={() => {
@@ -229,7 +238,7 @@ const Header = ({ profile, setProfile, setIsGlobalOpen }) => {
           />
         </div>
         <p className="text-black font-semibold hidden md:inline">
-          {companyName}
+          {branchName}
         </p>
         <button
           type="button"

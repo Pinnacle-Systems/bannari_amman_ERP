@@ -143,6 +143,7 @@ async function create(body) {
     branchId,
     active,
     bankHolderName,
+    bankBranchid,
   } = await body;
 
   const data = await prisma.bank.create({
@@ -155,6 +156,7 @@ async function create(body) {
       bankHolderName,
       companyId: companyId ? parseInt(companyId) : null,
       branchId: branchId ? parseInt(branchId) : null,
+      bankBranchid: bankBranchid ? parseInt(bankBranchid) : null,
     },
   });
 
@@ -167,10 +169,10 @@ async function update(id, body) {
     accNo,
     ifsc,
     swiftCode,
-    companyId,
-    branchId,
+
     active,
     bankHolderName,
+    bankBranchid,
   } = await body;
 
   const dataFound = await prisma.bank.findUnique({
@@ -192,8 +194,8 @@ async function update(id, body) {
       swiftCode,
       active,
       bankHolderName,
-      companyId: companyId ? parseInt(companyId) : null,
-      branchId: branchId ? parseInt(branchId) : null,
+
+      bankBranchid: bankBranchid ? parseInt(bankBranchid) : null,
     },
   });
 

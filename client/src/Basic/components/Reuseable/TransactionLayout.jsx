@@ -405,7 +405,7 @@ export const TransactionScreen = ({
 
           {/* ── FOOTER: terms + totals + buttons ────────────────────── */}
           {!showSidebarLayout && (
-            <div ref={footerRef} className="flex-none">
+            <div ref={footerRef} className="flex-none min-w-0">
               {footer}
             </div>
           )}
