@@ -257,6 +257,14 @@ const FabricSalesInvoiceForm = ({
     skip: !id,
   });
 
+  const isEditAllowed = singleData?.data?.isEditAllowed ?? true;
+
+  useEffect(() => {
+    if (id && singleData?.data?.isEditAllowed === false) {
+      setReadOnly(true);
+    }
+  }, [id, singleData, setReadOnly]);
+
   useEffect(() => {
     if (!id && bankList?.data?.length && branchId) {
       const matchedBank = bankList.data.find(
@@ -472,6 +480,12 @@ const FabricSalesInvoiceForm = ({
 
   const handleSubmitCustom = async (callback, data, text, nextProcess) => {
     try {
+      if (id && !isEditAllowed) {
+        toast.error(
+          "Invoice edit window has expired. Invoices can only be edited within 1 day of creation.",
+        );
+        return;
+      }
       const formData = new FormData();
       for (let key in data) {
         if (key == "attachments") {
@@ -935,6 +949,11 @@ const FabricSalesInvoiceForm = ({
                     Fabric Sales Invoice
                   </span>
                   {id && <ModeChip id={id} readOnly={readOnly} />}
+                  {id && !isEditAllowed && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      🔒 Locked
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 flex-nowrap mt-1 h-7">
                   <h2 className="text-md font-extrabold tracking-tight truncate leading-none select-none text-white">
@@ -1768,9 +1787,20 @@ const FabricSalesInvoiceForm = ({
   );
 
   const headerContent = (
-    <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_1.65fr] gap-1.5 w-full">
-      {customerDetailsCompactSection}
-      {shippingDetailsCompactSection}
+    <div className="flex flex-col gap-1.5 w-full">
+      {id && !isEditAllowed && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 px-3 py-1.5 rounded-md text-xs flex items-center gap-2">
+          <span className="font-bold">🔒 Locked:</span>
+          <span>
+            This invoice was created more than 1 day ago and can no longer be
+            edited.
+          </span>
+        </div>
+      )}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_1.65fr] gap-1.5 w-full">
+        {customerDetailsCompactSection}
+        {shippingDetailsCompactSection}
+      </div>
     </div>
   );
 
@@ -1779,7 +1809,12 @@ const FabricSalesInvoiceForm = ({
       <button
         type="button"
         onClick={() => saveData("close")}
-        disabled={isDisabled || readOnly || childRecord.current > 0}
+        disabled={
+          isDisabled ||
+          readOnly ||
+          childRecord.current > 0 ||
+          (id && !isEditAllowed)
+        }
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -1788,7 +1823,10 @@ const FabricSalesInvoiceForm = ({
           }
         }}
         className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-blue-500/25 active:scale-95 transition-all duration-150 border border-blue-400/25 ${
-          isDisabled || readOnly || childRecord.current > 0
+          isDisabled ||
+          readOnly ||
+          childRecord.current > 0 ||
+          (id && !isEditAllowed)
             ? "opacity-50 cursor-not-allowed hover:shadow-none hover:from-blue-600 hover:to-indigo-600 active:scale-100"
             : "hover:-translate-y-0.5 cursor-pointer"
         }`}
@@ -1801,7 +1839,12 @@ const FabricSalesInvoiceForm = ({
       <button
         type="button"
         onClick={() => saveData("new")}
-        disabled={isDisabled || readOnly || childRecord.current > 0}
+        disabled={
+          isDisabled ||
+          readOnly ||
+          childRecord.current > 0 ||
+          (id && !isEditAllowed)
+        }
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -1810,7 +1853,10 @@ const FabricSalesInvoiceForm = ({
           }
         }}
         className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-2.5 py-1 rounded-md flex items-center text-xs font-medium shadow-sm hover:shadow-md hover:shadow-emerald-500/25 active:scale-95 transition-all duration-150 border border-emerald-400/25 ${
-          isDisabled || readOnly || childRecord.current > 0
+          isDisabled ||
+          readOnly ||
+          childRecord.current > 0 ||
+          (id && !isEditAllowed)
             ? "opacity-50 cursor-not-allowed hover:shadow-none hover:from-emerald-600 hover:to-teal-600 active:scale-100"
             : "hover:-translate-y-0.5 cursor-pointer"
         }`}
@@ -1820,7 +1866,7 @@ const FabricSalesInvoiceForm = ({
         {id ? "Update & New" : "Save & New"}
       </button>
 
-      {(!id || readOnly) && id && (
+      {(!id || readOnly) && id && isEditAllowed && (
         <button
           type="button"
           onClick={() => hasPermission(() => setReadOnly(false), "edit")}
@@ -2442,7 +2488,14 @@ const FabricSalesInvoiceForm = ({
         >
           <PDFViewer className="w-full h-full border-none">
             <FabricSalesInvoicePrintFormat
-              data={singleData?.data}
+              data={
+                singleData?.data
+                  ? {
+                      ...singleData.data,
+                      vehicleNo: vehicleNo || singleData.data.vehicleNo,
+                    }
+                  : { vehicleNo }
+              }
               taxDetails={enrichedData}
               totals={enrichedData}
               customerDetails={
@@ -2483,7 +2536,16 @@ const FabricSalesInvoiceForm = ({
         className="po-form-geist"
         showTabs={true}
         title="Fabric Sales Invoice"
-        badge={<ModeChip id={id} readOnly={readOnly} />}
+        badge={
+          <div className="flex items-center gap-1.5">
+            <ModeChip id={id} readOnly={readOnly} />
+            {id && !isEditAllowed && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                🔒 Edit Expired
+              </span>
+            )}
+          </div>
+        }
         closeIcon={<IoArrowBackCircleSharp className="w-6 h-6" />}
         onClose={onClose}
         onKeyDown={handleKeyDown}

@@ -18,6 +18,7 @@ import {
   buildIncludeForModule,
   createApprovalLog,
 } from "../utils/approvalHelper.js";
+import { checkInvoiceEditWindow } from "../utils/editExpiryHelper.js";
 
 const REFERENCE_PAGE = "FABRIC SALES INVOICE";
 
@@ -277,6 +278,7 @@ async function get(req) {
       ...order,
       // childRecord: order._count.JobCard,
       approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
+      isEditAllowed: checkInvoiceEditWindow(order.createdAt).isEditAllowed,
     };
   });
 
@@ -390,6 +392,7 @@ async function getOne(id) {
       approvalStatus: getApprovalStatus(log, !!log || shouldTrigger),
       // childRecord: data._count.JobCard,
       approvalLog: log,
+      isEditAllowed: checkInvoiceEditWindow(data.createdAt).isEditAllowed,
     },
   };
 }
@@ -657,6 +660,14 @@ async function update(id, body, files) {
     },
   });
   if (!dataFound) return NoRecordFound("Sales Invoice");
+
+  const { isEditAllowed } = checkInvoiceEditWindow(dataFound.createdAt);
+  if (!isEditAllowed) {
+    return {
+      statusCode: 1,
+      message: "Invoice edit window has expired. Invoices can only be edited within 1 day of creation.",
+    };
+  }
 
   const removedFabricItemIds = (dataFound.salesFabricItems || [])
     .filter((item) => !incomingFabricItemIds.includes(item.id))

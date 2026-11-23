@@ -842,11 +842,19 @@ const SalesInvoicePrintFormat = ({
                         </Text>
                       </View>
                     </View>
-                    <View style={[styles.exportCol, { borderRight: "none" }]}>
+                    <View style={styles.exportCol}>
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Port of Delivery</Text>
                         <Text style={styles.exportValue}>
                           : {deliveryPort || "—"}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={[styles.exportCol, { borderRight: "none" }]}>
+                      <View style={styles.exportItem}>
+                        <Text style={styles.exportLabel}>Vehicle No</Text>
+                        <Text style={styles.exportValue}>
+                          : {data?.vehicleNo || "—"}
                         </Text>
                       </View>
                     </View>
