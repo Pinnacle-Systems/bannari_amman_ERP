@@ -1092,6 +1092,32 @@ const FabricSalesInvoiceForm = ({
                   className={`${compactFieldClass} w-full max-w-none`}
                 />
               </div>
+              <div className={narrowFieldWrap}>
+                <DropdownInput
+                  name="Pay Term"
+                  options={dropDownListObject(
+                    id
+                      ? payTermList?.data
+                      : payTermList?.data?.filter((item) => item?.active),
+                    "name",
+                    "id",
+                  )}
+                  value={payTermId}
+                  setValue={setPayTermId}
+                  required={false}
+                  readOnly={readOnly || orderType === "AGAINSTPI"}
+                  className={`${compactFieldClass} w-full max-w-none`}
+                  dropdownMinWidth={240}
+                  // addNewLabel="+ Add New Pay Term"
+                  // childComponent={PayTermMaster}
+                  // addNewModalWidth="w-[40%] h-[66%]"
+                  disabled={
+                    childRecord.current > 0 ||
+                    readOnly ||
+                    orderType === "AGAINSTPI"
+                  }
+                />
+              </div>
             </div>
 
             {/* PI Selection when AGAINSTPI */}
@@ -1333,32 +1359,6 @@ const FabricSalesInvoiceForm = ({
             <div className="grid grid-cols-2 gap-1.5">
               <div className={narrowFieldWrap}>
                 <DropdownInput
-                  name="Pay Term"
-                  options={dropDownListObject(
-                    id
-                      ? payTermList?.data
-                      : payTermList?.data?.filter((item) => item?.active),
-                    "name",
-                    "id",
-                  )}
-                  value={payTermId}
-                  setValue={setPayTermId}
-                  required={false}
-                  readOnly={readOnly || orderType === "AGAINSTPI"}
-                  className={`${compactFieldClass} w-full max-w-none`}
-                  dropdownMinWidth={240}
-                  // addNewLabel="+ Add New Pay Term"
-                  // childComponent={PayTermMaster}
-                  // addNewModalWidth="w-[40%] h-[66%]"
-                  disabled={
-                    childRecord.current > 0 ||
-                    readOnly ||
-                    orderType === "AGAINSTPI"
-                  }
-                />
-              </div>
-              <div className={narrowFieldWrap}>
-                <DropdownInput
                   name="Currency"
                   options={dropDownListObject(
                     id
@@ -1379,26 +1379,27 @@ const FabricSalesInvoiceForm = ({
                   required={isCustomerExport}
                 />
               </div>
+              <div>
+                <TextInput
+                  name="Total Amount"
+                  placeholder="0.00"
+                  value={netTotalAmount}
+                  setValue={setNetTotalAmount}
+                  disabled={
+                    childRecord.current > 0 ||
+                    readOnly ||
+                    orderType === "AGAINSTPI"
+                  }
+                  required={true}
+                  readOnly={readOnly}
+                  type="number"
+                  className={`${compactFieldClass} w-full text-right pr-1`}
+                />
+              </div>
             </div>
 
             {/* Currency & Customer Po No */}
-            <div className="grid grid-cols-1 gap-1.5 max-w-40">
-              <TextInput
-                name="Total Invoice Amount"
-                placeholder="0.00"
-                value={netTotalAmount}
-                setValue={setNetTotalAmount}
-                disabled={
-                  childRecord.current > 0 ||
-                  readOnly ||
-                  orderType === "AGAINSTPI"
-                }
-                required={true}
-                readOnly={readOnly}
-                type="number"
-                className={`${compactFieldClass} w-full text-right pr-1`}
-              />
-            </div>
+            <div className="grid grid-cols-1 gap-1.5 max-w-40"></div>
           </div>
 
           {/* Bottom of Sidebar - Net Amount & View Summary */}
@@ -1689,7 +1690,7 @@ const FabricSalesInvoiceForm = ({
 
         {/* Row 2: Delivery Date & Carriage Charges */}
         <div className={shippingChargesGridClass}>
-          <div className="col-span-2">
+          <div className="col-span-3">
             <TextInput
               name="Vehicle Number"
               value={vehicleNo}
@@ -1703,7 +1704,7 @@ const FabricSalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          <div className="col-span-4">
+          {/* <div className="col-span-4">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1725,7 +1726,7 @@ const FabricSalesInvoiceForm = ({
                 childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
             />
-          </div>
+          </div> */}
           <div className="col-span-2">
             <TextInput
               name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
