@@ -627,7 +627,7 @@ const SalesInvoiveReport = ({
                                   </button>
                                 </Tooltip>
                               )}
-                              {onDelete && (
+                              {/* {onDelete && (
                                 <Tooltip
                                   title={
                                     dataObj.childRecord > 0
@@ -664,7 +664,7 @@ const SalesInvoiveReport = ({
                                     </svg>
                                   </button>
                                 </Tooltip>
-                              )}
+                              )} */}
                             </div>
                           </div>
                         </td>
