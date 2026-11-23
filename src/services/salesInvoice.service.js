@@ -314,11 +314,8 @@ async function getOne(id) {
         },
       },
 
-      customer: {
-        select: {
-          name: true,
-        },
-      },
+      customer: true,
+      customerDelivery: true,
       Bank: {
         include: {
           Branch: true,

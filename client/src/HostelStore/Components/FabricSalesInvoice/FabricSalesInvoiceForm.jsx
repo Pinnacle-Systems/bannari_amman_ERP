@@ -2449,6 +2449,13 @@ const FabricSalesInvoiceForm = ({
                 customerList?.data?.find((c) => c.id === customerId) ||
                 supplierData?.data
               }
+              deliveryCustomerDetails={
+                customerList?.data?.find((c) => c.id === customerDeliveryId) ||
+                singleData?.data?.customerDelivery ||
+                customerList?.data?.find(
+                  (c) => c.id === singleData?.data?.customerDeliveryId,
+                )
+              }
               branchData={branchData?.data}
               isCustomerExport={isCustomerExport}
               cityList={cityList}

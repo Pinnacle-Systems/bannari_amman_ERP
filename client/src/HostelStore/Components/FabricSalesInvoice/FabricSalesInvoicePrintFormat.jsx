@@ -387,6 +387,7 @@ const FabricSalesInvoicePrintFormat = ({
   taxDetails,
   totals,
   customerDetails,
+  deliveryCustomerDetails,
   branchData,
   isCustomerExport: isExportProp,
   cityList,
@@ -413,6 +414,10 @@ const FabricSalesInvoicePrintFormat = ({
   const isFabric = (data?.orderGridType || "FABRIC SALES") === "FABRIC SALES";
 
   const customer = customerDetails || data?.customer || {};
+  const shipTo =
+    deliveryCustomerDetails ||
+    data?.customerDelivery ||
+    customer;
   const branch = data?.Branch || {};
   const bank = data?.Bank || findFromList(data?.bankId, bankList?.data) || {};
 
@@ -790,24 +795,24 @@ const FabricSalesInvoicePrintFormat = ({
                       <Text style={styles.sectionHeader}>Ship To</Text>
                       <View style={styles.sectionBody}>
                         <Text style={styles.partyName}>
-                          {customer?.name || "N/A"}
+                          {shipTo?.name || "N/A"}
                         </Text>
                         <Text style={styles.partyAddr}>
-                          {customer?.address || ""}
+                          {shipTo?.address || ""}
                         </Text>
                         {[
                           {
                             label: "Contact Person",
-                            value: customer?.contactPersonName,
+                            value: shipTo?.contactPersonName,
                           },
                           {
                             label: "Mobile No",
-                            value: customer?.contactNumber,
+                            value: shipTo?.contactNumber,
                           },
-                          { label: "GST No", value: customer?.gstNo },
+                          { label: "GST No", value: shipTo?.gstNo },
                           {
                             label: "Email",
-                            value: customer?.contactPersonEmail,
+                            value: shipTo?.contactPersonEmail,
                           },
                         ].map(({ label, value }) =>
                           value ? (
