@@ -6,7 +6,9 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
   isDozen = false,
   qtyField = "qty",
   deliveryTaxValue,
-  deliveryTaxType
+  deliveryTaxType,
+  carriageCharge = 0,
+  carriageTax = 0
 ) {
   let roundTo = 2;
 
@@ -131,6 +133,37 @@ export function calculateTaxWithHSNBreakupAndInsertIntoPoItems(
       hsnMap[item._hsn][sgstKey] = (hsnMap[item._hsn][sgstKey] || 0) + (sgst || 0);
     }
   });
+
+  // ---- Step 3b: Carriage charge & tax split ----
+  const numCarriage = Math.max(0, parseFloat(carriageCharge) || 0);
+  const numCarriageTax =
+    carriageTax !== "" && carriageTax !== null && !isNaN(parseFloat(carriageTax))
+      ? Math.max(0, parseFloat(carriageTax))
+      : 0;
+
+  if (numCarriage > 0) {
+    result.carriageCharge = +(numCarriage.toFixed(roundTo));
+    result.carriageTax = numCarriageTax;
+    result.taxable += numCarriage;
+
+    const carriageTaxAmount = (numCarriage * numCarriageTax) / 100;
+    result.carriageTaxAmount = +(carriageTaxAmount.toFixed(roundTo));
+
+    if (numCarriageTax > 0) {
+      if (isSupplierOutside) {
+        const key = `IGST_${numCarriageTax}`;
+        slabMap[key] = (slabMap[key] || 0) + carriageTaxAmount;
+      } else {
+        const half = numCarriageTax / 2;
+        const cgstKey = `CGST_${half}`;
+        const sgstKey = `SGST_${half}`;
+        const halfTax = carriageTaxAmount / 2;
+
+        slabMap[cgstKey] = (slabMap[cgstKey] || 0) + halfTax;
+        slabMap[sgstKey] = (slabMap[sgstKey] || 0) + halfTax;
+      }
+    }
+  }
 
   // ---- Step 4: Build breakups ----
   result.slabBreakup = Object.entries(slabMap).map(([key, amt]) => {

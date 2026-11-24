@@ -498,7 +498,9 @@ const ProformaInvoiceYarnPrintFormat = ({
   // Each item carries taxPercent; group by slab, sum taxable + tax amounts
   const taxableTotal = parseFloat(taxDetails?.taxable || 0);
 
-  const carriageCharge = parseFloat(carriageFinalAmt) || 0;
+  const carriageCharge = parseFloat(
+    data?.carriageCharge ?? carriageFinalAmt ?? 0,
+  );
   const taxSlabBreakup = (taxDetails?.slabBreakup || [])?.filter(
     (s) => (s?.amount || 0) > 0,
   );
@@ -509,12 +511,12 @@ const ProformaInvoiceYarnPrintFormat = ({
   const printTotalAmount = isExport
     ? taxableTotal
     : parseFloat((taxableTotal + totalTaxAmount).toFixed(2));
-  const combinedBeforeRound = printTotalAmount + carriageCharge;
+  const combinedBeforeRound = printTotalAmount;
   const netAmount = Math.round(combinedBeforeRound);
   const roundOffAmount = parseFloat(
     (netAmount - combinedBeforeRound).toFixed(2),
   );
-  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
+  const grandTotal = isExport ? taxableTotal : totalGross;
 
   const consolidatedTaxSlabs = (() => {
     const taxMap = {};
@@ -1285,6 +1287,22 @@ const ProformaInvoiceYarnPrintFormat = ({
                         </View>
                       )}
 
+                      {carriageCharge > 0 && (
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>
+                            Carriage Charges / Freight
+                          </Text>
+                          <Text style={styles.summaryColon}>:</Text>
+                          <Text style={styles.summaryValue}>
+                            {currencySymbol}{" "}
+                            {formatCurrencyAmount(
+                              carriageCharge,
+                              currencyCode || currencySymbol,
+                            )}
+                          </Text>
+                        </View>
+                      )}
+
                       <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Taxable Amount</Text>
                         <Text style={styles.summaryColon}>:</Text>
@@ -1331,22 +1349,6 @@ const ProformaInvoiceYarnPrintFormat = ({
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
                               printTotalAmount,
-                              currencyCode || currencySymbol,
-                            )}
-                          </Text>
-                        </View>
-                      )}
-
-                      {carriageCharge > 0 && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>
-                            Carriage & Air Freight
-                          </Text>
-                          <Text style={styles.summaryColon}>:</Text>
-                          <Text style={styles.summaryValue}>
-                            {currencySymbol}{" "}
-                            {formatCurrencyAmount(
-                              carriageCharge,
                               currencyCode || currencySymbol,
                             )}
                           </Text>

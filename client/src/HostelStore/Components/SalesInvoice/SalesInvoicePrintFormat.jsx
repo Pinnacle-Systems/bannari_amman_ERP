@@ -312,6 +312,7 @@ const getFabricColumns = () => [
   { label: "K Dia", flex: 1.0, align: "center" },
   { label: "F Dia", flex: 1.0, align: "center" },
   { label: "Uom", flex: 1.0, align: "center" },
+  { label: "No of Rolls", flex: 1.0, align: "center" },
   { label: "Qty", flex: 1.2, align: "center" },
   { label: "Price", flex: 1.4, align: "center" },
   { label: "Gross Amount", flex: 1.7, align: "center" },
@@ -472,7 +473,9 @@ const SalesInvoicePrintFormat = ({
   );
 
   const taxableTotal = parseFloat(resolvedTaxDetails?.taxable || 0);
-  const carriageCharge = parseFloat(carriageFinalAmt) || 0;
+  const carriageCharge = parseFloat(
+    data?.carriageCharge ?? carriageFinalAmt ?? 0,
+  );
   const taxSlabBreakup = (resolvedTaxDetails?.slabBreakup || []).filter(
     (s) => (s?.amount || 0) > 0,
   );
@@ -483,12 +486,12 @@ const SalesInvoicePrintFormat = ({
   const printTotalAmount = isExport
     ? taxableTotal
     : parseFloat((taxableTotal + totalTaxAmount).toFixed(2));
-  const combinedBeforeRound = printTotalAmount + carriageCharge;
+  const combinedBeforeRound = printTotalAmount;
   const netAmount = Math.round(combinedBeforeRound);
   const roundOffAmount = parseFloat(
     (netAmount - combinedBeforeRound).toFixed(2),
   );
-  const grandTotal = isExport ? taxableTotal + carriageCharge : totalGross;
+  const grandTotal = isExport ? taxableTotal : totalGross;
 
   const consolidatedTaxSlabs = (() => {
     const taxMap = {};
@@ -1052,6 +1055,27 @@ const SalesInvoicePrintFormat = ({
                         <View
                           style={[
                             styles.td,
+                            { flex: 1.0, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {row?.numberOfRolls != null &&
+                            row?.numberOfRolls !== ""
+                              ? parseFloat(row.numberOfRolls)
+                              : ""}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
                             { flex: 1.2, justifyContent: "center" },
                           ]}
                         >
@@ -1332,6 +1356,11 @@ const SalesInvoicePrintFormat = ({
                         {" "}
                       </Text>
                       <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
                         style={[
                           styles.td,
                           {
@@ -1598,6 +1627,22 @@ const SalesInvoicePrintFormat = ({
                         </View>
                       )}
 
+                      {carriageCharge > 0 && (
+                        <View style={styles.summaryRow}>
+                          <Text style={styles.summaryLabel}>
+                            Carriage Charges / Freight
+                          </Text>
+                          <Text style={styles.summaryColon}>:</Text>
+                          <Text style={styles.summaryValue}>
+                            {currencySymbol}{" "}
+                            {formatCurrencyAmount(
+                              carriageCharge,
+                              currencyCode || currencySymbol,
+                            )}
+                          </Text>
+                        </View>
+                      )}
+
                       <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Taxable Amount</Text>
                         <Text style={styles.summaryColon}>:</Text>
@@ -1644,22 +1689,6 @@ const SalesInvoicePrintFormat = ({
                             {currencySymbol}{" "}
                             {formatCurrencyAmount(
                               printTotalAmount,
-                              currencyCode || currencySymbol,
-                            )}
-                          </Text>
-                        </View>
-                      )}
-
-                      {carriageCharge > 0 && (
-                        <View style={styles.summaryRow}>
-                          <Text style={styles.summaryLabel}>
-                            Carriage Charges
-                          </Text>
-                          <Text style={styles.summaryColon}>:</Text>
-                          <Text style={styles.summaryValue}>
-                            {currencySymbol}{" "}
-                            {formatCurrencyAmount(
-                              carriageCharge,
                               currencyCode || currencySymbol,
                             )}
                           </Text>

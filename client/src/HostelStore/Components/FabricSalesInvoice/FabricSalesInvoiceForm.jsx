@@ -224,7 +224,7 @@ const FabricSalesInvoiceForm = ({
   const [carriageCharge, setCarriageCharge] = useState("");
   const [loadingId, setLoadingId] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
-  const [carriageTax, setCarriageTax] = useState("");
+  const [carriageTax, setCarriageTax] = useState("5");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
   const [orderGridType, setOrderGridType] = useState("FABRIC SALES");
@@ -413,7 +413,9 @@ const FabricSalesInvoiceForm = ({
       }
       setCurrencyId(data?.currencyId || "");
       setCarriageCharge(data?.carriageCharge?.toFixed(2) || "");
-      setCarriageTax(data?.carriageTax?.toFixed(2) || "");
+      setCarriageTax(
+        data?.carriageTax != null ? data.carriageTax.toString() : "5",
+      );
       setLoadingId(data?.loadingId || "");
       setDeliveryId(data?.deliveryId || "");
       setCustomerDeliveryId(data?.customerDeliveryId || "");
@@ -572,15 +574,15 @@ const FabricSalesInvoiceForm = ({
         if (!item.hsnId) {
           errors.push(`Row ${index + 1}: HSN is required`);
         }
-        if (!item.loopLengthId) {
-          errors.push(`Row ${index + 1}: Loop Length is required`);
-        }
-        if (!item.kDiaId) {
-          errors.push(`Row ${index + 1}: KDia is required`);
-        }
-        if (!item.fDiaId) {
-          errors.push(`Row ${index + 1}: FDia is required`);
-        }
+        // if (!item.loopLengthId) {
+        //   errors.push(`Row ${index + 1}: Loop Length is required`);
+        // }
+        // if (!item.kDiaId) {
+        //   errors.push(`Row ${index + 1}: KDia is required`);
+        // }
+        // if (!item.fDiaId) {
+        //   errors.push(`Row ${index + 1}: FDia is required`);
+        // }
         if (!item.uomId) {
           errors.push(`Row ${index + 1}: UOM is required`);
         }
@@ -861,6 +863,12 @@ const FabricSalesInvoiceForm = ({
       isSupplierOutside,
       discountType,
       discountValue,
+      false,
+      "qty",
+      null,
+      null,
+      carriageCharge,
+      carriageTax,
     );
   }, [
     orderGridType,
@@ -869,6 +877,8 @@ const FabricSalesInvoiceForm = ({
     isSupplierOutside,
     discountType,
     discountValue,
+    carriageCharge,
+    carriageTax,
   ]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -898,21 +908,15 @@ const FabricSalesInvoiceForm = ({
     );
   }, [enrichedData, isCustomerExport, totalTaxAmount]);
 
-  const carriageChargesAmt = useMemo(() => {
-    return parseFloat(carriageFinalAmt) || 0;
-  }, [carriageFinalAmt]);
-
   const roundOffAmount = useMemo(() => {
-    const sum = totalAmount + carriageChargesAmt;
-    if (!sum) return 0;
-    return Number((Math.round(sum) - sum).toFixed(2));
-  }, [totalAmount, carriageChargesAmt]);
+    if (!totalAmount) return 0;
+    return Number((Math.round(totalAmount) - totalAmount).toFixed(2));
+  }, [totalAmount]);
 
   const calculatedGrandTotal = useMemo(() => {
-    const sum = totalAmount + carriageChargesAmt;
-    if (!sum) return 0;
-    return Math.round(sum);
-  }, [totalAmount, carriageChargesAmt]);
+    if (!totalAmount) return 0;
+    return Math.round(totalAmount);
+  }, [totalAmount]);
 
   const compactFieldClass = "!h-7 text-xs";
   const compactModalFieldClass = "!h-7 !py-0 text-xs";
@@ -1040,7 +1044,7 @@ const FabricSalesInvoiceForm = ({
                       setCarriageCharge("");
                       setLoadingId("");
                       setDeliveryId("");
-                      setCarriageTax("");
+                      setCarriageTax("5");
                       setCustomerPoNo("");
                     }
                   }}
@@ -2012,6 +2016,19 @@ const FabricSalesInvoiceForm = ({
           )}`,
           summaryColumn: "right",
         },
+        ...(parseFloat(carriageCharge) > 0
+          ? [
+              {
+                key: "carriageCharges",
+                label: "Carriage Charges / Freight",
+                value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                  carriageCharge || 0,
+                  currencyCode || isCurrencySymbol,
+                )}`,
+                summaryColumn: "right",
+              },
+            ]
+          : []),
         {
           key: "taxableAmount",
           label: "Taxable Amount",
@@ -2048,19 +2065,6 @@ const FabricSalesInvoiceForm = ({
           summaryColumn: "right",
           emphasized: true,
           valueClassName: "text-indigo-700",
-        },
-        {
-          key: "carriageCharges",
-          label: "Carriage Charges",
-          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
-            !isNaN(parseFloat(carriageFinalAmt)) && carriageFinalAmt !== ""
-              ? formatCurrencyAmount(
-                  carriageFinalAmt,
-                  currencyCode || isCurrencySymbol,
-                )
-              : "0.00"
-          }`,
-          summaryColumn: "right",
         },
         {
           key: "roundOff",
@@ -2493,9 +2497,11 @@ const FabricSalesInvoiceForm = ({
                 singleData?.data
                   ? {
                       ...singleData.data,
+                      carriageCharge,
+                      carriageTax,
                       vehicleNo: vehicleNo || singleData.data.vehicleNo,
                     }
-                  : { vehicleNo }
+                  : { carriageCharge, carriageTax, vehicleNo }
               }
               taxDetails={enrichedData}
               totals={enrichedData}
@@ -2516,7 +2522,7 @@ const FabricSalesInvoiceForm = ({
               currencyList={currencyList}
               payTermList={payTermList}
               bankList={bankList}
-              carriageFinalAmt={carriageFinalAmt}
+              carriageFinalAmt={carriageCharge}
               uomList={filteredUomList}
               sizeList={sizeList}
               hsnList={hsnList}
