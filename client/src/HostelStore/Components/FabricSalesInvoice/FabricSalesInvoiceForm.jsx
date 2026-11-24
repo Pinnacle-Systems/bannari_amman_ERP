@@ -574,15 +574,15 @@ const FabricSalesInvoiceForm = ({
         if (!item.hsnId) {
           errors.push(`Row ${index + 1}: HSN is required`);
         }
-        if (!item.loopLengthId) {
-          errors.push(`Row ${index + 1}: Loop Length is required`);
-        }
-        if (!item.kDiaId) {
-          errors.push(`Row ${index + 1}: KDia is required`);
-        }
-        if (!item.fDiaId) {
-          errors.push(`Row ${index + 1}: FDia is required`);
-        }
+        // if (!item.loopLengthId) {
+        //   errors.push(`Row ${index + 1}: Loop Length is required`);
+        // }
+        // if (!item.kDiaId) {
+        //   errors.push(`Row ${index + 1}: KDia is required`);
+        // }
+        // if (!item.fDiaId) {
+        //   errors.push(`Row ${index + 1}: FDia is required`);
+        // }
         if (!item.uomId) {
           errors.push(`Row ${index + 1}: UOM is required`);
         }

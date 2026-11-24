@@ -312,6 +312,7 @@ const getFabricColumns = () => [
   { label: "K Dia", flex: 1.0, align: "center" },
   { label: "F Dia", flex: 1.0, align: "center" },
   { label: "Uom", flex: 1.0, align: "center" },
+  { label: "No of Rolls", flex: 1.0, align: "center" },
   { label: "Qty", flex: 1.2, align: "center" },
   { label: "Price", flex: 1.4, align: "center" },
   { label: "Gross Amount", flex: 1.7, align: "center" },
@@ -1054,6 +1055,27 @@ const SalesInvoicePrintFormat = ({
                         <View
                           style={[
                             styles.td,
+                            { flex: 1.0, justifyContent: "center" },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Helvetica-Bold",
+                              fontSize: 10.5,
+                              color: "#000",
+                              textAlign: "right",
+                              width: "100%",
+                            }}
+                          >
+                            {row?.numberOfRolls != null &&
+                            row?.numberOfRolls !== ""
+                              ? parseFloat(row.numberOfRolls)
+                              : ""}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.td,
                             { flex: 1.2, justifyContent: "center" },
                           ]}
                         >
@@ -1320,6 +1342,11 @@ const SalesInvoicePrintFormat = ({
                       </Text>
                       <Text
                         style={[styles.td, { flex: 1.1, color: "transparent" }]}
+                      >
+                        {" "}
+                      </Text>
+                      <Text
+                        style={[styles.td, { flex: 1.0, color: "transparent" }]}
                       >
                         {" "}
                       </Text>
