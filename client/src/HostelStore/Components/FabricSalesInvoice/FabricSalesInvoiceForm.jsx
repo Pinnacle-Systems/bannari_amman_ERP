@@ -923,9 +923,9 @@ const FabricSalesInvoiceForm = ({
   const narrowFieldWrap = "min-w-0";
   const partyDropdownMinWidth = 260;
   const supplierCompactGridClass =
-    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end";
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 items-end";
   const shippingPortsGridClass =
-    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 items-end";
+    "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-2 items-end";
   const shippingChargesGridClass =
     "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-2 items-end";
 
@@ -1548,7 +1548,7 @@ const FabricSalesInvoiceForm = ({
       </div>
       <div className="px-2.5 py-2 flex-1 min-h-0">
         <div className={supplierCompactGridClass}>
-          <div className="min-w-0 md:col-span-2 xl:col-span-2">
+          <div className="col-span-4">
             <DropdownWithModal
               name="Customer"
               options={dropDownListObject(
@@ -1574,7 +1574,7 @@ const FabricSalesInvoiceForm = ({
               openOnFocus={true}
             />
           </div>
-          <div className="min-w-0">
+          <div className="col-span-2">
             <TextInput
               name="Contact Person"
               placeholder=""
@@ -1589,7 +1589,7 @@ const FabricSalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          <div className="min-w-0">
+          <div className="col-span-1">
             <TextInput
               name="Phone"
               placeholder=""
@@ -1618,7 +1618,7 @@ const FabricSalesInvoiceForm = ({
       <div className="px-2.5 py-1.5 flex-1 min-h-0 space-y-1">
         {/* Row 1: Ports & Advising Bank */}
         <div className={shippingPortsGridClass}>
-          <div className="min-w-0">
+          <div className="col-span-4">
             <DropdownWithModal
               name="Delivery To"
               options={dropDownListObject(
@@ -1641,7 +1641,7 @@ const FabricSalesInvoiceForm = ({
               disabled={childRecord.current > 0 || readOnly}
             />
           </div>
-          <div className="min-w-0">
+          <div className="col-span-3">
             <DropdownInput
               name="Loading Port"
               options={dropDownListObject(
@@ -1659,7 +1659,7 @@ const FabricSalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          <div className="min-w-0">
+          <div className="col-span-3">
             <DropdownInput
               name="Delivery Port"
               options={dropDownListObject(
@@ -1677,7 +1677,20 @@ const FabricSalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-
+          <div className="col-span-2">
+            <TextInput
+              name="Vehicle Number"
+              value={vehicleNo}
+              setValue={setVehicleNo}
+              readOnly={
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+              }
+              disabled={
+                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
+              }
+              className={compactFieldClass}
+            />
+          </div>
           {/* <div className="max-w-32">
             <DateInputNew
               name="Delivery Date"
@@ -1694,21 +1707,7 @@ const FabricSalesInvoiceForm = ({
 
         {/* Row 2: Delivery Date & Carriage Charges */}
         <div className={shippingChargesGridClass}>
-          <div className="col-span-2">
-            <TextInput
-              name="Vehicle Number"
-              value={vehicleNo}
-              setValue={setVehicleNo}
-              readOnly={
-                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
-              }
-              disabled={
-                childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
-              }
-              className={compactFieldClass}
-            />
-          </div>
-          <div className="col-span-4">
+          <div className="col-span-5">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1802,7 +1801,7 @@ const FabricSalesInvoiceForm = ({
           </span>
         </div>
       )}
-      <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_1.65fr] gap-1.5 w-full">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_1.85fr] gap-1.5 w-full">
         {customerDetailsCompactSection}
         {shippingDetailsCompactSection}
       </div>
