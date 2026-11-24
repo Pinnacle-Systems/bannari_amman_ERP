@@ -137,8 +137,8 @@ const styles = StyleSheet.create({
     backgroundColor: LIGHT_BG,
   },
   exportCol: { flex: 1, padding: 8, borderRight: `1 solid ${BORDER_LIGHT}` },
-  exportItem: { flexDirection: "row", marginBottom: 4 },
-  exportLabel: { fontSize: 9.5, color: "#000", width: 98 },
+  exportItem: { flexDirection: "row", marginBottom: 0 },
+  exportLabel: { fontSize: 9.5, color: "#000" },
   exportValue: {
     fontSize: 9.5,
     color: "#000",
@@ -840,25 +840,19 @@ const FabricSalesInvoicePrintFormat = ({
                       </View> */}
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Port of Loading</Text>
-                        <Text style={styles.exportValue}>
-                          : {loadingPort || "—"}
-                        </Text>
+                        <Text style={styles.exportValue}>: {loadingPort || "—"}</Text>
                       </View>
                     </View>
                     <View style={styles.exportCol}>
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Port of Delivery</Text>
-                        <Text style={styles.exportValue}>
-                          : {deliveryPort || "—"}
-                        </Text>
+                        <Text style={styles.exportValue}>: {deliveryPort || "—"}</Text>
                       </View>
                     </View>
                     <View style={[styles.exportCol, { borderRight: "none" }]}>
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Vehicle No</Text>
-                        <Text style={styles.exportValue}>
-                          : {data?.vehicleNo || "—"}
-                        </Text>
+                        <Text style={styles.exportValue}>: {data?.vehicleNo || "—"}</Text>
                       </View>
                     </View>
                   </View>
