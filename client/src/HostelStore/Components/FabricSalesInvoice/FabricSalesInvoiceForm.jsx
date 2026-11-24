@@ -1694,7 +1694,7 @@ const FabricSalesInvoiceForm = ({
 
         {/* Row 2: Delivery Date & Carriage Charges */}
         <div className={shippingChargesGridClass}>
-          <div className="col-span-3">
+          <div className="col-span-2">
             <TextInput
               name="Vehicle Number"
               value={vehicleNo}
@@ -1708,7 +1708,7 @@ const FabricSalesInvoiceForm = ({
               className={compactFieldClass}
             />
           </div>
-          {/* <div className="col-span-4">
+          <div className="col-span-4">
             <DropdownWithModal
               name="Advising Bank"
               options={dropDownListObjectMultiple(
@@ -1730,7 +1730,7 @@ const FabricSalesInvoiceForm = ({
                 childRecord.current > 0 || readOnly || orderType === "AGAINSTPI"
               }
             />
-          </div> */}
+          </div>
           <div className="col-span-2">
             <TextInput
               name={`Carriage Charges ${currencyId ? `(${isCurrencySymbol})` : ""}`}
