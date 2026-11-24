@@ -137,7 +137,7 @@ const ProformaInvoiceYarnForm = ({
   const [selectedQuoteVersion, setSelectedQuoteVersion] = useState("Latest");
   const [availableVersions, setAvailableVersions] = useState([]);
   const [bankId, setBankId] = useState("");
-  const [carriageTax, setCarriageTax] = useState("");
+  const [carriageTax, setCarriageTax] = useState("5");
   const [carriageFinalAmt, setCarriageFinalAmt] = useState("");
   const [customerPoNo, setCustomerPoNo] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -230,7 +230,9 @@ const ProformaInvoiceYarnForm = ({
       );
 
       setBankId(data.bankId || "");
-      setCarriageTax(data.carriageTax || "");
+      setCarriageTax(
+        data?.carriageTax != null ? data.carriageTax.toString() : "5",
+      );
       childRecord.current = data?.childRecord ? data?.childRecord : 0;
 
       let loadedVersions = [];
@@ -593,7 +595,7 @@ const ProformaInvoiceYarnForm = ({
     setValidityTo("");
     setCurrencyId("");
     setBankId("");
-    setCarriageTax("");
+    setCarriageTax("5");
     setCustomerPoNo("");
   };
 
@@ -645,8 +647,21 @@ const ProformaInvoiceYarnForm = ({
       isSupplierOutside,
       discountType,
       discountValue,
+      false,
+      "qty",
+      null,
+      null,
+      carriageCharge,
+      carriageTax,
     );
-  }, [yarnItems, isSupplierOutside, discountType, discountValue]);
+  }, [
+    yarnItems,
+    isSupplierOutside,
+    discountType,
+    discountValue,
+    carriageCharge,
+    carriageTax,
+  ]);
 
   const totalTaxAmount = useMemo(() => {
     return (enrichedData?.slabBreakup || []).reduce(
@@ -671,21 +686,15 @@ const ProformaInvoiceYarnForm = ({
     );
   }, [enrichedData, isCustomerExport, totalTaxAmount]);
 
-  const carriageChargesAmt = useMemo(() => {
-    return parseFloat(carriageFinalAmt) || 0;
-  }, [carriageFinalAmt]);
-
   const roundOffAmount = useMemo(() => {
-    const sum = totalAmount + carriageChargesAmt;
-    if (!sum) return 0;
-    return Number((Math.round(sum) - sum).toFixed(2));
-  }, [totalAmount, carriageChargesAmt]);
+    if (!totalAmount) return 0;
+    return Number((Math.round(totalAmount) - totalAmount).toFixed(2));
+  }, [totalAmount]);
 
   const calculatedGrandTotal = useMemo(() => {
-    const sum = totalAmount + carriageChargesAmt;
-    if (!sum) return 0;
-    return Math.round(sum);
-  }, [totalAmount, carriageChargesAmt]);
+    if (!totalAmount) return 0;
+    return Math.round(totalAmount);
+  }, [totalAmount]);
 
   const versionDropdown = (
     <div className="inline-flex items-center bg-[#102438] border border-[#28496D] px-1.5 py-0 rounded-md shadow-lg h-6">
@@ -1400,6 +1409,19 @@ const ProformaInvoiceYarnForm = ({
           )}`,
           summaryColumn: "right",
         },
+        ...(parseFloat(carriageCharge) > 0
+          ? [
+              {
+                key: "carriageCharges",
+                label: "Carriage Charges / Freight",
+                value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${formatCurrencyAmount(
+                  carriageCharge || 0,
+                  currencyCode || isCurrencySymbol,
+                )}`,
+                summaryColumn: "right",
+              },
+            ]
+          : []),
         {
           key: "taxableAmount",
           label: "Taxable Amount",
@@ -1436,19 +1458,6 @@ const ProformaInvoiceYarnForm = ({
           summaryColumn: "right",
           emphasized: true,
           valueClassName: "text-indigo-700",
-        },
-        {
-          key: "carriageCharges",
-          label: "Carriage Charges",
-          value: `${isCurrencySymbol ? isCurrencySymbol + " " : ""}${
-            !isNaN(parseFloat(carriageFinalAmt)) && carriageFinalAmt !== ""
-              ? formatCurrencyAmount(
-                  carriageFinalAmt,
-                  currencyCode || isCurrencySymbol,
-                )
-              : "0.00"
-          }`,
-          summaryColumn: "right",
         },
         {
           key: "roundOff",
@@ -1521,7 +1530,7 @@ const ProformaInvoiceYarnForm = ({
             cityList={cityList}
             currencyList={currencyList}
             payTermList={payTermList}
-            carriageFinalAmt={carriageFinalAmt}
+            carriageFinalAmt={carriageCharge}
             uomList={uomList}
             hsnList={hsnList}
             colorList={colorList}
