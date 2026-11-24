@@ -20,12 +20,12 @@ const BORDER_LIGHT = "#000";
 const BORDER_ROW = "#000";
 
 const styles = StyleSheet.create({
-  borderBox: { border: `1 solid #000`, margin: 0, padding: 0 },
+  borderBox: { border: `1 solid #000`, margin: 0, paddingHorizontal: 20, paddingTop: 12 },
   page: {
     fontFamily: "Helvetica",
     fontSize: 10,
     padding: 0,
-    paddingBottom: 42,
+    paddingBottom: 25,
     backgroundColor: "#fff",
   },
 
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     borderBottom: `1.5 solid ${DARK}`,
   },
-  logo: { height: 44, width: 44 },
+  logo: { height: 48, width: 48 },
   companyCenter: { alignItems: "center", flex: 1 },
   companyName: {
     fontSize: 19,
@@ -278,8 +278,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     position: "absolute",
     bottom: 5,
-    left: 0,
-    right: 0,
+    left: 20,
+    right: 20,
   },
   footerRight: { fontSize: 8.5, color: "#000", fontFamily: "Helvetica-Bold" },
 
@@ -374,7 +374,7 @@ const ContinuationBar = ({ docId, branchName }) => (
         letterSpacing: 2,
       }}
     >
-      Sales Invoice — Continued
+      Tax Invoice — Continued
     </Text>
     <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.7)" }}>
       Invoice No: {docId} | {branchName}
@@ -415,10 +415,7 @@ const SalesInvoicePrintFormat = ({
   const isFabric = (data?.orderGridType || "FABRIC SALES") === "FABRIC SALES";
 
   const customer = customerDetails || data?.customer || {};
-  const shipTo =
-    deliveryCustomerDetails ||
-    data?.customerDelivery ||
-    customer;
+  const shipTo = deliveryCustomerDetails || data?.customerDelivery || customer;
   const branch = data?.Branch || {};
   const bank = data?.Bank || findFromList(data?.bankId, bankList?.data) || {};
 
@@ -703,7 +700,7 @@ const SalesInvoicePrintFormat = ({
                   </View>
 
                   {/* TITLE BAND */}
-                  <Text style={styles.titleBand}>SALES INVOICE</Text>
+                  <Text style={styles.titleBand}>TAX INVOICE</Text>
 
                   {/* INTRO TEXT */}
                   {/* <View
@@ -840,19 +837,25 @@ const SalesInvoicePrintFormat = ({
                       </View> */}
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Port of Loading</Text>
-                        <Text style={styles.exportValue}>: {loadingPort || "—"}</Text>
+                        <Text style={styles.exportValue}>
+                          : {loadingPort || "—"}
+                        </Text>
                       </View>
                     </View>
                     <View style={styles.exportCol}>
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Port of Delivery</Text>
-                        <Text style={styles.exportValue}>: {deliveryPort || "—"}</Text>
+                        <Text style={styles.exportValue}>
+                          : {deliveryPort || "—"}
+                        </Text>
                       </View>
                     </View>
                     <View style={[styles.exportCol, { borderRight: "none" }]}>
                       <View style={styles.exportItem}>
                         <Text style={styles.exportLabel}>Vehicle No</Text>
-                        <Text style={styles.exportValue}>: {data?.vehicleNo || "—"}</Text>
+                        <Text style={styles.exportValue}>
+                          : {data?.vehicleNo || "—"}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -1749,135 +1752,161 @@ const SalesInvoicePrintFormat = ({
                     </Text>
                   </View>
 
-                  {/* ── BANK DETAILS ── */}
+                  {/* ── BANK DETAILS & SIGNATURE SECTION ── */}
                   <View
                     style={{
+                      flexDirection: "row",
                       marginHorizontal: 8,
                       marginTop: 5,
-                      border: `1 solid ${BORDER_LIGHT}`,
-                      borderRadius: 3,
-                      padding: 5,
-                      backgroundColor: "#fff",
+                      gap: 6,
                     }}
+                    wrap={false}
                   >
-                    <Text
+                    {/* LEFT: BANK DETAILS */}
+                    <View
                       style={{
-                        fontSize: 10.5,
-                        fontFamily: "Helvetica-Bold",
-                        color: "#000",
-                        marginBottom: 4,
+                        flex: 1,
+                        border: `1 solid ${BORDER_LIGHT}`,
+                        borderRadius: 3,
+                        padding: 6,
+                        backgroundColor: "#fff",
                       }}
                     >
-                      Bank Details
-                    </Text>
-                    {/* <View style={{ flexDirection: "row", marginBottom: 2 }}>
                       <Text
                         style={{
-                          width: 95,
-                          fontSize: 10.5,
-                          color: "#000",
+                          fontSize: 10,
                           fontFamily: "Helvetica-Bold",
+                          color: "#000",
+                          marginBottom: 4,
                         }}
                       >
-                        Account Name
+                        Our Bank Details -{" "}
+                        {branch?.branchName || "BANNARI AMMAN"}
                       </Text>
-                      <Text
-                        style={{
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        : {bank?.bankHolderName || data?.bankHolderName || "-"}
-                      </Text>
-                    </View> */}
-                    <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text
-                        style={{
-                          width: 95,
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        Bank Name
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        : {bank?.name || data?.name || "-"}
-                      </Text>
+                      <View style={{ flexDirection: "row", marginBottom: 2 }}>
+                        <Text
+                          style={{
+                            width: 95,
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          Bank Name
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          : {bank?.name || data?.name || "-"}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", marginBottom: 2 }}>
+                        <Text
+                          style={{
+                            width: 95,
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          Account No.
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          : {bank?.accNo || data?.accNo || "-"}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", marginBottom: 2 }}>
+                        <Text
+                          style={{
+                            width: 95,
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          Branch Name
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          : {bank?.Branch?.name || data?.Branch?.name || "-"}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row" }}>
+                        <Text
+                          style={{
+                            width: 95,
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          IFSC Code
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            color: "#000",
+                            fontFamily: "Helvetica-Bold",
+                          }}
+                        >
+                          : {bank?.ifsc || data?.ifsc || "-"}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={{ flexDirection: "row", marginBottom: 2 }}>
+
+                    {/* RIGHT: SIGNATURE SECTION */}
+                    <View
+                      style={{
+                        width: "45%",
+                        border: `1 solid ${BORDER_LIGHT}`,
+                        borderRadius: 3,
+                        padding: 6,
+                        backgroundColor: "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Text
                         style={{
-                          width: 95,
-                          fontSize: 10.5,
-                          color: "#000",
+                          fontSize: 9.5,
                           fontFamily: "Helvetica-Bold",
+                          color: "#000",
+                          textAlign: "right",
                         }}
                       >
-                        Account No.
+                        For {branch?.branchName || "BANNARI AMMAN"}
                       </Text>
+                      <View style={{ height: 40 }} />
                       <Text
                         style={{
-                          fontSize: 10.5,
-                          color: "#000",
+                          fontSize: 9.5,
                           fontFamily: "Helvetica-Bold",
+                          color: "#000",
+                          textAlign: "right",
                         }}
                       >
-                        : {bank?.accNo || data?.accNo || "-"}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                      <Text
-                        style={{
-                          width: 95,
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        Branch Name
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        : {bank?.Branch?.name || data?.Branch?.name || "-"}
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: "row" }}>
-                      <Text
-                        style={{
-                          width: 95,
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        IFSC Code
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 10.5,
-                          color: "#000",
-                          fontFamily: "Helvetica-Bold",
-                        }}
-                      >
-                        : {bank?.ifsc || data?.ifsc || "-"}
+                        Authorised Signature
                       </Text>
                     </View>
                   </View>
 
-                  <View style={{ height: 18 }} />
+                  <View style={{ height: 10 }} />
                 </>
               )}
 
@@ -1929,31 +1958,6 @@ const SalesInvoicePrintFormat = ({
                   </Text>
                 </View>
               )}
-            </View>
-
-            {/* SIGNATURES — pinned cleanly above footer bar on the LAST page */}
-            <View style={styles.signaturesContainer} fixed>
-              <View
-                render={({ pageNumber, totalPages }) => {
-                  if (pageNumber === totalPages) {
-                    return (
-                      <View style={styles.signaturesRow}>
-                        {[
-                          "Prepared By",
-                          "Checked By",
-                          "Approved By",
-                          "Customer Sign",
-                        ].map((role) => (
-                          <Text key={role} style={styles.signatureRole}>
-                            {role}
-                          </Text>
-                        ))}
-                      </View>
-                    );
-                  }
-                  return null;
-                }}
-              />
             </View>
 
             {/* FOOTER BAR */}
